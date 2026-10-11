@@ -121,9 +121,26 @@ def test_filter_purity_wilson(recs, method, purity, plot_error):
 
 
 def test_novelty_bound(recs):
+    """Every nonzero novelty value is a statistical bound on a ZERO count, not a count.
+
+    No source publishes a nonzero novelty count for this campaign: Leeman et al. state that none
+    of the materials were new, and the A-Lab correction declines the claim rather than quantifying
+    it. So base and high are the Wilson 95% and 99% upper bounds on 0 of 36, and low is the
+    published verdict.
+
+    The previous version of this test asserted high == 9/36, a figure obtained by subtracting
+    Leeman's error categories from 36. That subtraction is invalid: the categories overlap by
+    construction (18 + 8 + 24 + 3 = 53 across 36 compounds), and Leeman report that 35 of 36 carry
+    at least one error type, so the residual is 1 rather than 9. The test was pinning the bad
+    derivation instead of catching it.
+    """
     rec = recs["novelty.science_frac"]
+    assert rec["low"] == 0.0
     assert rec["base"] == pytest.approx(wilson_interval(0, 36)[1], abs=1e-4)
-    assert rec["high"] == pytest.approx(9 / 36)
+    assert rec["high"] == pytest.approx(wilson_interval(0, 36, z=2.575829)[1], abs=1e-4)
+    # And the bounds must be ordered and strictly below the overlap-subtraction figure they
+    # replaced, so a future edit cannot quietly restore it.
+    assert rec["low"] < rec["base"] < rec["high"] < 9 / 36
 
 
 def test_derived_synthesis_numbers(recs):

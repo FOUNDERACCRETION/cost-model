@@ -936,6 +936,45 @@ def joint_boundary_region(p, ratios=(0.90, 0.95, 1.00, 1.05, 1.10, 1.20), materi
     return {"ratios": list(ratios), "grid": grid, "material": material}
 
 
+def identification_tier_spread(doc):
+    """How the reading spread moves when phase identification is priced at each reading's own tier.
+
+    The three readings differ in how strictly they judge that a target phase was made, and a
+    stricter determination costs more per sample. The model charges ONE identification tier to all
+    three, which is internally inconsistent: it adopts a strict reading's low success count while
+    paying the lenient reading's identification bill.
+
+    No source prices a refinement-grade phase determination, so we do not invent one. Instead we
+    bound the effect using the three tiers the fee schedules already supply -- self-use, internal
+    service and external service -- and report the reading spread under the tier assignment that
+    widens it most, the one that narrows it most, and the uniform tier the model actually uses.
+    The assignment is an assumption either way; the bound is not.
+    """
+    import copy
+
+    rec = next(r for r in doc["parameters"] if r["name"] == "synth.xrd_cost_per_sample")
+    tiers = {"self_use": rec["low"], "internal": rec["base"], "external": rec["high"]}
+    lvl = "experimentally_validated"
+
+    def at(tier_usd):
+        d2 = copy.deepcopy(doc)
+        next(r for r in d2["parameters"] if r["name"] == "synth.xrd_cost_per_sample")["base"] = tier_usd
+        return {n: v["costs"][lvl]["B"] for n, v in an.scenarios(d2).items()}
+
+    by_tier = {name: at(usd) for name, usd in tiers.items()}
+    uniform = by_tier["internal"]
+    cheap, dear = min(uniform, key=uniform.get), max(uniform, key=uniform.get)
+    # Widest: the dearest reading pays the dearest tier, the cheapest reading the cheapest tier.
+    widest = by_tier["external"][dear] / by_tier["self_use"][cheap]
+    # Narrowest: the reverse assignment.
+    narrowest = by_tier["self_use"][dear] / by_tier["external"][cheap]
+    return {"tiers": tiers, "by_tier": by_tier, "uniform_factor": max(uniform.values()) / min(uniform.values()),
+            "widest_factor": widest, "narrowest_factor": narrowest,
+            "level_move_up": by_tier["external"][cheap] / uniform[cheap] - 1,
+            "level_move_down": by_tier["self_use"][cheap] / uniform[cheap] - 1,
+            "cheapest_reading": cheap, "dearest_reading": dear}
+
+
 def boundaries_section(p):
     """Section 5.8: how far the shared-synthesis assumption has to fail before it matters."""
     b = synthesis_decision_boundaries(p)
@@ -1049,6 +1088,15 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         for i, x in enumerate(P):
             k[f"l2_{x}_at_{tag}"] = money(ll[i])
     k["basis_move_pct"] = f"{s1['bases'][2]['l2'][0] / s1['bases'][0]['l2'][0] - 1:.0%}"
+    idt = identification_tier_spread(doc)
+    k["idtier_self_use"] = money(idt["tiers"]["self_use"])
+    k["idtier_internal"] = money(idt["tiers"]["internal"])
+    k["idtier_external"] = money(idt["tiers"]["external"])
+    k["idtier_uniform_factor"] = f"{idt['uniform_factor']:.0f}"
+    k["idtier_widest_factor"] = f"{idt['widest_factor']:.0f}"
+    k["idtier_narrowest_factor"] = f"{idt['narrowest_factor']:.0f}"
+    k["idtier_level_up_pct"] = f"{idt['level_move_up']:.0%}"
+    k["idtier_level_down_pct"] = f"{idt['level_move_down']:.0%}"
     # Extreme-to-extreme across every overhead variant the paper tabulates: direct-only is the
     # cheapest and the negotiated rate the dearest, so the span is the full range of the 4.5 table.
     _all_l2_A = [s1["bases"][0]["l2"][0], _l2(mtdc)[0]["usd_per"], s1["bases"][2]["l2"][0],

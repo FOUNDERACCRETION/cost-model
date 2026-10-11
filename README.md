@@ -353,9 +353,9 @@ Level 3, shown only for completeness and never as a headline. Its Monte Carlo sp
 
 | Level | Pipeline | MC 5th pct | MC median | MC 95th pct | optimistic (A-Lab) | middle (Prein) | pessimistic (Leeman) |
 |---|---|---|---|---|---|---|---|
-| L3 | A | $9,881 | $243,312 | $111,781,670 | $12,431 | $12,181 | unbounded |
-| L3 | B | $9,731 | $227,559 | $109,848,469 | $12,354 | $11,753 | unbounded |
-| L3 | C | $9,832 | $287,028 | $116,453,719 | $12,162 | $13,146 | unbounded |
+| L3 | A | $9,881 | $243,312 | $111,781,670 | $19,972 | $12,181 | unbounded |
+| L3 | B | $9,731 | $227,559 | $109,848,469 | $19,850 | $11,753 | unbounded |
+| L3 | C | $9,832 | $287,028 | $116,453,719 | $19,540 | $13,146 | unbounded |
 
 Level 2, pipeline B, by worldview (the mixture is the main source of level-2 spread):
 

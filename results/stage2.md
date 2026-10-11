@@ -130,9 +130,9 @@ Level 3, shown only for completeness and never as a headline. Its Monte Carlo sp
 
 | Level | Pipeline | MC 5th pct | MC median | MC 95th pct | optimistic (A-Lab) | middle (Prein) | pessimistic (Leeman) |
 |---|---|---|---|---|---|---|---|
-| L3 | A | $9,881 | $243,312 | $111,781,670 | $12,431 | $12,181 | unbounded |
-| L3 | B | $9,731 | $227,559 | $109,848,469 | $12,354 | $11,753 | unbounded |
-| L3 | C | $9,832 | $287,028 | $116,453,719 | $12,162 | $13,146 | unbounded |
+| L3 | A | $9,881 | $243,312 | $111,781,670 | $19,972 | $12,181 | unbounded |
+| L3 | B | $9,731 | $227,559 | $109,848,469 | $19,850 | $11,753 | unbounded |
+| L3 | C | $9,832 | $287,028 | $116,453,719 | $19,540 | $13,146 | unbounded |
 
 Level 2, pipeline B, by worldview (the mixture is the main source of level-2 spread):
 
@@ -580,7 +580,7 @@ All are break-even solves on the model with every other quantity held shared, no
 | `mlip.chgnet.step_cost_per_atom` | $12,181 | $12,181 | $0.00 | 0.00% | 100.0% |
 | `mlip.steps_per_relaxation` | $12,181 | $12,181 | $0.00 | 0.00% | 100.0% |
 | `price.gpu_a100.on_demand` | $12,181 | $12,181 | $0.00 | 0.00% | 100.0% |
-| `novelty.science_frac` | unbounded | $4,697 | unbounded at one end | n/a |  |
+| `novelty.science_frac` | unbounded | $7,547 | unbounded at one end | n/a |  |
 
 #### Level 3: per validated new material (lower-bound quantity; see README), pipeline B
 
@@ -620,7 +620,7 @@ All are break-even solves on the model with every other quantity held shared, no
 | `gen.mattergen.frac_stable_after_chgnet_filter` | $11,753 | $11,753 | $0.00 | 0.00% | 100.0000% |
 | `gen.mattergen.frac_stable_strict` | $11,753 | $11,753 | $0.00 | 0.00% | 100.0000% |
 | `price.gpu_a100.on_demand` | $11,753 | $11,753 | $0.00 | 0.00% | 100.0000% |
-| `novelty.science_frac` | unbounded | $4,532 | unbounded at one end | n/a |  |
+| `novelty.science_frac` | unbounded | $7,281 | unbounded at one end | n/a |  |
 
 #### Level 3: per validated new material (lower-bound quantity; see README), pipeline C
 
@@ -660,4 +660,4 @@ All are break-even solves on the model with every other quantity held shared, no
 | `gen.ion_exchange.frac_stable_after_chgnet_filter` | $13,146 | $13,146 | $0.00 | 0.00% | 100.0% |
 | `gen.ion_exchange.frac_stable_strict` | $13,146 | $13,146 | $0.00 | 0.00% | 100.0% |
 | `gen.mattergen.frac_stable_after_chgnet_filter` | n/a | $12,001 | inconsistent at one end | n/a |  |
-| `novelty.science_frac` | unbounded | $5,069 | unbounded at one end | n/a |  |
+| `novelty.science_frac` | unbounded | $8,144 | unbounded at one end | n/a |  |

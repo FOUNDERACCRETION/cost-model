@@ -243,7 +243,7 @@ validated_new,A,mlip.chgnet.recall,12181.014473575511,12181.014473575511,0.0,0.0
 validated_new,A,mlip.chgnet.step_cost_per_atom,12181.014473575511,12181.014473575511,0.0,0.0,ok
 validated_new,A,mlip.steps_per_relaxation,12181.014473575511,12181.014473575511,0.0,0.0,ok
 validated_new,A,price.gpu_a100.on_demand,12181.014473575511,12181.014473575511,0.0,0.0,ok
-validated_new,A,novelty.science_frac,inf,4696.999181010718,inf,nan,unbounded at one end
+validated_new,A,novelty.science_frac,inf,7546.5925144773755,inf,nan,unbounded at one end
 validated_new,B,synth.success_unconditional,66274.65942973754,5427.651147906667,60847.00828183087,0.5091689155798238,ok
 validated_new,B,synth.recipes_per_target,11753.110230692484,69379.14791051598,57626.037679823494,0.4566894095799183,ok
 validated_new,B,dft.cost_per_candidate,11132.725095852476,23128.06086747778,11995.335771625303,0.019788288855172854,ok
@@ -278,7 +278,7 @@ validated_new,B,gen.mattergen.frac_novel_vs_mp,11753.110230692484,11753.11023069
 validated_new,B,gen.mattergen.frac_stable_after_chgnet_filter,11753.110230692484,11753.110230692484,0.0,0.0,ok
 validated_new,B,gen.mattergen.frac_stable_strict,11753.110230692484,11753.110230692484,0.0,0.0,ok
 validated_new,B,price.gpu_a100.on_demand,11753.110230692484,11753.110230692484,0.0,0.0,ok
-validated_new,B,novelty.science_frac,inf,4531.999304955022,inf,nan,unbounded at one end
+validated_new,B,novelty.science_frac,inf,7281.489885853185,inf,nan,unbounded at one end
 validated_new,C,synth.success_unconditional,74127.23979158544,6070.748633155893,68056.49115842955,0.46887335333279534,ok
 validated_new,C,synth.recipes_per_target,13145.682344714662,68297.4188688477,55151.73652413304,0.3079178221552076,ok
 validated_new,C,dft.cost_per_candidate,10770.692227206402,56691.85041412917,45921.15818692277,0.21347258528522414,ok
@@ -313,4 +313,4 @@ validated_new,C,gen.ion_exchange.frac_novel_vs_mp,13145.682344714662,13145.68234
 validated_new,C,gen.ion_exchange.frac_stable_after_chgnet_filter,13145.682344714662,13145.682344714662,0.0,0.0,ok
 validated_new,C,gen.ion_exchange.frac_stable_strict,13145.682344714662,13145.682344714662,0.0,0.0,ok
 validated_new,C,gen.mattergen.frac_stable_after_chgnet_filter,,12001.240797774843,nan,nan,inconsistent at one end
-validated_new,C,novelty.science_frac,inf,5068.975112121973,inf,nan,unbounded at one end
+validated_new,C,novelty.science_frac,inf,8144.240218704969,inf,nan,unbounded at one end

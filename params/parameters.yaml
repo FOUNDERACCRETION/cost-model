@@ -698,7 +698,24 @@ parameters:
     unit: fraction of DFT-stable verdicts that are wrong
     source_url: https://www.nature.com/articles/s41586-023-06735-9
     citations: [merchant2023gnome, an2026, szymanski2023alab]
-    source_note: "Proxy: flip rate under a higher level of theory, not experimental failure. Base and low: GNoME under r2SCAN, 84% of binaries/ternaries (16% flip) and 86.8% of quaternaries (13.2% flip) stay stable. High: PBE->SCAN, 109 of 166 survive, 34.3% flip (An et al. 2026, 57/166, https://arxiv.org/html/2607.01713). A-Lab: 3 of 16 analysed failures were computational. No published direct error rate against experiment."
+    source_note: "PROXY: a disagreement rate between two levels of theory, NOT experimental failure.
+      No source reports a direct error rate against experiment, and no source we found breaks the
+      flip rate down by chemistry -- only by number of elements.
+      Base 0.16 and low 0.132, both PUBLISHED and both verified 2026-10-11: GNoME reports that
+      '84% of the discovered binaries and ternary materials also present negative phase-separation
+      energies' and '86.8% of tested quaternaries also remain stable on the r2SCAN convex hull',
+      i.e. 16% and 13.2% flip. Note these are two different tests, not one metric split by arity:
+      phase-separation energy for the binaries and ternaries, r2SCAN hull position for the
+      quaternaries.
+      High 0.3434 is DERIVED and more loosely comparable than base and low. An et al. 2026
+      (arXiv:2607.01713) report that of 166 DYNAMICALLY STABLE candidates, 109 (65.7%) have an
+      E_SCAN_hull below 1 meV/atom; 57/166 = 34.3% is our subtraction, and the paper does not call
+      it a flip rate. Two caveats follow: SCAN was not run on the 132 candidates eliminated
+      earlier, so this is not a PBE->SCAN flip rate over all 298 PBE-stable materials, and the
+      population is pre-screened on dynamical stability, which the other two endpoints are not.
+      CHANGED 2026-10-11: the note previously described the An et al. figure as a PBE->SCAN flip
+      rate with 109 of 166 surviving, which overstated what the source states.
+      A-Lab's own attribution, for context only: 3 of 16 analysed failures were computational."
     evidence_grade: proxy
 
   # ------------------------------------------------------------------ fixed cost per new chemistry
@@ -915,11 +932,26 @@ parameters:
   - name: novelty.science_frac
     low: 0.0
     base: 0.0964
-    high: 0.25
+    high: 0.1556
     unit: fraction of synthesised, database-novel targets that are new to science
     source_url: https://par.nsf.gov/servlets/purl/10532478
     citations: [leeman2024, szymanski2026correction]
-    source_note: "Leeman et al.: 0 of 36 new (24 no evidence of the predicted ordering, 3 already reported). Low 0 = their verdict. Base = Wilson 95% upper bound on 0/36, i.e. the largest rate the data allow, so the base cost per new material is OPTIMISTIC. High = 9/36 not attributed to known or disordered phases (derived). A-Lab correction: 'new to the platform, not necessarily new to science' (https://pmc.ncbi.nlm.nih.gov/articles/PMC12872444)."
+    source_note: "NO PUBLISHED NONZERO COUNT EXISTS for this campaign. Leeman et al. state that
+      'none of the materials produced by A-lab were new', and that the three they regard as
+      correctly synthesised -- MnAgO2, Y3In2Ga3O12, CaFe2(PO4)2O -- 'have been reported'. The
+      A-Lab correction makes no new-to-science claim: 'new to the platform, not necessarily new
+      to science' (https://pmc.ncbi.nlm.nih.gov/articles/PMC12872444). So every value here but
+      the low one is a statistical bound on a zero count, not a count.
+      Low 0.0 = the published verdict. Base 0.0964 = Wilson 95% upper bound on 0 of 36. High
+      0.1556 = Wilson 99% upper bound on the same. Both bounds make cost per NEW material
+      optimistic, since a higher novelty share divides the cost.
+      CHANGED 2026-10-11: high was 0.25, derived as '9/36 not attributed to known or disordered
+      phases' by subtracting Leeman's error categories from 36. That subtraction is invalid --
+      the categories OVERLAP by construction ('Compounds can have several errors'): very poor fit
+      18/36, prediction changed to match 8/36, no evidence of predicted ordering 24/36, already
+      reported 3/36, summing to 53. Leeman report that 35 of the 36 carry at least one error
+      type, so the residual is 1, not 9, and that one is CaFe2(PO4)2O, which they class as
+      already reported. Verified against the PRX Energy text 2026-10-11."
     evidence_grade: derived
 
   # ------------------------------------------------------------------ prices
@@ -1022,8 +1054,10 @@ scenarios:
       synth.success_unconditional: 0.631579  # 36/57, unconditional (corrected count)
       synth.recipes_per_target: 6.193         # 353/57, REPORTED by the corrected article, not derived
       dft.wrong_verdict_frac: 0.132               # lowest flip rate in sources; A-Lab: 3 of 57 targets failed computationally
-      novelty.science_frac: 0.25                  # most generous figure in sources (9/36 not attributed to known phases)
-    note: "A-Lab's correction makes no new-to-science claim ('new to the platform, not necessarily new to science'), so no A-Lab number exists for novelty; 0.25 is the most generous figure our sources allow. Recipes are stated explicitly rather than left to the budget-model fallback: the fallback is calibrated to reproduce 6.19 here, so the two agree, but relying on that agreement would hide the fallback if the calibration ever changed."
+      novelty.science_frac: 0.1556                # Wilson 99% upper bound on 0 of 36: the most generous rate the
+                                                  # data admit, since no source publishes a nonzero count. Was 0.25,
+                                                  # from an invalid subtraction of overlapping error categories.
+    note: "A-Lab's correction makes no new-to-science claim ('new to the platform, not necessarily new to science'), so no A-Lab number exists for novelty; 0.1556 is the most generous rate the data admit, being the Wilson 99% upper bound on Leeman's 0 of 36. Recipes are stated explicitly rather than left to the budget-model fallback: the fallback is calibrated to reproduce 6.19 here, so the two agree, but relying on that agreement would hide the fallback if the calibration ever changed."
 
   middle_prein:
     description: "Prein et al. 2025, an independent automated campaign: 7 of 24 attempted targets made, one recipe per target."
