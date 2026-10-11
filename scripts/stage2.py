@@ -7,6 +7,7 @@ those blocks comes from params/parameters.yaml and data/.
 """
 
 import argparse
+import collections
 import csv
 import json
 import math
@@ -967,6 +968,13 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     P = an.PIPELINES
     l1, l2 = s1["l1"], [o["usd_per"] for o in s1["l2"]]
     k = {}
+    # Evidence-grade census. Generated because 4.1 and Limitation 9 state these counts, and an
+    # earlier version of the manuscript claimed three parameters were graded `missing` when the
+    # parameter file had one -- a drift that rereading never caught because nothing checked it.
+    _grades = collections.Counter(r.get("evidence_grade") for r in records(doc).values())
+    k["grade_total"] = f"{sum(_grades.values()):,}"
+    for _g, _n in _grades.items():
+        k[f"grade_{_g}"] = f"{_n:,}"
     for i, x in enumerate(P):
         k[f"l1_{x}"] = money(l1[x])
         k[f"l2_{x}"] = money(l2[i])
@@ -976,6 +984,20 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["l1_ratio_A_B"] = f"{l1['A'] / l1['B']:.2f}"
     k["l1_B_cheaper_pct"] = f"{1 - l1['B'] / l1['A']:.0%}"
     k["l1_ratio_C_B"] = f"{l1['C'] / l1['B']:.1f}"
+    # The source prints the generative pool's filtered stability as a RANGE spanning two models and
+    # does not assign either endpoint in its main text. Run the full model at both ends rather than
+    # approximating the ratio by purity alone: the conclusion about materiality is not the same at
+    # the two ends, so quoting one endpoint hides a sign change.
+    for tag, purity in (("lo", 0.038), ("hi", 0.088)):
+        rr = funnel({**p, "gen_filter_purity": purity})
+        o1 = {x: rr["pipelines"][x]["outputs"]["dft_confirmed_stable"]["usd_per"] for x in P}
+        o2 = {x: rr["pipelines"][x]["outputs"]["experimentally_validated"]["usd_per"] for x in P}
+        k[f"genrange_{tag}_purity"] = f"{purity:.1%}"
+        k[f"genrange_{tag}_l1_C"] = money(o1["C"])
+        k[f"genrange_{tag}_l1_ratio"] = f"{o1['C'] / o1['B']:.2f}"
+        k[f"genrange_{tag}_l2_C"] = money(o2["C"])
+        k[f"genrange_{tag}_l2_gap"] = f"{an._ratio_gap(o2['C'], o2['B']):.1%}"
+        k[f"genrange_{tag}_l2_material"] = "yes" if an._ratio_gap(o2["C"], o2["B"]) > MATERIAL else "no"
     base_span = s1["span"][1]
     k["l2_spread_base"] = f"{base_span['spread']:.2f}"
     k["l2_spread_base_pct"] = f"{base_span['spread'] - 1:.0%}"
