@@ -757,6 +757,7 @@ def synthesis_decision_boundaries(p, points=(3, 10, 30, 54.5, 100, 200, 500, 100
     """
     a = synthesis_cost_per_attempt(p)["usd"]
     r = p["synth_recipes_per_target"]
+    s_base = p["synth_success_unconditional"]
     bill = r * a
     rows = []
     for d in points:
@@ -779,8 +780,16 @@ def synthesis_decision_boundaries(p, points=(3, 10, 30, 54.5, 100, 200, 500, 100
             # extra recipes in j that make j cost (1+material) times i
             row[f"recipes_{i}{j}_mat"] = ((1 + material) * q_i - c0[j]) / a - r
             row[f"recipes_share_{i}{j}_mat"] = (((1 + material) * q_i - c0[j]) / a - r) / r
+            # An algebraic boundary is not automatically a feasible probability: the ratio is
+            # usable only while the implied success RATE stays within [0, 1]. The admissible
+            # ratio ceiling is 1/S, so a boundary above it cannot be reached by any real
+            # synthesis campaign at this baseline, however the algebra reads.
+            row[f"feasible_{i}{j}"] = s_base * (q_i / q_j) <= 1.0
+            row[f"feasible_{i}{j}_mat_hi"] = s_base * hi <= 1.0
+            row[f"implied_S_{i}{j}"] = s_base * (q_i / q_j)
         rows.append(row)
-    return {"rows": rows, "attempt_usd": a, "recipes": r, "bill": bill}
+    return {"rows": rows, "attempt_usd": a, "recipes": r, "bill": bill,
+            "s_base": s_base, "max_feasible_ratio": 1.0 / s_base}
 
 
 def boundary_sensitivity(p, dft=54.5):
@@ -810,9 +819,13 @@ def boundary_sensitivity(p, dft=54.5):
         d = 1000.0 if "span top" in name else dft
         c0 = upstream_per_target(q, d)
         bill = r * synthesis_cost_per_attempt(q)["usd"]
+        ratio = (c0["C"] + bill) / (c0["B"] + bill)
+        s_base = q["synth_success_unconditional"]
         out.append({
             "variant": name,
-            "success_CB": (c0["C"] + bill) / (c0["B"] + bill),
+            "success_CB": ratio,
+            "implied_S_C": s_base * ratio,
+            "feasible": s_base * ratio <= 1.0,
             "recipes_AB": (c0["A"] - c0["B"]) / a,
             "recipes_share_AB": (c0["A"] - c0["B"]) / a / r,
         })
@@ -830,9 +843,11 @@ def boundaries_section(p):
                       f"S_C/S_B keeping C-B within {MATERIAL:.0%}",
                       "Extra recipes in B for B-A parity", f"and for B {MATERIAL:.0%} dearer than A"],
                      rows)
-    srows = [[v["variant"], f"{v['success_CB']:.3f}x", f"{v['recipes_share_AB']:.2%}"]
-             for v in boundary_sensitivity(p)]
-    stable = md_table(["Variant", "S_C/S_B for parity", "Extra recipes, share of baseline"], srows)
+    srows = [[v["variant"], f"{v['success_CB']:.3f}x",
+              f"{v['implied_S_C']:.1%}" + ("" if v["feasible"] else " (infeasible)"),
+              f"{v['recipes_share_AB']:.2%}"] for v in boundary_sensitivity(p)]
+    stable = md_table(["Variant", "S_C/S_B for parity", "implied S_C",
+                       "Extra recipes, share of baseline"], srows)
     note = ("\n\nPARITY IS NOT MATERIALITY. The parity columns say where two pipelines cost the same, so a "
             "slightly larger difference reverses their ranking while leaving them nearly equal in cost. The "
             f"materiality columns say where the gap reaches {MATERIAL:.0%}, the standard used everywhere else in "
@@ -959,6 +974,17 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     S = p["synth_success_unconditional"]
     k["bound_success_S_base_pct"] = f"{S:.2%}"
     k["bound_success_S_parity_pct"] = f"{S * at_base['success_CB']:.2%}"
+    k["bound_max_feasible_ratio"] = f"{bd['max_feasible_ratio']:.3f}"
+    k["bound_implied_S_price100"] = f"{bs['compute price 100x']['implied_S_C']:.1%}"
+    k["bound_price100_feasible"] = "yes" if bs["compute price 100x"]["feasible"] else "no"
+    k["bound_all_table_rows_feasible"] = ("yes" if all(r["feasible_CB"] and r["feasible_CB_mat_hi"]
+                                                       for r in bd["rows"]) else "no")
+    # Feasibility depends on which reading sets the baseline success rate.
+    _recs = records(doc)["synth.success_unconditional"]
+    k["bound_max_ratio_optimistic"] = f"{1.0 / _recs['high']:.3f}"
+    k["bound_max_ratio_pessimistic"] = f"{1.0 / _recs['low']:.1f}"
+    k["bound_top_mat_hi"] = f"{at_top['success_CB_mat_hi']:.3f}"
+    k["bound_top_mat_hi_implied_optimistic"] = f"{_recs['high'] * at_top['success_CB_mat_hi']:.1%}"
     k["bound_success_parity_pp"] = f"{(S * at_base['success_CB'] - S) * 100:.2f}"
     # The 10% materiality band, which parity does not give.
     k["bound_mat_lo"] = f"{at_base['success_CB_mat_lo']:.3f}"
@@ -984,6 +1010,8 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
                .replace("1,000", "1000").lower())
         k[f"bdsens_{tag}_success"] = f"{v['success_CB']:.3f}"
         k[f"bdsens_{tag}_recipes_share"] = f"{v['recipes_share_AB']:.2%}"
+        k[f"bdsens_{tag}_implied_S"] = f"{v['implied_S_C']:.1%}"
+        k[f"bdsens_{tag}_feasible"] = "yes" if v["feasible"] else "no"
     k["sweep_b_cheapest_everywhere"] = "yes" if all(r["b_cheapest"] for r in sw["rows"]) else "no"
     # Threshold-equation archive: unrounded coefficients, residuals, root comparison.
     tc = threshold_coefficients(p)

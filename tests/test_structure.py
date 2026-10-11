@@ -541,3 +541,59 @@ def test_overlap_reference_is_a_spread_not_a_single_value():
     # the reference must be well above a genuinely different pair, which is what makes it useful
     meas = an.kill_condition({"draws": rows}, bins=60)["dft_confirmed_stable"]["overlap"][("B", "A")]
     assert meas < ref["min"]
+
+
+def test_success_ratio_boundaries_are_checked_against_the_probability_ceiling():
+    """A success RATIO is attainable only while the success RATE it implies stays in [0, 1].
+
+    Revision 14 printed a parity ratio of 2.465 for the hundredfold-compute-price variant without
+    noting that at the baseline success rate of 43.75% it implies S_C = 107.8%, which no campaign
+    can reach. An external reviewer caught it. The ceiling is 1/S_base, and every displayed
+    interval has to be intersected with it; an algebraic boundary is not automatically a feasible
+    probability.
+    """
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import synthesis_decision_boundaries, boundary_sensitivity
+    from src.params import load, resolve
+
+    doc = load()
+    p = resolve(doc)
+    S = p["synth_success_unconditional"]
+    bd = synthesis_decision_boundaries(p)
+
+    assert bd["max_feasible_ratio"] == pytest.approx(1.0 / S)
+    # the flag must agree with the arithmetic, row by row, for parity and the upper 10% bound
+    for row in bd["rows"]:
+        assert row["feasible_CB"] == (S * row["success_CB"] <= 1.0)
+        assert row["feasible_CB_mat_hi"] == (S * row["success_CB_mat_hi"] <= 1.0)
+        assert row["implied_S_CB"] == pytest.approx(S * row["success_CB"])
+    # every row of the published table is feasible at this baseline; the paper says so
+    assert all(r["feasible_CB"] and r["feasible_CB_mat_hi"] for r in bd["rows"])
+
+    # and exactly one sensitivity variant is not, which is the one the paper labels
+    by = {v["variant"]: v for v in boundary_sensitivity(p)}
+    infeasible = [n for n, v in by.items() if not v["feasible"]]
+    assert infeasible == ["compute price 100x"], infeasible
+    assert by["compute price 100x"]["implied_S_C"] > 1.0
+    assert by["compute price 100x"]["implied_S_C"] == pytest.approx(1.078, abs=5e-4)
+
+
+def test_feasibility_ceiling_moves_with_the_reading():
+    """The ceiling is 1/S_base, so which boundaries are attainable depends on which reading sets
+    the baseline. Section 5.6 states this, so it is pinned: under the optimistic reading the
+    span-top upper materiality bound becomes infeasible, and under the pessimistic one nothing is
+    constrained."""
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import synthesis_decision_boundaries
+    from src.params import load, resolve, records
+
+    doc = load()
+    p = resolve(doc)
+    rec = records(doc)["synth.success_unconditional"]
+    top = next(r for r in synthesis_decision_boundaries(p)["rows"] if r["dft"] >= 1000)
+
+    assert rec["high"] * top["success_CB_mat_hi"] > 1.0, "optimistic reading: span-top bound infeasible"
+    assert rec["low"] * top["success_CB_mat_hi"] < 1.0, "pessimistic reading: unconstrained"
+    assert 1.0 / rec["high"] < 1.0 / p["synth_success_unconditional"] < 1.0 / rec["low"]

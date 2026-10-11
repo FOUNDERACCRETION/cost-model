@@ -221,14 +221,14 @@ PARITY IS NOT MATERIALITY. The parity columns say where two pipelines cost the s
 
 All are break-even solves on the model with every other quantity held shared, not measurements: no source reports a pipeline-specific synthesis difference, so each figure is the size a hypothetical difference would have to reach.
 
-| Variant | S_C/S_B for parity | Extra recipes, share of baseline |
-|---|---|---|
-| base | 1.029x | 0.62% |
-| generative purity at pool purity, 15.2% | 1.000x | 0.62% |
-| generative purity at 2.4%, near the feasibility floor | 1.051x | 0.62% |
-| compute price 10x | 1.261x | 6.22% |
-| compute price 100x | 2.465x | 62.22% |
-| DFT cost at the span top, 1,000 core-h | 1.447x | 11.42% |
+| Variant | S_C/S_B for parity | implied S_C | Extra recipes, share of baseline |
+|---|---|---|---|
+| base | 1.029x | 45.0% | 0.62% |
+| generative purity at pool purity, 15.2% | 1.000x | 43.8% | 0.62% |
+| generative purity at 2.4%, near the feasibility floor | 1.051x | 46.0% | 0.62% |
+| compute price 10x | 1.261x | 55.2% | 6.22% |
+| compute price 100x | 2.465x | 107.8% (infeasible) | 62.22% |
+| DFT cost at the span top, 1,000 core-h | 1.447x | 63.3% | 11.42% |
 
 ## Tornado (summary)
 
