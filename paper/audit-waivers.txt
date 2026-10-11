@@ -57,3 +57,6 @@ bdrow_200_recipes: the 5.6 table gives the share, not the absolute count
 bdrow_500_recipes: the 5.6 table gives the share, not the absolute count
 bdrow_1000_recipes: the 5.6 table gives the share, not the absolute count
 bound_success_CB_at_pool_purity_excess: 5.6 quotes this rounded as "0.02% of the ratio"
+
+# --- Final draft: software-validation figures moved to paper/DIAGNOSTICS.md ------------------
+thr_printed_coeff_root_10: the paper does not make this claim; the rounded-coefficient root and its 0.18 core-hour shift are recorded in paper/DIAGNOSTICS.md

@@ -127,3 +127,80 @@ regenerated. **This check belongs in the build.**
 Related: `pct()` was rounding a probability of 0.995 up to "100%", asserting a certainty the
 simulation never found. It now gains decimal places instead of printing 100% for anything short
 of certainty, or 0% for anything above zero.
+
+---
+
+# Software validation moved out of the manuscript
+
+The manuscript states results. The checks that establish the implementation computes those results
+correctly live here, because they are properties of the software rather than findings about
+materials discovery. Each regenerates from the repository.
+
+## Threshold fit
+
+- Worst relative residual of `c0i(d) = αi·d + βi` against the model: **7.6 × 10⁻¹⁶**, evaluated at
+  six verification costs up to 2,000 core-hours — twice the top of the swept range, so affinity is
+  checked outside the interval the two-point recovery was fitted on.
+- Unrounded coefficients, residual table and root comparison: `results/threshold_coefficients.json`.
+- Closed form against the model's bisected root at τ = 0.10: **196.5733 vs 196.5733**, relative
+  agreement 2 × 10⁻¹⁵. They are the same number, as they must be if the relation is affine.
+- Substituting the *rounded* printed coefficients instead gives **196.39** — a shift of 0.18
+  core-hours. This is the only source of disagreement between the paper's printed figures and a
+  reader's recomputation from them.
+- `α_C/α_B = 4.000000`, exactly the purity ratio of §5.3, asserted to 1e-9 by
+  `test_threshold_coefficient_archive`.
+- Usable-crossing condition: a positive denominator is necessary but not sufficient; the root must
+  also be nonnegative. Boundary at `b = (β_C − (1+τ)β_B)/τ`, pinned by
+  `test_positive_denominator_is_not_sufficient_for_a_usable_crossing`.
+
+## Overlap reference
+
+`analysis.overlap_reference` draws two independent bootstrap samples, with replacement and of the
+original size, from one pipeline's own draws, so true overlap is 1 by construction. **60
+replicates** on the same equal-width log₁₀ grid `kill_condition` uses, spanning the pooled finite
+positive range of all three pipelines at that level.
+
+| | Measured | Reference range | Position |
+|:--|--:|:--|:--|
+| Level 1 | 89% | 96.5%–97.8% | below |
+| Level 2 | 99% | 96.9%–98.0% | above |
+
+The replicates are independent pairs; the measured A and B samples are dependent, sharing parameter
+draws. That dependence is not reproduced, is not modelled, and its direction is not asserted. The
+reference is a yardstick for finite-sample histogram variability, not a null distribution, and no
+p-value is computed anywhere in the module.
+
+Bin-count sweep, A–B overlap:
+
+| bins | 20 | 40 | 60 | 120 | 240 |
+|:--|--:|--:|--:|--:|--:|
+| Level 1 | 90.6% | 89.9% | 89.4% | 88.8% | 87.8% |
+| Level 2 | 98.5% | 98.5% | 98.6% | 97.7% | 97.1% |
+
+Beyond the reported range the level-1 figure falls to 80.2% at 2,000 bins and 53.4% at 20,000 bins
+against 20,000 draws. Those values are reported here and not in the paper, because at that
+resolution the coefficient is dominated by sample sparsity: two independent samples from an
+identical distribution score 0.61 at 20,000 bins.
+
+## Test suite
+
+754 tests. The ones that guard against specific past failures:
+
+| Test | Guards |
+|:--|:--|
+| `test_level2_is_independent_of_w` | `w` cancels from level 2, at interior values, and is still live at level 1 |
+| `test_the_crossing_does_not_depend_on_synthesis_success` | `S` cancels from `d*`, swept over the full range of the three readings |
+| `test_materiality_is_symmetric_and_matches_the_sweep_convention` | one denominator convention across sweep and simulation |
+| `test_parity_and_materiality_boundaries_are_distinct_and_both_correct` | each boundary delivers the gap it claims; materiality is >10× parity at base |
+| `test_success_ratio_boundaries_are_checked_against_the_probability_ceiling` | a ratio is attainable only while the implied rate stays ≤ 1 |
+| `test_feasibility_ceiling_moves_with_the_reading` | the ceiling is 1/S_base and depends on which reading sets it |
+| `test_matching_purity_does_not_quite_equalise_the_pipelines` | residual equals the β gap over Q_B, not over the bill |
+| `test_overlap_decreases_under_nested_refinement_only` | monotonicity holds for nested refinements only |
+| `test_overlap_does_not_approach_zero_for_identical_samples` | identical samples retain overlap 1 at any bin count |
+| `test_overlap_null_floor_calibrates_the_coefficient` | marginal overlap is invariant to pairing; the paired statistic is not |
+| `test_the_current_manuscript_passes_the_numeric_audit` | every printed figure matches the model or is waived with a reason |
+| `test_the_manuscript_revision_label_matches_its_filename` | title-page label matches the file |
+| `test_reconstruction_worksheet_reproduces_the_attempt_cost` | the worksheet's printed components sum to its printed subtotal |
+
+Both cancellation tests also assert the parameter remains live where it should act, so neither can
+pass by the quantity having been dropped from the model.

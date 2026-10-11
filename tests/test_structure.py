@@ -427,10 +427,15 @@ def test_the_current_manuscript_passes_the_numeric_audit():
     sys.path.insert(0, str(root / "scripts"))
     from audit_numbers import audit
 
-    papers = sorted(root.glob("paper/p1-revision*.md"),
-                    key=lambda q: int(re.search(r"revision(\d+)", q.name).group(1)))
-    assert papers, "no manuscript found"
-    current = papers[-1]
+    # p1-final.md is the submission manuscript when it exists; otherwise the highest revision.
+    final = root / "paper" / "p1-final.md"
+    if final.exists():
+        current = final
+    else:
+        papers = sorted(root.glob("paper/p1-revision*.md"),
+                        key=lambda q: int(re.search(r"revision(\d+)", q.name).group(1)))
+        assert papers, "no manuscript found"
+        current = papers[-1]
     assert audit(current, root / "results" / "key_numbers.json") == 0, (
         f"{current.name} disagrees with results/key_numbers.json; regenerate or waive")
 
