@@ -1363,6 +1363,12 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         # How many times more a synthesis lever moves level-2 cost than the best compute lever.
         # This is a ratio of cost shares, so it is generated rather than divided by hand in prose.
         k[f"el_ratio_{x}"] = f"{base_el['recipes per target'][x]['return'] / comp:.0f}"
+        # The same ratio at the Monte Carlo medians, which 5.8 quotes beside the deterministic one.
+        # Generated rather than divided by hand off the rounded table: the two estimands differ and
+        # hand-division from three-decimal displays is where transcription errors start.
+        _mr = mc_ret["recipes per target"][x]["median"]
+        _mc_comp = max(mc_ret[n][x]["median"] for n, lv_ in an.levers().items() if lv_["group"] == "compute")
+        k[f"el_mc_ratio_{x}"] = f"{_mr / _mc_comp:.0f}"
     sp = an.spot_switch(doc, p)
     k["spot_lo"] = f"{min(abs(v) for v in sp['change'].values()):.1%}"
     k["spot_hi"] = f"{max(abs(v) for v in sp['change'].values()):.1%}"
