@@ -33,11 +33,11 @@ def test_fill_is_idempotent():
     assert fill(text, keys) == text
 
 
-CURRENT = DRAFT.parent / "p1-revision8.md"
+CURRENT = DRAFT.parent / "p1-revision9.md"
 
 
 def test_current_manuscript_exists():
-    assert CURRENT.exists(), "paper/p1-revision8.md is the current manuscript"
+    assert CURRENT.exists(), "paper/p1-revision9.md is the current manuscript"
 
 
 def test_no_stale_overhead_figures():
@@ -54,5 +54,8 @@ def test_no_stale_overhead_figures():
                   "controlled on the model dimension",
                   # withdrawn in revision 8: no bound on verification cost is established
                   "lower bound on the real cost", "plausibly more expensive",
-                  "is economically immaterial once the laboratory"):
+                  "is economically immaterial once the laboratory",
+                  # withdrawn in revision 9: thresholds are accounting-dependent
+                  "immaterial everywhere we model, unconditionally",
+                  "per correctly DFT-stable", "26 to 136 times as much"):
         assert stale not in text, stale

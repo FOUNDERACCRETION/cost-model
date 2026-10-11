@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src import analysis as an  # noqa: E402
-from src.funnel import funnel  # noqa: E402
+from src.funnel import funnel, synthesis_cost_per_attempt  # noqa: E402
 from src.params import load, records, resolve  # noqa: E402
 
 LEVEL_NAMES = {
@@ -674,6 +674,18 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["basis_move_pct"] = f"{s1['bases'][2]['l2'][0] / s1['bases'][0]['l2'][0] - 1:.0%}"
 
     sw = dft_threshold_sweep(p)
+    # The crossings depend on synthesis expenditure per target, not on DFT cost alone, so we
+    # report them under the accounting variants the paper already carries. If a threshold were
+    # an artefact of one overhead convention this is where it would show.
+    for tag, q in (("direct", {**p, "synth_cost_basis": "bench"}),
+                   ("mtdc", {**p, "indirect_base": "mtdc"}),
+                   ("default", p),
+                   ("negotiated", {**p, "synth_indirect_rate": 0.58})):
+        sv = dft_threshold_sweep(q, points=(54.5,))
+        k[f"xacct_{tag}_attempt"] = money(synthesis_cost_per_attempt(q)["usd"])
+        for key, label in (("CB", "gen"), ("AB", "filter")):
+            v = sv["crossings"][key][0.10]
+            k[f"xacct_{tag}_{label}10"] = "beyond 20,000" if v is None else f"{v:,.0f}"
     for r in sw["rows"]:
         tag = f"{r['dft']:g}".replace(".", "p")
         k[f"sweep_CB_{tag}"] = f"{r['CB']:.1%}"

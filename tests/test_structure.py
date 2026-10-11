@@ -163,3 +163,29 @@ def test_dft_threshold_sweep_is_monotonic_and_ordered():
     assert max(ab) < 0.10, "filter decision exceeds 10% inside the span"
     # And the generative decision crosses 10% inside it.
     assert sw["crossings"]["CB"][0.10] < 1000, "generative decision should cross 10% within the span"
+
+
+def test_threshold_scales_with_synthesis_cost():
+    """The materiality crossing is proportional to synthesis expenditure per target, so it
+    is accounting-dependent. Revision 9 reports this; if the proportionality broke, the
+    Section 5.5 equation d* = tau.r.a / (kC - (1+tau).kB) would no longer hold."""
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import dft_threshold_sweep
+    from src.funnel import synthesis_cost_per_attempt
+    from src.params import load, resolve
+
+    p = resolve(load())
+    variants = [{**p, "synth_cost_basis": "bench"},
+                {**p, "indirect_base": "mtdc"},
+                p,
+                {**p, "synth_indirect_rate": 0.58}]
+    ratios = []
+    for q in variants:
+        cross = dft_threshold_sweep(q, points=(54.5,))["crossings"]["CB"][0.10]
+        ratios.append(cross / synthesis_cost_per_attempt(q)["usd"])
+    assert max(ratios) / min(ratios) < 1.02, f"crossing not proportional to attempt cost: {ratios}"
+    # And the filter crossing is NOT uniformly outside the tested span: under direct-cost
+    # accounting it falls inside it, which is why Section 5.5 states that claim conditionally.
+    direct = dft_threshold_sweep(variants[0], points=(54.5,))["crossings"]["AB"][0.10]
+    assert direct < 1000, "expected the filter crossing to fall inside the span under direct costs"

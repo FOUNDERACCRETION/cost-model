@@ -2,11 +2,11 @@
 title: "What Does It Cost to Discover a Material?"
 subtitle: "An end-to-end cost model of AI-driven inorganic materials discovery"
 author: "Karthikeya"
-date: "Working paper, revision 8 --- 11 October 2026"
+date: "Working paper, revision 9 --- 11 October 2026"
 abstract: |
   Artificial intelligence has made the computational stages of inorganic materials discovery extremely cheap, and the field widely asserts that synthesis is now the bottleneck. We did not find it priced in dollars anywhere in our search. We build an end-to-end cost model that follows a candidate material from generation through machine-learned screening, density functional theory verification and laboratory synthesis, and we report cost at three output levels: a correctly DFT-stable material, an experimentally validated one, and one that is genuinely new to science. The third we can define and compare across pipelines but not price, because the only published novelty count for the reference campaign is zero. Every parameter is graded for evidence quality, three are graded as having no source at all, several are measured first-hand, and the complete model is to be released as a replication package. Along the way we build a bottom-up estimate of the cost of a solid-state synthesis attempt, \$271, from eleven US institutional fee schedules together with assumed throughput, a compensation proxy and an overhead treatment. We did not locate a comparable published figure within our search scope. It is an illustrative US academic manual-laboratory estimate, not a measured or universal rate.
 
-  We find that pipeline choice is economically immaterial once synthesis is included. A machine-learned interatomic potential pre-filter cuts cost per correctly DFT-stable material by 39%, and a generative candidate pool costs roughly four times a filtered ion-exchange pool at the same stage, but on the assumption that the synthesis term does not depend on how a candidate was found, the two decisions this implies are not equally material. Whether to use an MLIP pre-filter changes cost per experimentally validated material by under 10% at every DFT cost in our span, crossing that threshold only at 1,034 core-hours per candidate. Whether to source candidates generatively is immaterial only below about 200 core-hours; at the top of the span it changes cost by 45%. Across 20,000 simulations the filtered pipeline is the cheaper of the two ion-exchange pipelines in 99.5% of draws, but by more than 10% in only 1% of them at the validated-material level --- an ordering that is reliable and a magnitude that is not.
+  We find that the economic significance of computational pipeline choice depends on which decision is being made. A machine-learned interatomic potential pre-filter cuts cost per robust DFT-stable prediction by 39%, and a generative candidate pool costs roughly four times a filtered ion-exchange pool at the same stage, but on the assumption that the synthesis term does not depend on how a candidate was found, and with other parameters at the deterministic baseline, the two decisions this implies behave differently. Whether to use an MLIP pre-filter changes cost per experimentally validated material by under 10% throughout the tested range of verification cost under our default accounting, though not under every accounting variant we carry. Whether to source candidates generatively passes 10% at roughly 200 core-hours per candidate, a threshold that falls between 138 and 219 across those variants. Across 20,000 simulations the filtered pipeline is the cheaper of the two ion-exchange pipelines in 99.5% of draws, but by more than 10% in only 1% of them at the validated-material level --- an ordering that is reliable and a magnitude that is not.
 
   The quantity that does govern the answer is the synthesis success rate, which three groups read three ways from essentially two experiments. Cost per validated material ranges from about \$3,000 under the most favourable defensible reading of the originating laboratory's campaign to about \$50,000 under a published re-analysis of the same campaign, a factor of about 17. Cheaper computation does not close this gap: at the deterministic base a proportional improvement in compute price is 26 to 105 times weaker than the same improvement in a synthesis term, and the only compute lever requiring no research expenditure moves the result by under 3%.
 
@@ -53,11 +53,11 @@ Our contributions are:
 
 1. **An end-to-end dollar model of materials discovery**, from generation through synthesis, across three pipelines, with every parameter documented and graded by evidence quality --- including the ones graded as assumptions and the three with no source --- and released with the code.
 
-2. **The result that synthesis is 96 to 99% of the modelled cost of a validated material at base DFT cost, and a threshold for when that stops holding.** The share is a modelled quantity throughout, not a measurement: it pairs a manual-laboratory cost build-up with success rates and recipe multiplicity taken from an autonomous campaign, an assumption we state in Section 3.5 and revisit in Section 7. An MLIP pre-filter cuts cost per correctly DFT-stable material by 39% and a generative pool costs about four times the filtered ion-exchange pool at the same stage. At the level of a validated material these two decisions separate: the filter decision stays under a 10% cost difference at every DFT cost we model, while the generative-pool decision passes 10% at about 200 core-hours per candidate. We report the threshold rather than a single immateriality claim, because the DFT cost that decides it is the quantity we are least able to pin down (Section 4.3).
+2. **The result that synthesis is 96 to 99% of the modelled cost of a validated material at base DFT cost, and a threshold for when that stops holding.** The share is a modelled quantity throughout, not a measurement: it pairs a manual-laboratory cost build-up with success rates and recipe multiplicity taken from an autonomous campaign, an assumption we state in Section 3.5 and revisit in Section 7. An MLIP pre-filter cuts cost per robust DFT-stable prediction by 39% and a generative pool costs about four times the filtered ion-exchange pool at the same stage. At the level of a validated material these two decisions separate: the filter decision stays under a 10% cost difference at every DFT cost we model, while the generative-pool decision passes 10% at about 200 core-hours per candidate. We report the threshold rather than a single immateriality claim, because the DFT cost that decides it is the quantity we are least able to pin down (Section 4.3).
 
 3. **The finding that the answer is governed by one contested parameter.** Cost per validated material spans a factor of about 17 across three published readings of the synthesis evidence, which is far larger than any difference between methods. The spread is not measurement uncertainty; two of the three readings interpret the same experiment and disagree about what was made.
 
-4. **A decomposition of where cost sits, and therefore where proportional improvement moves the total.** At base DFT cost a 1% proportional improvement in a synthesis term moves cost per validated material 26 to 136 times as much as the same proportional improvement in compute price; at the top of the DFT span the ratio falls to single digits. We do not rank these per dollar of research effort, because the cost of achieving each improvement is unknown. The one lever requiring no research expenditure, switching to spot compute pricing, moves cost per validated material by 0.6% to 2.3%, before any allowance for spot interruption and retry.
+4. **A decomposition of where cost sits, and therefore where proportional improvement moves the total.** At the deterministic base a 1% proportional improvement in a synthesis term moves cost per validated material 26 to 105 times as much as the same proportional improvement in compute price, and 36 to 136 times when the same ratio is evaluated at the Monte Carlo medians; at the top of the DFT span the ratio falls to single digits. We do not rank these per dollar of research effort, because the cost of achieving each improvement is unknown. The one lever requiring no research expenditure, switching to spot compute pricing, moves cost per validated material by 0.6% to 2.3%, before any allowance for spot interruption and retry.
 
 5. **An independent observation about benchmark transferability, with the model family held fixed.** CHGNet is the filter in both the benchmark and the pool measurements. Neither source names a version or checkpoint, so the comparison is matched on model family rather than on an identical fitted model. Its discovery acceleration factor is 1.65 on a realistically constructed ion-exchange pool against 3.36 reported on the standard benchmark test set, and 1.27 on a generative pool. Classification rates measured on one candidate distribution did not transfer to ours, and substituting direct measurements where we had used benchmark rates more than halved our estimate of what filtering saves. We report this as an observed discrepancy with several candidate causes, not as a demonstrated property of the benchmark.
 
@@ -119,7 +119,7 @@ Every pipeline pays to generate its own candidates. Checking whether a structure
 
 ## 3.2 Three output levels
 
-1. **Per correctly DFT-stable material** --- one candidate that DFT places on or below the convex hull, discounted by the share of such verdicts expected to be wrong. We label it this way deliberately: the quantity is not the cost of a DFT-stable verdict, which would be cheaper by a factor of $1/(1-w)$, but the cost of one that is also right.
+1. **Per cross-functionally robust DFT-stable prediction** --- one candidate that DFT places on or below the convex hull, discounted by the share whose stability does not survive a higher level of theory. We avoid calling this "correct": $w$ is a disagreement rate between two calculations, not a verdict against experiment, and the label should not imply established truth. The quantity is not the cost of a DFT-stable verdict, which would be cheaper by a factor of $1/(1-w)$.
 2. **Per experimentally validated material** --- one material subsequently synthesised as the target phase.
 3. **Per validated new material** --- one such material also new to science rather than new to the prediction platform.
 
@@ -145,7 +145,7 @@ One caution on this step. The stability rates we take from @szymanski2025baselin
 
 A share $w$ of DFT "stable" verdicts do not survive scrutiny. Our proxy for it is the *cross-functional stable-to-unstable transition rate*: the directed fraction of candidates called stable at one level of theory that are called unstable at a higher one. We use the shorthand "wrong verdict" for readability, but the quantity is a disagreement between two calculations, not experimental ground truth, and a material above the hull is not thereby impossible to synthesise [@kingsbury2022r2scan; @an2026; @merchant2023gnome]. The underlying error scale is well documented: GGA formation-energy errors against experiment are of order 0.1 eV/atom [@kirklin2015oqmd]; surrogate models inherit and compound them [@bartel2020]; corrections reduce but do not eliminate them [@wang2021corrections]; and about half of ICSD-reported compounds sit above the computed hull at all [@sun2016metastability].
 
-A wrong verdict is charged twice: the DFT run yields nothing, and since we cannot identify which verdicts are wrong, every DFT-stable candidate proceeds to synthesis, so that share of attempts is also wasted.
+Every candidate sent to synthesis incurs the allocated cost, including the targets that are never made. Observed unconditional campaign success determines experimental-output costing; cross-functional transitions define a separate computational endpoint and are not treated as an experimental failure probability. We do not claim that a candidate whose stability flips under a higher level of theory cannot be synthesised --- roughly half of ICSD-reported compounds sit above the computed hull [@sun2016metastability] --- only that it fails the computational test level 1 defines.
 
 Synthesis success is **not** conditioned on the verdict being correct. Each campaign's observed success rate already embeds whatever computational failure that campaign experienced, so dividing by $(1-w)$ as well would charge the same failures twice. $w$ is retained for the level-1 output, where the question is what a cross-functionally robust prediction costs, and is reported separately as a diagnostic.
 
@@ -254,8 +254,6 @@ Two caveats on this source: its data are NIH indirect-cost records rather than a
 
 | Basis | \$ per attempt | Level 2: A / B / C |
 |:---------|--:|:-----------|
-| Basis | \$ per attempt | Level 2: A / B / C |
-|:---------|--:|:-----------|
 | Direct costs and tuition, no indirect recovery | 191 | \$2,758 / \$2,734 / \$2,845 |
 | Effective 42% on an MTDC-like base (fees and tuition excluded) | 213 | \$3,069 / \$3,045 / \$3,155 |
 | **Effective 42% on total direct costs (default)** | **271** | **\$3,891 / \$3,868 / \$3,978** |
@@ -272,7 +270,7 @@ We default to including overhead because the question is the resource cost of a 
 
 | Output | A | B | C |
 |:-----------|--:|--:|--:|
-| 1. per correctly DFT-stable material | \$31.48 | \$19.05 | \$76.61 |
+| 1. per robust DFT-stable prediction | \$31.48 | \$19.05 | \$76.61 |
 | 2. per experimentally validated material | \$3,891 | \$3,868 | \$3,978 |
 | --- of which compute | \$60.44 | \$36.58 | \$147 |
 | --- of which synthesis | \$3,831 | \$3,831 | \$3,831 |
@@ -281,7 +279,7 @@ The synthesis term is identical across pipelines. This is structural, not coinci
 
 ## 5.2 An MLIP pre-filter cuts DFT cost by 39%, not several-fold
 
-Pipeline B costs \$19.05 per correctly DFT-stable material against A's \$31.48, a ratio of 1.65, so B is 39% cheaper. The filter saves money because DFT then runs on a pool that is 15.2% stable rather than 9.2% [@szymanski2025baselines]. The relaxations themselves cost about three cents.
+Pipeline B costs \$19.05 per robust DFT-stable prediction against A's \$31.48, a ratio of 1.65, so B is 39% cheaper. The filter saves money because DFT then runs on a pool that is 15.2% stable rather than 9.2% [@szymanski2025baselines]. The relaxations themselves cost about three cents.
 
 The ratio is not independent of Section 5.4: because DFT spend per stable hit is DFT cost divided by purity, the level-1 cost ratio between two pipelines approaches their purity ratio whenever DFT dominates the compute term --- which it does at base, where the relaxations cost about three cents. So 1.65 here and the ion-exchange acceleration factor of 1.65 in Section 5.4 are very nearly the same quantity reached from two directions; generation, filter and convergence costs account for the small difference. We report both because they answer different questions --- what a filter saves, and whether a benchmark predicts it --- but a reader should not count them as two findings.
 
@@ -289,7 +287,7 @@ The ratio is not independent of Section 5.4: because DFT spend per stable hit is
 
 ## 5.3 A generative pool costs about four times as much, through purity at the DFT gate
 
-Pipeline C costs \$76.61 per correctly DFT-stable material against B's \$19.05. Both run the same filter-then-DFT funnel; what differs is what reaches DFT. After filtering, 15.2% of ion-exchange candidates are DFT-stable against 3.8% of generated ones [@szymanski2025baselines]. DFT spend per stable hit is DFT cost divided by purity, so the ratio is approximately 15.2/3.8. Generation cost plays no part: the generative model's GPU time is 0.5% of C's compute spend.
+Pipeline C costs \$76.61 per robust DFT-stable prediction against B's \$19.05. Both run the same filter-then-DFT funnel; what differs is what reaches DFT. After filtering, 15.2% of ion-exchange candidates are DFT-stable against 3.8% of generated ones [@szymanski2025baselines]. DFT spend per stable hit is DFT cost divided by purity, so the ratio is approximately 15.2/3.8. Generation cost plays no part: the generative model's GPU time is 0.5% of C's compute spend.
 
 Two qualifications. This is not an independent reproduction of @szymanski2025baselines' conclusion, because the model takes their measurements as inputs; it restates them in dollars. And its magnitude rests on a value the source prints as a range rather than as a single number: the main text gives 3.8% to 8.8% for diffusion-model candidates after filtering, and assigning 3.8% specifically to the configuration we model is our reading, not the source's statement. Taking the two ends of that printed range against the ion-exchange purity of 15.2%, the DFT-dominated ratio spans roughly 1.7 to 4.0. An earlier draft quoted 2.2 to 6.7 here; that range came from a wider uncertainty interval on a single figure-read value and does not follow from the printed range, so we withdraw it. The 1.7-to-4.0 figures are the simple purity-ratio approximation and have not been regenerated from the full model. The direction never reverses across the range.
 
@@ -327,9 +325,24 @@ Two decisions are bundled inside "pipeline choice" and they do not behave alike.
 | 500 | 24.2% | 5.2% | 8.0% |
 | 1,000 | 44.7% | 9.7% | 14.9% |
 
-Taking a 10% cost difference as the materiality threshold, the generative-pool decision reaches it at **197 core-hours** per candidate and the filter decision at **1,034**, above the top of our span. At a 5% threshold the two are 96 and 474 core-hours. So the filter decision is immaterial everywhere we model, unconditionally, while the generative-pool decision is immaterial only below roughly 200 core-hours --- and 200 core-hours is well inside the range a Materials Project-compatible calculation might plausibly cost.
+Taking a 10% cost difference as the materiality threshold and holding all other parameters at the deterministic baseline, the generative-pool decision reaches it at **197 core-hours** per candidate and the filter decision at **1,034**. At a 5% threshold the two are 96 and 474. The 1,034 figure lies beyond the 1,000-core-hour top of the tested range and is an extrapolation of the fitted cost relationship, not an observed crossing.
 
-This is why we report a threshold rather than a single immateriality claim. The quantity that decides it is the one Section 4.3 says we cannot pin down.
+**The crossings scale with the synthesis bill, exactly.** Setting $(C_C - C_B)/C_B = \tau$ and writing $c_{0i} = \kappa_i d$ for DFT cost $d$ per candidate, with $\kappa_i$ the candidates verified per candidate reaching synthesis,
+
+$$d^{*} \;=\; \frac{\tau \, r a}{\kappa_C - (1+\tau)\,\kappa_B}$$
+
+so the threshold is proportional to $ra$, the synthesis expenditure per target. It is therefore an accounting-dependent quantity, and the paper's overhead variants move it:
+
+| Accounting basis | \$ per attempt | Generative, 10% | Filter, 10% |
+|:--|--:|--:|--:|
+| Direct costs only | 191 | 138 | **729** |
+| Effective 42% on an MTDC-like base | 213 | 154 | 812 |
+| Effective 42% on total direct costs (default) | 271 | 197 | 1,034 |
+| Negotiated 58% on total direct costs | 301 | 219 | 1,151 |
+
+The generative-pool crossing sits between 138 and 219 core-hours across every accounting treatment we carry, so that result is robust in shape. The filter crossing is not uniformly outside the tested range: under direct-cost accounting it falls at 729 core-hours, **inside** the span. The statement that the filter decision stays below 10% throughout the tested range therefore holds under the default overhead treatment and fails under the direct-cost one, and we report it with that condition attached rather than as a general property.
+
+This is why we report thresholds rather than a single immateriality claim. The quantity that decides them is the one Section 4.3 says we cannot pin down, and the second quantity that decides them is an accounting choice.
 
 The near-equality at low DFT cost is structural. Level-2 cost is
 
@@ -345,7 +358,7 @@ Neither $r$ nor $a$ nor $S$ is pipeline-dependent. Every DFT-stable verdict proc
 | 54.5 | \$31.48 / \$19.05 / \$76.61 | \$3,891 / \$3,868 / \$3,978 | 1.03x | 96--99% |
 | 1,000 | \$577 / \$349 / \$1,398 | \$4,939 / \$4,502 / \$6,514 | 1.45x | 59--85% |
 
-A separate sensitivity, reported in the supplement, varies the span's *low endpoint* and recomputes the geometric midpoint: that tests the base-selection convention rather than DFT cost, and the pipeline spread there runs from 3% to 22% as the low endpoint moves from 3 to 200 core-hours.
+A separate sensitivity varies the span's *low endpoint* and recomputes the geometric midpoint. That tests the base-selection convention rather than DFT cost, and we note it only to distinguish the two: the pipeline spread there runs from 3% to 22% as the low endpoint moves from 3 to 200 core-hours. The released package regenerates it.
 
 **The 1.03 is conditional, not a bound.** It assumes synthesis success, recipes and attempt cost do not depend on how a candidate was found. There is a plausible direction for the first --- MLIPs are trained on databases dominated by materials that have actually been made, so a pre-filter may favour candidates that are *more* synthesisable, which would widen the spread --- but plausibility is not a proof, and pipeline-specific differences in recipes or attempt cost could push either way. Section 7 treats this as the primary threat to validity.
 
@@ -457,7 +470,7 @@ The pattern may resemble what @kusumegi2025 observe in publishing, where adoptio
 1. **Primary threat to validity: synthesis success is assumed independent of pipeline.** No source we found measures this. The expected direction would widen the 1.03 spread, but we do not claim it as a bound. The follow-up study is to attempt matched sets of filtered and unfiltered DFT-stable candidates and compare success rates.
 2. **Filter recall is not measured on these pools.** We import it from the benchmark, which is an assumption, not a measurement. Measured purity and imported recall describe different populations, so both can be correct and still be mismatched for our use.
 3. **The generative-pool result's magnitude depends on which end of a printed range we take.** The source gives 3.8% to 8.8% for diffusion-model candidates after filtering; we take 3.8% for the configuration we model, which is our reading rather than the source's assignment. Across the range the DFT-dominated ratio spans roughly 1.7 to 4.0 rather than the 2.2 to 6.7 quoted in earlier drafts; the direction does not change.
-4. **Overhead treatment is an accounting choice** moving level 2 by 41% between the extreme variants of Section 4.5, while barely moving the pipeline spread. The rate itself is an average across NIH-funded institutions, not a rate any one laboratory faces.
+4. **Overhead treatment is an accounting choice** moving level 2 by 57% between the extreme variants of Section 4.5, while barely moving the pipeline spread. It also moves the materiality thresholds of Section 5.5 in proportion to the attempt cost. The rate itself is an average across NIH-funded institutions, not a rate any one laboratory faces.
 5. **No level-3 cost is reported.** The novelty share for the reference campaign is disputed, and the count we would have to use is zero, at which the implied cost is unbounded. Level 3 appears in the pipeline comparison of Section 5.6, which uses a nonzero novelty share from the parameter file, but no dollar figure for it appears in this paper.
 6. **DFT cost spans more than two orders of magnitude.** Results are reported across the span.
 7. **The cross-functional transition rate is a proxy, and it now affects only level 1.** $w$ is the directed fraction of candidates called stable at one level of theory and unstable at a higher one. It is not an experimental error rate, a material above the hull is not thereby impossible to synthesise, and functional disagreement also runs the other way, which we do not credit. Since level-2 and level-3 costs now use unconditional success rates, $w$ no longer enters them; it defines the level-1 output and is otherwise reported as a diagnostic.
@@ -479,9 +492,9 @@ The model is a pure function from parameters to results, so a reader who disagre
 
 # 9. Conclusion
 
-The field's standard claim that synthesis is the bottleneck is a claim about rate, and we do not test it: we price nothing in time. What we can now say is that synthesis is also where the money is, and by how much: at base DFT cost a proportional improvement in a synthesis term is worth between 26 and 105 times at the deterministic base the same proportional improvement in compute price, and the single compute improvement requiring no research expenditure moves the total by under 3%.
+The field's standard claim that synthesis is the bottleneck is a claim about rate, and we do not test it: we price nothing in time. What we can now say is that synthesis is also where the money is, and by how much: at the deterministic base a proportional improvement in a synthesis term is worth between 26 and 105 times the same proportional improvement in compute price, and the single compute improvement requiring no research expenditure moves the total by under 3%.
 
-The consequence, on the assumption that the synthesis term does not depend on how a candidate was found, is that the two decisions bundled inside "pipeline choice" separate. Using an MLIP pre-filter changes the cost of a validated material by under 10% at every verification cost we model. Sourcing candidates generatively is immaterial only while verification stays below about 200 core-hours per candidate, and we cannot say with confidence that it does. The synthesis-independence assumption is imposed rather than tested, and is the primary threat to both statements.  An MLIP pre-filter cuts computational cost by 39% and a generative candidate pool costs four times the filtered ion-exchange one at the DFT gate, yet at base DFT cost all three deliver a validated material within 3% of the same price, and the filter decision stays within 10% at every verification cost we model.
+The consequence, on the assumption that the synthesis term does not depend on how a candidate was found, is that the two decisions bundled inside "pipeline choice" separate. Using an MLIP pre-filter changes the cost of a validated material by under 10% throughout the tested range of verification cost, under our default accounting. Sourcing candidates generatively is immaterial only while verification stays below roughly 200 core-hours per candidate, and we cannot say with confidence that it does. Both thresholds scale with the synthesis bill, so both are accounting-dependent as well as calibration-dependent. The synthesis-independence assumption is imposed rather than tested, and is the primary threat to both statements.  An MLIP pre-filter cuts computational cost by 39% and a generative candidate pool costs four times the filtered ion-exchange one at the DFT gate, yet at base DFT cost all three deliver a validated material within 3% of the same price.
 
 What does govern the price is a number the field does not currently know. Three groups read the synthesis evidence three ways, producing cost estimates spanning a factor of about 17, and two of those readings interpret the same experiment. Closing that gap requires new synthesis data, not better analysis and not better models. Until it closes, statements about what AI-driven materials discovery costs are statements about which re-analysis one believes.
 
