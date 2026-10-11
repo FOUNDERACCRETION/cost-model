@@ -33,11 +33,11 @@ def test_fill_is_idempotent():
     assert fill(text, keys) == text
 
 
-CURRENT = DRAFT.parent / "p1-revision7.md"
+CURRENT = DRAFT.parent / "p1-revision8.md"
 
 
 def test_current_manuscript_exists():
-    assert CURRENT.exists(), "paper/p1-revision7.md is the current manuscript"
+    assert CURRENT.exists(), "paper/p1-revision8.md is the current manuscript"
 
 
 def test_no_stale_overhead_figures():
@@ -51,5 +51,8 @@ def test_no_stale_overhead_figures():
                   # withdrawn in revision 7: w cancels out of level 2
                   "Verification accuracy is the computational lever",
                   "26 to 136 times weaker", "each target is charged six attempts",
-                  "controlled on the model dimension"):
+                  "controlled on the model dimension",
+                  # withdrawn in revision 8: no bound on verification cost is established
+                  "lower bound on the real cost", "plausibly more expensive",
+                  "is economically immaterial once the laboratory"):
         assert stale not in text, stale

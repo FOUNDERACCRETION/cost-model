@@ -139,3 +139,27 @@ def test_multiplier_unreachable_returns_none():
     p = resolve(load())
     out = multiplier_for_level2_spread(p, 1000.0)
     assert out["multiplier"] is None and out["spread"] < 1000
+
+
+# ---------------------------------------------------------------- DFT threshold sweep (revision 8)
+
+
+def test_dft_threshold_sweep_is_monotonic_and_ordered():
+    """Both pipeline gaps grow with DFT cost, and the generative-pool decision always
+    costs more than the filter decision. If either fails, Section 5.5's threshold
+    argument does not hold."""
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import dft_threshold_sweep
+    from src.params import load, resolve
+
+    sw = dft_threshold_sweep(resolve(load()))
+    cb = [r["CB"] for r in sw["rows"]]
+    ab = [r["AB"] for r in sw["rows"]]
+    assert cb == sorted(cb), "generative-pool gap must grow with DFT cost"
+    assert ab == sorted(ab), "filter gap must grow with DFT cost"
+    assert all(c >= a for c, a in zip(cb, ab)), "generative gap must exceed filter gap"
+    # The threshold claim: the filter decision stays under 10% across the modelled span.
+    assert max(ab) < 0.10, "filter decision exceeds 10% inside the span"
+    # And the generative decision crosses 10% inside it.
+    assert sw["crossings"]["CB"][0.10] < 1000, "generative decision should cross 10% within the span"

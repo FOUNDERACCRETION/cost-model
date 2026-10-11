@@ -569,6 +569,44 @@ def multiplier_section(s1, p):
               f"{pct(r2['filtered_success'])}.")
 
 
+def dft_threshold_sweep(p, points=(3, 10, 30, 54.5, 100, 200, 300, 500, 1000),
+                        targets=(0.05, 0.10, 0.20)):
+    """Vary DFT cost per candidate DIRECTLY and report paired pipeline gaps.
+
+    This is not the same object as the DFT-span table, which varies the span's low endpoint
+    and recomputes a geometric-midpoint base: that is a sensitivity to the base-selection
+    convention. Here DFT cost is the independent variable, so the question answered is
+    "at what verification cost does the choice of pipeline start to matter?" with synthesis
+    success, recipes and attempt cost held shared across pipelines throughout.
+
+    Comparators are relative to B, the cheapest pipeline at base: (C - B)/B is the
+    generative-pool decision, (A - B)/B is the MLIP-filter decision.
+    """
+    def gaps(d):
+        r = funnel({**p, "dft_cost_per_candidate": d})["pipelines"]
+        o = {k: r[k]["outputs"]["experimentally_validated"] for k in ("A", "B", "C")}
+        cb = o["B"]["usd_per"]
+        return {"dft": d, "CB": (o["C"]["usd_per"] - cb) / cb, "AB": (o["A"]["usd_per"] - cb) / cb,
+                "b_compute_share": o["B"]["compute_usd_per"] / cb}
+
+    rows = [gaps(d) for d in points]
+
+    def crossing(key, target, lo=1.0, hi=20000.0):
+        """DFT cost at which the comparator first reaches target. None if never within range."""
+        if gaps(hi)[key] < target:
+            return None
+        for _ in range(80):
+            mid = (lo + hi) / 2
+            if gaps(mid)[key] < target:
+                lo = mid
+            else:
+                hi = mid
+        return (lo + hi) / 2
+
+    cross = {key: {t: crossing(key, t) for t in targets} for key in ("CB", "AB")}
+    return {"rows": rows, "crossings": cross, "targets": targets}
+
+
 def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     """Formatted numbers the paper draft quotes, written to results/key_numbers.json (the draft's single source)."""
     P = an.PIPELINES
@@ -634,6 +672,18 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         for i, x in enumerate(P):
             k[f"l2_{x}_at_{tag}"] = money(ll[i])
     k["basis_move_pct"] = f"{s1['bases'][2]['l2'][0] / s1['bases'][0]['l2'][0] - 1:.0%}"
+
+    sw = dft_threshold_sweep(p)
+    for r in sw["rows"]:
+        tag = f"{r['dft']:g}".replace(".", "p")
+        k[f"sweep_CB_{tag}"] = f"{r['CB']:.1%}"
+        k[f"sweep_AB_{tag}"] = f"{r['AB']:.1%}"
+        k[f"sweep_bshare_{tag}"] = f"{r['b_compute_share']:.1%}"
+    for key, label in (("CB", "gen"), ("AB", "filter")):
+        for tgt, val in sw["crossings"][key].items():
+            nm = f"cross_{label}_{int(tgt * 100)}pct"
+            k[nm] = "never within 20,000 core-h" if val is None else f"{val:,.0f}"
+    k["sweep_AB_max"] = f"{max(r['AB'] for r in sw['rows']):.1%}"
     # Monte Carlo and readings
     lvl = "experimentally_validated"
     med = {}
