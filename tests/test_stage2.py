@@ -72,7 +72,7 @@ def test_joint_counts_match_records(doc):
 def test_worldview_counts_match_records(doc):
     recs = records(doc)
     r = doc["monte_carlo"]["joint"]["worldview"]["readings"]
-    s = recs["synth.success_given_correct_label"]
+    s = recs["synth.success_unconditional"]
     assert r["optimistic_alab"]["success"]["k"] / r["optimistic_alab"]["success"]["n"] == pytest.approx(s["high"], rel=1e-3)
     assert r["middle_prein"]["success"]["k"] / r["middle_prein"]["success"]["n"] == pytest.approx(s["base"])
     assert r["pessimistic_leeman"]["success"]["k"] / r["pessimistic_leeman"]["success"]["n"] == pytest.approx(3 / 58)
@@ -120,7 +120,7 @@ def test_recipes_budget_model(doc):
 
 
 def test_recipes_negatively_correlated_with_success(draws):
-    p_target = [(1 - p["dft_wrong_verdict_frac"]) * p["synth_success_given_correct"] for p, _ in draws]
+    p_target = [(1 - p["dft_wrong_verdict_frac"]) * p["synth_success_unconditional"] for p, _ in draws]
     recipes = [p["synth_recipes_per_target"] for p, _ in draws]
     assert corr(p_target, recipes) < -0.9
 
@@ -142,20 +142,21 @@ def test_pool_draw_centres(doc):
 
 def test_success_and_novelty_drawn_together(draws):
     """Within the mixture, high-success draws come with high novelty (both from the same reading)."""
-    success = [p["synth_success_given_correct"] for p, _ in draws]
+    success = [p["synth_success_unconditional"] for p, _ in draws]
     novelty = [p["novelty_science_frac"] for p, _ in draws]
     assert corr(success, novelty) > 0.3
     leeman = [p for p, info in draws if info["worldview"] == "pessimistic_leeman"]
     alab = [p for p, info in draws if info["worldview"] == "optimistic_alab"]
-    assert max(p["synth_success_given_correct"] for p in leeman) < min(p["synth_success_given_correct"] for p in alab)
+    assert max(p["synth_success_unconditional"] for p in leeman) < min(p["synth_success_unconditional"] for p in alab)
 
 
 def test_apply_worldview(doc):
     p = resolve(doc)
     q = apply_worldview(p, {"success": 0.5, "novelty": 0.1, "wrong_verdict": 0.2}, 9.28)
-    assert q["synth_success_given_correct"] == 0.5 and q["novelty_science_frac"] == 0.1
-    assert q["synth_recipes_per_target"] == pytest.approx(recipes_for_success(0.4, 9.28))
-    assert p["synth_success_given_correct"] != 0.5  # input untouched
+    assert q["synth_success_unconditional"] == 0.5 and q["novelty_science_frac"] == 0.1
+    # recipes now key on unconditional success (0.5), not (1 - w) x success (0.4).
+    assert q["synth_recipes_per_target"] == pytest.approx(recipes_for_success(0.5, 9.28))
+    assert p["synth_success_unconditional"] != 0.5  # input untouched
 
 
 # ---------------------------------------------------------------- analysis
@@ -199,7 +200,7 @@ def test_tornado(doc):
     assert base["experimentally_validated"]["B"] > 0
 
 
-@pytest.mark.parametrize("overrides", [{}, {"dft_cost_per_candidate": 1000.0}, {"synth_success_given_correct": 0.05}])
+@pytest.mark.parametrize("overrides", [{}, {"dft_cost_per_candidate": 1000.0}, {"synth_success_unconditional": 0.05}])
 def test_synthesis_elasticities_structural(doc, overrides):
     """Level-2 synthesis cost = recipes x cost per attempt / ((1 - w) success): a structural property.
 

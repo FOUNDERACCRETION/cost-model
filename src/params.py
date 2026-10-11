@@ -138,7 +138,7 @@ def resolve_with_sources(doc: dict, level: str = "base", overrides: dict | None 
         "reference_phases": v("fixed.reference_phases_per_chemistry"),
         # synthesis
         "synth_recipes_per_target": v("synth.recipes_per_target"),
-        "synth_success_given_correct": v("synth.success_given_correct_label"),
+        "synth_success_unconditional": v("synth.success_unconditional"),
         "synth_success_multiplier_filtered": v("synth.success_multiplier_mlip_filtered"),
         "xrd_cost_per_sample": v("synth.xrd_cost_per_sample"),
         "furnace_fixed_fee": v("synth.furnace_fixed_fee"),
@@ -150,6 +150,7 @@ def resolve_with_sources(doc: dict, level: str = "base", overrides: dict | None 
         "synth_indirect_rate": v("synth.indirect_rate"),
         "synth_cost_basis": choices["cost_basis"],
         "fa_on_service_fees": choices["fa_base_includes_service_fees"],
+        "indirect_base": choices.get("indirect_base", "total_direct"),
         "labour_attempts_per_week": v("synth.labour_attempts_per_week"),
         "weeks_per_year": v("synth.weeks_per_year"),
         "crucible_cost": v("synth.crucible_cost"),

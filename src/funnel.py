@@ -28,7 +28,7 @@ FRACTIONS = (
     "pool_frac_stable", "pool_frac_novel_mp", "pool_frac_novel_all_db",
     "gen_frac_stable", "gen_frac_novel_mp", "gen_frac_novel_all_db",
     "mlip_nonconv_frac", "mlip_tpr", "mlip_fpr", "dft_fraction_sent",
-    "dft_wrong_verdict_frac", "synth_success_given_correct", "novelty_science_frac",
+    "dft_wrong_verdict_frac", "synth_success_unconditional", "novelty_science_frac",
     "pool_filter_purity", "gen_filter_purity",
 )
 NON_NEGATIVE = (
@@ -73,7 +73,7 @@ def _check(p: dict) -> None:
         raise ValueError("fa_on_service_fees must be True or False")
     if p["mlip_filter_basis"] not in ("measured", "matbench"):
         raise ValueError(f"mlip_filter_basis must be 'measured' or 'matbench', got {p['mlip_filter_basis']}")
-    if p["synth_success_given_correct"] * p["synth_success_multiplier_filtered"] > 1:
+    if p["synth_success_unconditional"] * p["synth_success_multiplier_filtered"] > 1:
         raise ValueError("synthesis success x filtered multiplier exceeds 1")
 
 
@@ -129,10 +129,18 @@ def synthesis_cost_per_attempt(p: dict) -> dict:
         "other consumables": p["other_consumables_per_attempt"],
     }
     direct_usd = sum(direct.values())
-    # Tuition is a direct cost but outside the F&A base (MTDC excludes tuition remission).
+    # Tuition is a direct cost. Under MTDC it sits outside the base (2 CFR 200.1 excludes tuition
+    # remission); under a total-direct-cost base it is inside it.
     tuition = p["labour_tuition_remission"] / attempts_per_year
     service_fees = direct["xrd"] + direct["furnace"]
-    fa_base = direct_usd if p["fa_on_service_fees"] else direct_usd - service_fees
+    # The effective indirect rate is defined by its source as recovered indirect cost over TOTAL
+    # DIRECT COSTS. Pairing it with a narrowed base understates recovery against that definition,
+    # so total_direct is the matched default. mtdc reproduces the pre-2026-10-11 behaviour and is
+    # kept as an accounting scenario.
+    if p.get("indirect_base", "total_direct") == "total_direct":
+        fa_base = direct_usd + tuition
+    else:
+        fa_base = direct_usd if p["fa_on_service_fees"] else direct_usd - service_fees
     indirect = fa_base * p["synth_indirect_rate"] if p["synth_cost_basis"] == "funder" else 0.0
     parts = {**direct, "tuition": tuition, "indirect (F&A)": indirect}
     return {"parts": parts, "direct_usd": direct_usd + tuition, "fa_base_usd": fa_base, "usd": sum(parts.values())}
@@ -217,7 +225,7 @@ def _pipeline(p: dict, name: str, source: str, use_mlip: bool, mlip: dict, dft: 
     novel_beyond_mp = ratio(p[f"{source}_frac_novel_all_db"], novel_mp) if novel_mp > 0 else 0.0
     w = p["dft_wrong_verdict_frac"]
     # Sensitivity switch: synthesis success for MLIP-filtered pipelines (B, C) relative to A.
-    success = p["synth_success_given_correct"] * (p["synth_success_multiplier_filtered"] if use_mlip else 1.0)
+    success = p["synth_success_unconditional"] * (p["synth_success_multiplier_filtered"] if use_mlip else 1.0)
     recipes = p["synth_recipes_per_target"]
 
     stages = []
@@ -249,9 +257,14 @@ def _pipeline(p: dict, name: str, source: str, use_mlip: bool, mlip: dict, dft: 
     stages.append(_stage("DFT check", dft_in, dft_pass, core_h_each=dft["core_h"], note="pass = DFT-stable verdict"))
     verdicts = stages[-1]["surviving"]
 
+    # Unconditional synthesis success: the campaign-observed rate already embeds whatever
+    # computational failure that campaign experienced, so (1 - w) must NOT be applied here.
+    # Applying both charged computational failure twice on the readings that were never
+    # conditioned. w is still computed and reported, as a separate transition-rate diagnostic
+    # and for the level-1 output, but it no longer enters the level-2 or level-3 denominators.
     stages.append(_stage(
-        "synthesis", verdicts, (1 - w) * success, usd_each=recipes * synth["usd"],
-        note=f"correct verdict {1 - w:.3f} x success {success:.3f}",
+        "synthesis", verdicts, success, usd_each=recipes * synth["usd"],
+        note=f"unconditional success {success:.3f}",
     ))
     made = stages[-1]["surviving"]
     stages.append(_stage(

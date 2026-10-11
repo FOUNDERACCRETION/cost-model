@@ -32,7 +32,7 @@ def hand_params(**overrides) -> dict:
         "dft_scf_per_ionic": 10, "dft_ionic_steps": 9,
         "dft_wrong_verdict_frac": 0.2,
         "reference_phases": 0,
-        "synth_recipes_per_target": 2, "synth_success_given_correct": 0.5, "synth_success_multiplier_filtered": 1.0,
+        "synth_recipes_per_target": 2, "synth_success_unconditional": 0.5, "synth_success_multiplier_filtered": 1.0,
         "xrd_cost_per_sample": 100.0, "furnace_fixed_fee": 0.0, "furnace_hourly": 0.0,
         "furnace_hours_per_attempt": 0.0, "labour_annual_salary": 0.0, "labour_fringe_rate": 0.0, "labour_tuition_remission": 0.0,
         "synth_indirect_rate": 0.0, "synth_cost_basis": "funder", "fa_on_service_fees": True, "labour_attempts_per_week": 1, "weeks_per_year": 52,
@@ -55,8 +55,9 @@ def stage(pipeline: dict, name: str) -> dict:
 def test_hand_case_1_pipeline_a():
     """100 candidates, 10% DFT-stable, 10 core-h each at $1 -> $1,000 compute, 10 verdicts.
     20% of verdicts wrong -> 8 correct -> $125 per DFT-confirmed stable ($100 naive).
-    Synthesis: 10 targets x 2 recipes x $100 = $2,000. Made = 10 x 0.8 x 0.5 = 4 -> $3,000 / 4 = $750.
-    New = 4 x 0.5 x 0.5 = 1 -> $3,000.
+    Synthesis: 10 targets x 2 recipes x $100 = $2,000. Made = 10 x 0.5 = 5 -> $3,000 / 5 = $600.
+    New = 5 x 0.5 x 0.5 = 1.25 -> $2,400.
+    CHANGED 2026-10-11: made was 10 x 0.8 x 0.5 = 4 at $750; (1 - w) no longer enters level 2.
     Wrong verdicts: 2 -> 20 DFT core-h wasted, 4 synthesis attempts ($400) wasted.
     """
     a = funnel(hand_params())["pipelines"]["A"]
@@ -66,10 +67,10 @@ def test_hand_case_1_pipeline_a():
     assert out["naive_per_dft_stable_verdict"]["usd_per"] == pytest.approx(100)
     assert out["dft_confirmed_stable"]["count"] == pytest.approx(8)
     assert out["dft_confirmed_stable"]["usd_per"] == pytest.approx(125)
-    assert out["experimentally_validated"]["count"] == pytest.approx(4)
-    assert out["experimentally_validated"]["usd_per"] == pytest.approx(750)
-    assert out["validated_new"]["count"] == pytest.approx(1)
-    assert out["validated_new"]["usd_per"] == pytest.approx(3000)
+    assert out["experimentally_validated"]["count"] == pytest.approx(5)
+    assert out["experimentally_validated"]["usd_per"] == pytest.approx(600)
+    assert out["validated_new"]["count"] == pytest.approx(1.25)
+    assert out["validated_new"]["usd_per"] == pytest.approx(2400)
     lr = a["label_reliability"]
     assert lr["wrong_verdicts"] == pytest.approx(2)
     assert lr["dft_core_h_on_wrong_verdicts"] == pytest.approx(20)
@@ -146,9 +147,12 @@ def test_zero_fixed_cost_means_total_equals_marginal():
 
 def test_synthesis_cost_per_attempt_bottom_up():
     """Labour 52,000 x 1.25 / 52 weeks / 10 per week = $125; furnace 6 + 3 x 10 = $36; XRD $80;
-    crucible 40 / 4 = $10; precursors 2 g x $2/g = $4; other consumables $5. F&A base $260.
-    Indirect (F&A) 20% of $260 = $52. Tuition 5,200 / 520 attempts = $10, outside the F&A base.
-    Total $322."""
+    crucible 40 / 4 = $10; precursors 2 g x $2/g = $4; other consumables $5. Direct $260.
+    Tuition 5,200 / 520 attempts = $10. Under the default total-direct-cost base the indirect
+    base is 260 + 10 = $270 and indirect (F&A) 20% of that = $54. Total $324.
+
+    CHANGED 2026-10-11: the base was MTDC-like ($260, tuition excluded) giving $52 and $322.
+    The 42% effective rate is defined over TOTAL direct costs, so that was a rate/base mismatch."""
     p = hand_params(
         labour_annual_salary=52_000, labour_fringe_rate=0.25, synth_indirect_rate=0.2, labour_attempts_per_week=10,
         furnace_fixed_fee=6, furnace_hourly=3, furnace_hours_per_attempt=10, xrd_cost_per_sample=80,
@@ -158,25 +162,35 @@ def test_synthesis_cost_per_attempt_bottom_up():
     s = synthesis_cost_per_attempt(p)
     assert s["parts"] == pytest.approx({
         "labour": 125, "furnace": 36, "xrd": 80, "crucible": 10, "precursors": 4, "other consumables": 5,
-        "tuition": 10, "indirect (F&A)": 52,
+        "tuition": 10, "indirect (F&A)": 54,
     })
     assert s["direct_usd"] == pytest.approx(270)
-    assert s["usd"] == pytest.approx(322)
+    assert s["fa_base_usd"] == pytest.approx(270)
+    assert s["usd"] == pytest.approx(324)
 
 
 def test_fa_base_and_cost_basis():
-    """Same inputs as above. Fees out of the F&A base: base = 260 - 80 XRD - 36 furnace = $144, F&A 20% = $28.80,
-    total 260 + 10 + 28.80 = $298.80. Bench basis: no F&A, $270."""
+    """Same inputs as above, under the retained MTDC scenario (indirect_base = "mtdc").
+    Fees out of the base: base = 260 - 80 XRD - 36 furnace = $144, F&A 20% = $28.80,
+    total 260 + 10 + 28.80 = $298.80. Fees in: base $260, F&A $52, total $322.
+    Matched default (total_direct): base $270, F&A $54, total $324. Bench basis: no F&A, $270."""
     p = hand_params(
         labour_annual_salary=52_000, labour_fringe_rate=0.25, synth_indirect_rate=0.2, labour_attempts_per_week=10,
         furnace_fixed_fee=6, furnace_hourly=3, furnace_hours_per_attempt=10, xrd_cost_per_sample=80,
         crucible_cost=40, attempts_per_crucible=4, precursor_mass_g=2, precursor_usd_per_g=2,
         other_consumables_per_attempt=5, labour_tuition_remission=5_200,
     )
-    no_fees = synthesis_cost_per_attempt({**p, "fa_on_service_fees": False})
+    mtdc = {**p, "indirect_base": "mtdc"}
+    no_fees = synthesis_cost_per_attempt({**mtdc, "fa_on_service_fees": False})
     assert no_fees["fa_base_usd"] == pytest.approx(144)
     assert no_fees["parts"]["indirect (F&A)"] == pytest.approx(28.8)
     assert no_fees["usd"] == pytest.approx(298.8)
+    with_fees = synthesis_cost_per_attempt({**mtdc, "fa_on_service_fees": True})
+    assert with_fees["fa_base_usd"] == pytest.approx(260)
+    assert with_fees["usd"] == pytest.approx(322)
+    matched = synthesis_cost_per_attempt(p)
+    assert matched["fa_base_usd"] == pytest.approx(270)
+    assert matched["usd"] == pytest.approx(324)
     bench = synthesis_cost_per_attempt({**p, "synth_cost_basis": "bench"})
     assert bench["parts"]["indirect (F&A)"] == 0
     assert bench["usd"] == pytest.approx(270)
@@ -243,7 +257,12 @@ def test_label_reliability_zero_and_one():
     perfect = funnel(hand_params(dft_wrong_verdict_frac=0.0))["pipelines"]["A"]["outputs"]
     assert perfect["dft_confirmed_stable"]["usd_per"] == pytest.approx(perfect["naive_per_dft_stable_verdict"]["usd_per"])
     useless = funnel(hand_params(dft_wrong_verdict_frac=1.0))["pipelines"]["A"]
-    assert useless["outputs"]["experimentally_validated"]["usd_per"] == math.inf
+    # w = 1 makes LEVEL 1 unbounded: no verdict survives the cross-functional check.
+    assert useless["outputs"]["dft_confirmed_stable"]["usd_per"] == math.inf
+    # Level 2 stays finite: the campaign-observed success rate is unconditional and does not
+    # depend on w. CHANGED 2026-10-11 -- level 2 used to go to infinity here, which was the
+    # double-charge showing up at the limit.
+    assert math.isfinite(useless["outputs"]["experimentally_validated"]["usd_per"])
     assert useless["label_reliability"]["synthesis_usd_on_wrong_verdicts"] == pytest.approx(useless["marginal"]["synthesis_usd"])
 
 
@@ -269,7 +288,7 @@ def test_gpu_generation_priced_at_gpu_rate():
     ({"pool_frac_stable": 0.0, "gen_frac_stable": 0.0}, "naive_per_dft_stable_verdict"),
     ({"n_candidates": 0}, "naive_per_dft_stable_verdict"),
     ({"mlip_tpr": 0.0, "mlip_fpr": 0.0, "pool_frac_stable": 0.0, "gen_frac_stable": 0.0}, "naive_per_dft_stable_verdict"),
-    ({"synth_success_given_correct": 0.0}, "experimentally_validated"),
+    ({"synth_success_unconditional": 0.0}, "experimentally_validated"),
     ({"novelty_science_frac": 0.0}, "validated_new"),
 ])
 def test_zero_survivors_give_inf_not_error(overrides, inf_from):

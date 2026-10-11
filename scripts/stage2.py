@@ -308,13 +308,13 @@ def returns_section(p, mc_ret):
     ratio = {k: synth_min[k] / comp_max[k] for k in an.PIPELINES}
     mc_ratio = {k: min(mc_ret[n][k]["median"] for n in synth) / max(mc_ret[n][k]["median"] for n in comp)
                 for k in an.PIPELINES}
-    return ("Return = % fall in cost per validated material per 1% improvement in the lever: the log-elasticity "
+    return ("Return = % fall in cost per validated material per 1% PROPORTIONAL improvement in the lever: the log-elasticity "
             "d ln(cost) / d ln(lever) at the evaluation point, signed so that a positive number means the improvement "
             "lowers cost. It is scale-free, so levers in different units compare directly.\n\n"
             + md_table(["Group", "Lever", "A base", "B base", "C base", "A MC median (5–95%)", "B MC median (5–95%)",
                         "C MC median (5–95%)"], rows)
             + "\n\n**The synthesis levers are tied at unit elasticity; they are not ranked.** Level-2 synthesis cost is "
-              "recipes × cost per attempt / ((1 − w) × success), so each of the three has elasticity one by "
+              "recipes × cost per attempt / success, so each of the three has elasticity one by "
               "construction. Success is exactly 1 because it also divides the compute term. Recipes and cost per "
               "attempt equal the synthesis share of level-2 cost ("
             + ", ".join(f"{base['recipes per target'][k]['return']:.3f} for {k}" for k in an.PIPELINES)
@@ -329,7 +329,7 @@ def returns_section(p, mc_ret):
             + ", ".join(f"{ratio[k]:.0f}× ({k})" for k in an.PIPELINES)
             + " at the base point, and "
             + ", ".join(f"{mc_ratio[k]:.0f}× ({k})" for k in an.PIPELINES)
-            + f" at the Monte Carlo medians. Per percentage point, synthesis is worth "
+            + f" at the Monte Carlo medians. Proportionally, synthesis is worth "
               f"{min(min(ratio.values()), min(mc_ratio.values())):.0f}–{max(max(ratio.values()), max(mc_ratio.values())):.0f} "
               "times compute, depending on the pipeline and the evaluation point.")
 
@@ -561,11 +561,11 @@ def multiplier_section(s1, p):
     rows = []
     for t, r in s1["mult"].items():
         rows.append([f"{t:g}×", f"{r['multiplier']:.2f}", pct(r["filtered_success"]),
-                     pct(p["synth_success_given_correct"])])
+                     pct(p["synth_success_unconditional"])])
     r2 = s1["mult"][2.0]
     return (md_table(["Level-2 spread", "Multiplier needed", "Success in B and C", "Success in A"], rows)
             + f"\n\nFor pipeline choice to double the cost per validated material, an MLIP pre-filter would have to "
-              f"roughly double synthesis success, from {pct(p['synth_success_given_correct'])} to "
+              f"roughly double synthesis success, from {pct(p['synth_success_unconditional'])} to "
               f"{pct(r2['filtered_success'])}.")
 
 
@@ -673,7 +673,7 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["threshold_hi"] = money(max(t["attempt_for_compute_share"].values()))
     par = an.purity_for_parity(p, "B")
     k["parity_purity"], k["parity_ratio"] = pct(par["purity"], 1), f"{par['ratio_to_measured']:.1f}"
-    k["mult_2x_success_from"] = pct(p["synth_success_given_correct"])
+    k["mult_2x_success_from"] = pct(p["synth_success_unconditional"])
     k["mult_2x_success_to"] = pct(s1["mult"][2.0]["filtered_success"])
     return k
 

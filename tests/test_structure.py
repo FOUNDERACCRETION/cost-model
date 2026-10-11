@@ -40,10 +40,14 @@ CASES = list(all_cases())
 @pytest.mark.parametrize("p", CASES)
 def test_level2_differs_only_through_compute(p):
     """Level-2 synthesis term is the same for A, B and C and equals
-    recipes x cost per attempt / ((1 - w) x success): nothing pipeline-specific."""
+    recipes x cost per attempt / success: nothing pipeline-specific.
+
+    CHANGED 2026-10-11: the denominator was (1 - w) x success. Synthesis success is now the
+    campaign-observed UNCONDITIONAL rate, which already embeds that campaign's computational
+    failures, so dividing by (1 - w) as well charged them twice."""
     pipelines = funnel(p)["pipelines"]
     expected = p["synth_recipes_per_target"] * synthesis_cost_per_attempt(p)["usd"] / (
-        (1 - p["dft_wrong_verdict_frac"]) * p["synth_success_given_correct"]
+        p["synth_success_unconditional"]
     )
     for pl in pipelines.values():
         lvl2 = pl["outputs"]["experimentally_validated"]
@@ -56,11 +60,17 @@ def test_level2_differs_only_through_compute(p):
 
 @pytest.mark.parametrize("p", CASES)
 def test_level2_compute_term_is_level1_over_success(p):
-    """Compute per validated material = compute per DFT-confirmed stable / synthesis success."""
+    """Compute per validated material = compute per DFT-confirmed stable x (1 - w) / success.
+
+    Level 1 counts verdicts x (1 - w); level 2 counts verdicts x success. The two output levels
+    now use different adjustments on purpose: level 1 asks what a cross-functionally robust
+    stable prediction costs, level 2 asks what a material someone actually made costs, and the
+    unconditional success rate already contains that campaign's computational failures."""
     for pl in funnel(p)["pipelines"].values():
         out = pl["outputs"]
+        factor = (1 - p["dft_wrong_verdict_frac"]) / p["synth_success_unconditional"]
         assert out["experimentally_validated"]["compute_usd_per"] == pytest.approx(
-            out["dft_confirmed_stable"]["usd_per"] / p["synth_success_given_correct"], rel=1e-9
+            out["dft_confirmed_stable"]["usd_per"] * factor, rel=1e-9
         )
 
 

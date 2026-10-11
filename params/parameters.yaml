@@ -38,9 +38,19 @@ choices:
   # question is the resource cost of a material, and F&A pays for real space, utilities and administration);
   # "bench" = direct costs only, as a lab's own budget sees them. base_case.py prints both.
   cost_basis: funder                 # funder | bench
-  # Put XRD and furnace recharge fees inside the F&A base? Default no: recharge rates already include the
-  # service centre's share of indirect costs (2 CFR 200.468(b)(2)). A reviewer may reject either choice.
+  # Put XRD and furnace recharge fees inside the F&A base? Applies only when indirect_base = mtdc.
+  # Default no: recharge rates already include the service centre's share of indirect costs
+  # (2 CFR 200.468(b)(2)). We treat that as an accounting convention, not a demonstrated fact:
+  # the rule does not establish that a given facility's schedule absorbs the same cost pools an
+  # institution-wide rate covers, and we have not inspected those pools. A reviewer may reject it.
   fa_base_includes_service_fees: false
+  # Which base the indirect rate is applied to. The EFFECTIVE rate (42%) is defined by its source as
+  # recovered indirect cost divided by TOTAL DIRECT COSTS, so pairing it with a narrowed base is a
+  # rate/base mismatch. Default is now the matched pairing.
+  #   total_direct  effective rate on all direct costs incl. service fees and tuition  (matched; default)
+  #   mtdc          effective rate on an MTDC-like base, tuition always excluded, fees per the flag above
+  #                 (the pre-2026-10-11 behaviour; retained as an accounting scenario, not a definition)
+  indirect_base: total_direct        # total_direct | mtdc
 
 parameters:
 
@@ -734,15 +744,16 @@ parameters:
     source_note: A-Lab, 353 recipes / 57 targets = 6.19. High 355/57 = 6.23 if the original paper's 355 is right (table says VERIFY).
     evidence_grade: derived
 
-  - name: synth.success_given_correct_label
-    low: 0.05
+  - name: synth.success_unconditional
+    low: 0.051724
     base: 0.4375
-    high: 0.7037
-    unit: fraction of targets made as the target phase, given the DFT verdict is right
+    high: 0.631579
+    unit: fraction of targets made as the target phase (unconditional, as the campaign reports it)
     source_url: https://arxiv.org/html/2511.01790v1
     citations: [prein2025, szymanski2023alab, szymanski2026correction, leeman2024, chen2024jacs]
-    source_note: "Base: Prein et al. 2025, 7/16 characterised. High: A-Lab corrected, 38/54 excluding computational errors (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133); the 36/57 = 63% headline includes those 3 computational failures, which the model charges through dft.wrong_verdict_frac instead. Low: Leeman et al. 2024, 3/58 (https://par.nsf.gov/servlets/purl/10532478), which does not separate computational from experimental failure. Other: Prein 7/24 = 29% counting uncharacterisable; Chen et al. 2024, 1/4."
+    source_note: "UNCONDITIONAL rates throughout, as each campaign reports them. Base: Prein et al. 2025, 7/16 = 0.4375 characterised. High: A-Lab corrected, 36/57 = 0.6316 (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133). Low: Leeman et al. 2024, 3/58 = 0.05172 (https://par.nsf.gov/servlets/purl/10532478). Other: Prein 7/24 = 29% counting uncharacterisable; Chen et al. 2024, 1/4. CHANGED 2026-10-11: was 'given the DFT verdict is right', with high = 38/54 = 0.7037 (computational failures removed from the denominator AND the two manual-intervention successes added) and the model then dividing all three readings by (1 - w). Only the optimistic reading had been conditioned, so the middle and pessimistic branches were charged computational failure twice. All three are now unconditional and (1 - w) no longer enters the synthesis pass rate. The A-Lab target-level crosswalk is still PENDING, so 36/57 is a proposed baseline, not a settled count."
     evidence_grade: published
+    change_note: "CHANGED 2026-10-11: high was 0.58, the NEGOTIATED average. That is a different quantity from the effective rate and lies outside the 25-45% effective range the same source gives, so it is not an upper bound on an effective rate. High is now 0.45, the top of the effective range; 58% is retained as the negotiated_rate_scenario, clearly labelled."
 
   - name: synth.xrd_cost_per_sample
     low: 5
@@ -814,8 +825,8 @@ parameters:
   - name: synth.indirect_rate
     low: 0.25
     base: 0.42
-    high: 0.58
-    unit: fraction of the indirect-cost base (modified total direct costs)
+    high: 0.45
+    unit: fraction of the indirect-cost base (total direct costs when indirect_base = total_direct)
     source_url: https://www.nber.org/papers/w33627
     citations: [azoulay2025icr, cfr200468]
     source_note: "Azoulay, Gross & Sampat (2025), 'Indirect Cost Recovery in U.S. Innovation Policy', NBER WP 33627. Base: the EFFECTIVE indirect cost recovery (ICR) rate, what NIH actually pays, averages 42% (abstract; Table 1, 2024: mean 42%, median 40%, s.d. 10%, min 14%, max 81%). High: the NEGOTIATED ICR rate, the ceiling an institution may charge, averages 58% (abstract; Table 1, 2024: mean 58%, median 56%). Low: 'effective rates in practice are generally between 25% and 45%' (section 3.3, p. 17), lower end. Applying the negotiated 58% would overstate indirect cost by about a third. Population: the underlying data are NIH indirect-cost records for 354 NIH grantee institutions (69% universities, 18% independent hospitals, 13% research institutes; NIH RePORTER since 2006 and the CGAF before), not a census of US universities. The effective rate is NIH ICR paid divided by direct costs for the institution as a whole, a total-direct-cost denominator, whereas the model applies it to an MTDC-like base that excludes tuition and service fees; on a narrower base the true rate per base dollar is somewhat higher, so 42% leans low. Vocabulary: the paper's headline term is 'indirect cost recovery'; it uses 'F&A rate' only for the negotiated agreement. Used only when cost_basis = funder. Base of the charge: labour, fringe, crucibles, precursors and other consumables (MTDC includes salaries, fringe, materials, supplies and services and excludes tuition remission, 2 CFR 200.1, https://www.law.cornell.edu/cfr/text/2/200.1). XRD and furnace recharge fees are left out of the base by default: service-centre rates 'must normally consist of its direct costs and an allocable share of all indirect costs' (2 CFR 200.468(b)(2), https://www.law.cornell.edu/cfr/text/2/200.468), so indirect cost on top would double-count. Institutional practice varies; choices.fa_base_includes_service_fees reverses this. Negotiated-rate examples, not used: Caltech FY2026 on-campus 70% (https://www.fundingopportunities.caltech.edu/static/guides/FY26_Rate_Memo.pdf), Stanford 54% (FY2025-26), Michigan 56% (FY2025-29), MIT 62% (FY2026). The 2025 NIH 15% cap was vacated (First Circuit, Jan 2026) and is not used."
@@ -944,7 +955,7 @@ parameters:
 correlations:
 
   - name: recipes_vs_success
-    parameters: [synth.recipes_per_target, synth.success_given_correct_label]
+    parameters: [synth.recipes_per_target, synth.success_unconditional]
     sign: negative
     reason: "A-Lab's 6.19 recipes per target averages successes and failures. Failed targets exhaust the recipe budget, successes stop early, so a world with high success also has fewer recipes per target. High recipes with high success is not physical."
     stage2_handling: "Draw success, then recipes conditionally: recipes = success x (recipes per successful target) + (1 - success) x (recipes per failed target). Needs A-Lab's per-target recipe counts split by outcome (Supplementary data; not yet in sources/)."
@@ -970,7 +981,7 @@ correlations:
     stage2_handling: "Reject draws whose implied pass fraction exceeds 1, and report the implied false-positive rate of accepted draws."
 
   - name: success_vs_novelty_worldview
-    parameters: [synth.success_given_correct_label, novelty.science_frac, dft.wrong_verdict_frac]
+    parameters: [synth.success_unconditional, novelty.science_frac, dft.wrong_verdict_frac]
     sign: positive
     reason: "Success and novelty come from the same contested re-analyses of the same experiments. A-Lab's 70% success and its novelty claim are one reading; Leeman et al.'s 5% success and zero new materials are another. Low success with high novelty mixes incompatible readings. The wrong-verdict share belongs to the same reading: A-Lab attributes only 3 of 57 failures to computation, while Leeman finds most targets are known disordered phases, i.e. the prediction was wrong."
     stage2_handling: "Do not sample independently. Report the named scenarios below next to the Monte Carlo; within the Monte Carlo, condition novelty and w on a drawn scenario."
@@ -996,7 +1007,7 @@ scenarios:
   optimistic_alab:
     description: "A-Lab's own reading (Szymanski et al. 2023, as corrected 2026)."
     values:
-      synth.success_given_correct_label: 0.7037   # 38/54, computational failures excluded
+      synth.success_unconditional: 0.631579  # 36/57, unconditional (corrected count)
       dft.wrong_verdict_frac: 0.132               # lowest flip rate in sources; A-Lab: 3 of 57 targets failed computationally
       novelty.science_frac: 0.25                  # most generous figure in sources (9/36 not attributed to known phases)
     note: "A-Lab's correction makes no new-to-science claim ('new to the platform, not necessarily new to science'), so no A-Lab number exists for novelty; 0.25 is the most generous figure our sources allow."
@@ -1004,7 +1015,7 @@ scenarios:
   middle_prein:
     description: "Prein et al. 2025, an independent automated campaign (7 of 16 characterised targets made)."
     values:
-      synth.success_given_correct_label: 0.4375
+      synth.success_unconditional: 0.4375
       dft.wrong_verdict_frac: 0.16
       novelty.science_frac: 0.0964                # Wilson upper bound on 0/36; Prein et al. report no novelty figure
     note: "Matches the stage-1 base values."
@@ -1012,7 +1023,7 @@ scenarios:
   pessimistic_leeman:
     description: "Leeman et al. 2024's re-analysis of A-Lab."
     values:
-      synth.success_given_correct_label: 0.05     # 3/58
+      synth.success_unconditional: 0.051724  # 3/58, unconditional
       dft.wrong_verdict_frac: 0.3434              # highest flip rate in sources; Leeman: most targets are known disordered phases
       novelty.science_frac: 0.0                   # 0 of 36 new
     note: "Novelty 0 makes level 3 unbounded (no new material at any spend). That is this worldview's result, not a numerical failure."
@@ -1123,7 +1134,7 @@ monte_carlo:
         optimistic_alab:
           source: "Szymanski et al., Nature (2023), corrected January 2026"
           standing: "peer-reviewed (Nature), 57 targets; the experiment Leeman et al. re-analyse"
-          success: {type: beta_counts, k: 38, n: 54}
+          success: {type: beta_counts, k: 36, n: 57}   # unconditional (changed 2026-10-11 from 38/54)
           novelty: {type: beta_counts, k: 9, n: 36}
           wrong_verdict: {type: uniform, low: 0.132, high: 0.16}
         middle_prein:
@@ -1141,4 +1152,4 @@ monte_carlo:
       notes: "A-Lab's novelty uses Leeman's 9 of 36 not attributed to known phases (A-Lab's correction makes no new-to-science claim). Prein reports no novelty figure and inherits the only count, 0 of 36. Wrong-verdict share: GNoME's 13.2-16% flip range (no counts) for A-Lab and Prein; An et al.'s 57 of 166 flips for Leeman."
     recipes:
       reason: "Recipes per target fall as per-target success rises (correlation recipes_vs_success)."
-      method: "recipes = p / q with q = 1 - (1 - p)^(1 / B), p = (1 - wrong verdict share) x success, B = synth.recipe_budget. Reproduces A-Lab's 6.19 at p = 36/57."
+      method: "recipes = p / q with q = 1 - (1 - p)^(1 / B), p = unconditional success, B = synth.recipe_budget. Reproduces A-Lab's 6.19 at p = 36/57. CHANGED 2026-10-11: p was (1 - wrong verdict share) x success, which both double-charged computational failure and contradicted this note's own calibration point."

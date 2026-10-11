@@ -36,5 +36,9 @@ def test_fill_is_idempotent():
 def test_no_stale_overhead_figures():
     """Values from before the effective-rate fix (negotiated 58% as base) must not survive untagged."""
     text = DRAFT.read_text()
-    for stale in ("$3,794", "$3,765 / $3,897", "$3,722", "$2,751", "$65,403", "$5,186", "within 3%", "21 to 119"):
+    # Figures superseded by the 2026-10-11 repairs (unconditional success; matched indirect base).
+    # "within 3%" is deliberately NOT listed: the repaired model gives a 3% spread again.
+    for stale in ("$3,794", "$3,765 / $3,897", "$3,722", "$2,751", "$65,403", "$5,186", "21 to 119",
+                  "$3,653", "$3,625", "$3,756", "$3,581", "$213 per attempt", "20 to 114", "20 to 83",
+                  "38/54", "38 of 54", "given the DFT verdict is right"):
         assert stale not in text, stale

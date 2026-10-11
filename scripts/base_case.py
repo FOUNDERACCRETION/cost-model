@@ -219,7 +219,7 @@ def main():
             print(f"  {target}x level-2 spread: not reachable before filtered success hits 1 (max {res['spread']:.2f}x)")
         else:
             print(f"  {target}x level-2 spread needs multiplier {res['multiplier']:.3f}: filtered pipelines' success"
-                  f" {res['filtered_success']:.3f} against A's {p['synth_success_given_correct']:.3f}")
+                  f" {res['filtered_success']:.3f} against A's {p['synth_success_unconditional']:.3f}")
 
     print()
     print("DISCOVERY ACCELERATION FACTOR (purity / prevalence; no assumption about which classifier rate transfers)")

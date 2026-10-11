@@ -15,9 +15,9 @@ paper/references.bib (tests/test_citations.py). -->
 
 Artificial intelligence has made the computational stages of inorganic materials discovery extremely cheap, and the field widely asserts that synthesis is now the bottleneck. That assertion has never been priced. We build an end-to-end cost model that follows a candidate material from generation through machine-learned screening, density functional theory verification and laboratory synthesis, and we report the cost of three outputs: a DFT-confirmed stable material, an experimentally validated one, and one that is genuinely new to science. Every parameter is sourced and graded, several are measured first-hand, and the complete model is released.
 
-We find that pipeline choice is economically immaterial once synthesis is included. A machine-learned interatomic potential pre-filter cuts cost per DFT-confirmed stable material by 39%<!--k:l1_B_cheaper_pct-->, and a generative candidate pool costs roughly four times an ion-exchange pool at the same stage, but all three pipelines land within 4%<!--k:l2_spread_base_pct--> of one another on cost per experimentally validated material, because the synthesis term contains no pipeline-dependent quantity. Across 20,000<!--k:mc_draws--> simulations the cheaper pipeline wins in 99.5%<!--k:kill_l2_p_B_lt_A--> of draws and by more than 10% in 1%<!--k:kill_l2_material_BA-->.
+We find that pipeline choice is economically immaterial once synthesis is included. A machine-learned interatomic potential pre-filter cuts cost per DFT-confirmed stable material by 39%<!--k:l1_B_cheaper_pct-->, and a generative candidate pool costs roughly four times an ion-exchange pool at the same stage, but all three pipelines land within 3%<!--k:l2_spread_base_pct--> of one another on cost per experimentally validated material, because the synthesis term contains no pipeline-dependent quantity. Across 20,000<!--k:mc_draws--> simulations the cheaper pipeline wins in 99.4%<!--k:kill_l2_p_B_lt_A--> of draws and by more than 10% in 1%<!--k:kill_l2_material_BA-->.
 
-The quantity that does govern the answer is the synthesis success rate, which three groups read three ways from essentially two experiments. Cost per validated material ranges from about $2,653<!--k:reading_optimistic_alab_B--> under the originating laboratory's own reading to about $63,072<!--k:reading_pessimistic_leeman_B--> under a published re-analysis of the same campaign, a factor of 24<!--k:reading_factor_B-->. No computational improvement closes this gap: the best compute lever is 20<!--k:returns_ratio_lo--> to 114<!--k:returns_ratio_hi--> times weaker per percentage point than the synthesis levers, and the only lever available at zero cost moves the result by under 3%.
+The quantity that does govern the answer is the synthesis success rate, which three groups read three ways from essentially two experiments. Cost per validated material ranges from about $2,975<!--k:reading_optimistic_alab_B--> under the originating laboratory's own reading to about $49,917<!--k:reading_pessimistic_leeman_B--> under a published re-analysis of the same campaign, a factor of 17<!--k:reading_factor_B-->. No computational improvement closes this gap: the best compute lever is 26<!--k:returns_ratio_lo--> to 136<!--k:returns_ratio_hi--> times weaker per percentage point than the synthesis levers, and the only lever available at zero cost moves the result by under 3%.
 
 We also report that a widely used stability-prediction benchmark overstates filter performance on realistically constructed candidate pools. The discovery acceleration factor of a standard potential is 1.65 on an ion-exchange pool against 3.36 reported on the benchmark test set, and 1.27 on a generative pool.
 
@@ -43,11 +43,11 @@ Our contributions are:
 
 1. **An end-to-end dollar model of materials discovery**, from generation through synthesis, across three pipelines, with every parameter sourced, graded by evidence quality, and released with the code.
 
-2. **The finding that pipeline choice is economically immaterial once synthesis is included.** An MLIP pre-filter cuts cost per DFT-confirmed stable material by 39%<!--k:l1_B_cheaper_pct--> and a generative pool costs about four times an ion-exchange pool at the same stage, yet the three pipelines differ by 4%<!--k:l2_spread_base_pct--> in cost per experimentally validated material. This is structural: the synthesis term contains no pipeline-dependent quantity.
+2. **The finding that pipeline choice is economically immaterial once synthesis is included.** An MLIP pre-filter cuts cost per DFT-confirmed stable material by 39%<!--k:l1_B_cheaper_pct--> and a generative pool costs about four times an ion-exchange pool at the same stage, yet the three pipelines differ by 3%<!--k:l2_spread_base_pct--> in cost per experimentally validated material. This is structural: the synthesis term contains no pipeline-dependent quantity.
 
-3. **The finding that the answer is governed by one contested parameter.** Cost per validated material spans a factor of 24<!--k:reading_factor_B--> across three published readings of the synthesis evidence, which is far larger than any difference between methods. The spread is not measurement uncertainty; two of the three readings interpret the same experiment and disagree about what was made.
+3. **The finding that the answer is governed by one contested parameter.** Cost per validated material spans a factor of 17<!--k:reading_factor_B--> across three published readings of the synthesis evidence, which is far larger than any difference between methods. The spread is not measurement uncertainty; two of the three readings interpret the same experiment and disagree about what was made.
 
-4. **A quantified ranking of where improvement pays.** Per percentage point, synthesis levers are worth 20<!--k:returns_ratio_lo--> to 114<!--k:returns_ratio_hi--> times the best computational lever. The only lever whose cost is known to be zero, switching to spot compute pricing, moves cost per validated material by 0.7%<!--k:spot_lo--> to 2.9%<!--k:spot_hi-->.
+4. **A quantified ranking of where improvement pays.** Per percentage point, synthesis levers are worth 26<!--k:returns_ratio_lo--> to 136<!--k:returns_ratio_hi--> times the best computational lever. The only lever whose cost is known to be zero, switching to spot compute pricing, moves cost per validated material by 0.6%<!--k:spot_lo--> to 2.3%<!--k:spot_hi-->.
 
 5. **An independent observation about benchmark transferability.** A standard potential's discovery acceleration factor is 1.65 on a realistically constructed ion-exchange pool against 3.36 reported on the standard benchmark test set, and 1.27 on a generative pool. Classification rates measured on one candidate distribution do not transfer to another, and using them where direct measurements exist overstates the value of filtering by more than a factor of two.
 
@@ -75,7 +75,7 @@ Agrawal, McHale and Oettl model innovation as sequential search over a combinato
 
 That is our result in theoretical form. Their model is analytical and uncalibrated; it specifies the conditions under which prediction and testing are complements without saying, for any real discovery problem, how far apart the two stages actually are. Our contribution is to supply that calibration for inorganic materials: prediction is so much cheaper than testing that improving prediction cannot move the total cost, and the ratio is roughly two orders of magnitude per percentage point of improvement.
 
-> **[FOR AUTHOR REVIEW — added overnight; neither Agrawal et al. paper has been read in full.]** The same authors have since extended the argument. Their 2026 working paper "AI in Science" [@agrawal2026aiinscience] decomposes knowledge production into a multi-stage process and argues that the returns to AI are "jagged": they differ across domains and across workflow stages, with strong returns to design aids and subtler returns elsewhere (abstract). Our result is a stage-level statement of that kind for one domain: the returns to computational improvement are concentrated in a stage that carries 1%<!--k:compute_share_lo--> to 5%<!--k:compute_share_hi--> of the cost of a validated material. We are therefore calibrating a claim they made in 2026 as well as the 2024 prioritised-search model. Two cautions before this paragraph stands: their stages are stages of knowledge production (for example question generation versus design), not the prediction-versus-testing split we price, so the mapping needs to be argued rather than asserted; and the summary here rests on the abstract alone.
+> **[FOR AUTHOR REVIEW — added overnight; neither Agrawal et al. paper has been read in full.]** The same authors have since extended the argument. Their 2026 working paper "AI in Science" [@agrawal2026aiinscience] decomposes knowledge production into a multi-stage process and argues that the returns to AI are "jagged": they differ across domains and across workflow stages, with strong returns to design aids and subtler returns elsewhere (abstract). Our result is a stage-level statement of that kind for one domain: the returns to computational improvement are concentrated in a stage that carries 1%<!--k:compute_share_lo--> to 4%<!--k:compute_share_hi--> of the cost of a validated material. We are therefore calibrating a claim they made in 2026 as well as the 2024 prioritised-search model. Two cautions before this paragraph stands: their stages are stages of knowledge production (for example question generation versus design), not the prediction-versus-testing split we price, so the mapping needs to be argued rather than asserted; and the summary here rests on the abstract alone.
 
 We also share their caution about where returns accrue. The practical implication of their complementarity result, in our setting, is that computational improvement without synthesis investment buys very little.
 
@@ -87,7 +87,7 @@ The A-Lab campaign reported realising a set of targets from computational predic
 
 Separately, large-scale generative predictions have been questioned on novelty grounds: a critique of one 380,000-structure stable set reports that a random sample of ten entries all matched known structure types, and that a substantial share contain radioactive elements [@cheetham2024]. That critique concerns novelty only; it makes no claim about synthesis as a bottleneck.
 
-**Gap, and our position in it.** We do not adjudicate this dispute. We take the three readings as three coherent worldviews, propagate each through the cost model, and report what each implies. The resulting factor of 24<!--k:reading_factor_B--> is, we argue, the most policy-relevant number in the paper: it says that the field does not currently know what a validated material costs to within an order of magnitude, and that no amount of computational progress will tell it.
+**Gap, and our position in it.** We do not adjudicate this dispute. We take the three readings as three coherent worldviews, propagate each through the cost model, and report what each implies. The resulting factor of 17<!--k:reading_factor_B--> is, we argue, the most policy-relevant number in the paper: it says that the field does not currently know what a validated material costs to within an order of magnitude, and that no amount of computational progress will tell it.
 
 ---
 
@@ -145,7 +145,7 @@ No published dollar cost per solid-state synthesis attempt exists. We build it b
 
 Labour pairs a graduate trainee's stipend and fringe with trainee throughput of 10 to 20 compositions per week [CITATION NEEDED: the Liverpool manual-synthesis throughput estimate, https://pmc.ncbi.nlm.nih.gov/articles/PMC10866347/, has no bib entry yet], so person and throughput match. The labour term is a trainee's because that is who makes materials in academic laboratories, and the cost of reaching the research frontier is itself rising: the training a researcher needs before contributing has lengthened as knowledge accumulates [@jones2009burden]. Crucible cost is divided by firings survived. The reference campaign attempted roughly six recipes per target (353 for 57) [@szymanski2023alab], so each target is charged six attempts, and failed targets still pay for all of theirs.
 
-At base an attempt costs $213<!--k:attempt-->: XRD $80<!--k:attempt_xrd_r-->, furnace $38<!--k:attempt_furnace_r-->, labour $40<!--k:attempt_labour_r-->, indirect cost $22<!--k:attempt_indirect_r-->, tuition $21<!--k:attempt_tuition_r-->, precursors $2.64<!--k:attempt_precursors-->.
+At base an attempt costs $271<!--k:attempt-->: XRD $80<!--k:attempt_xrd_r-->, furnace $38<!--k:attempt_furnace_r-->, labour $40<!--k:attempt_labour_r-->, indirect cost $80<!--k:attempt_indirect_r-->, tuition $21<!--k:attempt_tuition_r-->, precursors $2.64<!--k:attempt_precursors-->.
 
 ### 3.6 Fixed and marginal cost
 
@@ -207,17 +207,17 @@ Synthesis success, novelty and the wrong-verdict share all come from these same 
 
 ### 4.5 Accounting choices
 
-Institutional overhead is the largest single accounting choice in synthesis cost, and synthesis is 95%<!--k:span_base_share_lo--> to 99%<!--k:span_base_share_hi--> of the level-2 figure. Two choices are involved: the rate, and the base it is charged on.
+Institutional overhead is the largest single accounting choice in synthesis cost, and synthesis is 96%<!--k:span_base_share_lo--> to 99%<!--k:span_base_share_hi--> of the level-2 figure. Two choices are involved: the rate, and the base it is charged on.
 
-**The rate.** We use the *effective* indirect cost recovery rate, 42%<!--k:indirect_rate-->: the average that NIH actually pays across more than 350 grantee institutions [@azoulay2025icr]. The same study puts the average *negotiated* rate at 58%<!--k:indirect_rate_high-->, the ceiling an institution may charge; applying it would overstate indirect cost by about a third, raising the attempt cost to $221<!--k:attempt_at_negotiated--> and level 2 for pipeline B by 4%<!--k:negotiated_l2_rise_pct--> to $3,765<!--k:l2_B_at_negotiated-->. The negotiated rate is our high value and the low end of the typical effective range, 25%<!--k:indirect_rate_low-->, our low. Two caveats: the data are NIH indirect-cost records, covering universities, independent hospitals and research institutes, not a census of US universities; and the effective rate is measured against total direct costs, a wider base than the one we charge it on, so 42% leans low.
+**The rate.** We use the *effective* indirect cost recovery rate, 42%<!--k:indirect_rate-->: the average that NIH actually pays across more than 350 grantee institutions [@azoulay2025icr]. The same study puts the average *negotiated* rate at 45%<!--k:indirect_rate_high-->, the ceiling an institution may charge; applying it would overstate indirect cost by about a third, raising the attempt cost to $276<!--k:attempt_at_negotiated--> and level 2 for pipeline B by 2%<!--k:negotiated_l2_rise_pct--> to $3,948<!--k:l2_B_at_negotiated-->. The negotiated rate is our high value and the low end of the typical effective range, 25%<!--k:indirect_rate_low-->, our low. Two caveats: the data are NIH indirect-cost records, covering universities, independent hospitals and research institutes, not a census of US universities; and the effective rate is measured against total direct costs, a wider base than the one we charge it on, so 42% leans low.
 
 **The base.**
 
 | Basis | $ per attempt | Level 2: A / B / C |
 |---|---|---|
-| Direct costs only | $191<!--k:basis_bench_attempt--> | $3,284<!--k:basis_bench_l2_A--> / $3,255<!--k:basis_bench_l2_B--> / $3,387<!--k:basis_bench_l2_C--> |
-| Overhead, service fees outside the base (default) | $213<!--k:basis_funder_attempt--> | $3,653<!--k:basis_funder_l2_A--> / $3,625<!--k:basis_funder_l2_B--> / $3,756<!--k:basis_funder_l2_C--> |
-| Overhead, service fees inside the base | $262<!--k:basis_funder_fees_in_attempt--> | $4,487<!--k:basis_funder_fees_in_l2_A--> / $4,459<!--k:basis_funder_fees_in_l2_B--> / $4,591<!--k:basis_funder_fees_in_l2_C--> |
+| Direct costs only | $191<!--k:basis_bench_attempt--> | $2,758<!--k:basis_bench_l2_A--> / $2,734<!--k:basis_bench_l2_B--> / $2,845<!--k:basis_bench_l2_C--> |
+| Overhead, service fees outside the base (default) | $271<!--k:basis_funder_attempt--> | $3,891<!--k:basis_funder_l2_A--> / $3,868<!--k:basis_funder_l2_B--> / $3,978<!--k:basis_funder_l2_C--> |
+| Overhead, service fees inside the base | $271<!--k:basis_funder_fees_in_attempt--> | $3,891<!--k:basis_funder_fees_in_l2_A--> / $3,868<!--k:basis_funder_fees_in_l2_B--> / $3,978<!--k:basis_funder_fees_in_l2_C--> |
 
 We default to including overhead because the question is the resource cost of a validated material, which a funder bears. We exclude service-centre fees from the overhead base because federal rules require recharge rates to consist of direct costs and an allocable share of indirect costs [@cfr200468], so charging institutional overhead on top counts it twice. Practice varies and a reviewer may reject this.
 
@@ -230,9 +230,9 @@ We default to including overhead because the question is the resource cost of a 
 | Output | A | B | C |
 |---|---|---|---|
 | 1. per DFT-confirmed stable material | $31.48<!--k:l1_A--> | $19.05<!--k:l1_B--> | $76.61<!--k:l1_C--> |
-| 2. per experimentally validated material | $3,653<!--k:l2_A--> | $3,625<!--k:l2_B--> | $3,756<!--k:l2_C--> |
-| — of which compute | $71.95<!--k:l2_compute_A--> | $43.55<!--k:l2_compute_B--> | $175<!--k:l2_compute_C--> |
-| — of which synthesis | $3,581<!--k:l2_synthesis_A--> | $3,581<!--k:l2_synthesis_B--> | $3,581<!--k:l2_synthesis_C--> |
+| 2. per experimentally validated material | $3,891<!--k:l2_A--> | $3,868<!--k:l2_B--> | $3,978<!--k:l2_C--> |
+| — of which compute | $60.44<!--k:l2_compute_A--> | $36.58<!--k:l2_compute_B--> | $147<!--k:l2_compute_C--> |
+| — of which synthesis | $3,831<!--k:l2_synthesis_A--> | $3,831<!--k:l2_synthesis_B--> | $3,831<!--k:l2_synthesis_C--> |
 
 The synthesis term is identical across pipelines. This is structural, not coincidental.
 
@@ -266,7 +266,7 @@ The mechanism, which rests on an assumption, is that if the benchmark's recall t
 
 ### 5.5 Pipeline choice is immaterial once synthesis is included
 
-At base DFT cost the pipelines are 1.04<!--k:l2_spread_base-->× apart at level 2; at the top of the span, 1.55<!--k:l2_spread_high-->×. The near-equality is structural. Level-2 cost is
+At base DFT cost the pipelines are 1.03<!--k:l2_spread_base-->× apart at level 2; at the top of the span, 1.45<!--k:l2_spread_high-->×. The near-equality is structural. Level-2 cost is
 
 > compute per DFT-confirmed stable / success + recipes × cost per attempt / ((1 − w) × success)
 
@@ -274,11 +274,11 @@ and the second term contains no pipeline-dependent quantity. Every DFT-stable ve
 
 | DFT core-h | Level 1: A / B / C | Level 2: A / B / C | Spread | Synthesis share |
 |---|---|---|---|---|
-| 2.975 | $1.72<!--k:span_low_l1_A--> / $1.04<!--k:span_low_l1_B--> / $4.56<!--k:span_low_l1_C--> | $3,585<!--k:span_low_l2_A--> / $3,583<!--k:span_low_l2_B--> / $3,591<!--k:span_low_l2_C--> | 1.00<!--k:span_low_spread-->× | 100%<!--k:span_low_share--> |
-| 54.5 | $31.48<!--k:span_base_l1_A--> / $19.05<!--k:span_base_l1_B--> / $76.61<!--k:span_base_l1_C--> | $3,653<!--k:span_base_l2_A--> / $3,625<!--k:span_base_l2_B--> / $3,756<!--k:span_base_l2_C--> | 1.04<!--k:span_base_spread-->× | 95%<!--k:span_base_share_lo-->–99%<!--k:span_base_share_hi--> |
-| 1,000 | $577<!--k:span_high_l1_A--> / $349<!--k:span_high_l1_B--> / $1,398<!--k:span_high_l1_C--> | $4,900<!--k:span_high_l2_A--> / $4,379<!--k:span_high_l2_B--> / $6,776<!--k:span_high_l2_C--> | 1.55<!--k:span_high_spread-->× | 53%<!--k:span_high_share_lo-->–82%<!--k:span_high_share_hi--> |
+| 2.975 | $1.72<!--k:span_low_l1_A--> / $1.04<!--k:span_low_l1_B--> / $4.56<!--k:span_low_l1_C--> | $3,834<!--k:span_low_l2_A--> / $3,833<!--k:span_low_l2_B--> / $3,840<!--k:span_low_l2_C--> | 1.00<!--k:span_low_spread-->× | 100%<!--k:span_low_share--> |
+| 54.5 | $31.48<!--k:span_base_l1_A--> / $19.05<!--k:span_base_l1_B--> / $76.61<!--k:span_base_l1_C--> | $3,891<!--k:span_base_l2_A--> / $3,868<!--k:span_base_l2_B--> / $3,978<!--k:span_base_l2_C--> | 1.03<!--k:span_base_spread-->× | 96%<!--k:span_base_share_lo-->–99%<!--k:span_base_share_hi--> |
+| 1,000 | $577<!--k:span_high_l1_A--> / $349<!--k:span_high_l1_B--> / $1,398<!--k:span_high_l1_C--> | $4,939<!--k:span_high_l2_A--> / $4,502<!--k:span_high_l2_B--> / $6,514<!--k:span_high_l2_C--> | 1.45<!--k:span_high_spread-->× | 59%<!--k:span_high_share_lo-->–85%<!--k:span_high_share_hi--> |
 
-**The 1.04<!--k:l2_spread_base-->× is a lower bound.** It assumes synthesis success does not depend on how a candidate was found, and that assumption has a likely direction: MLIPs are trained on databases dominated by materials that have actually been made, so a pre-filter plausibly favours candidates that are *more* synthesisable. If so the true spread is wider. Section 7 treats this as the primary threat to validity.
+**The 1.03<!--k:l2_spread_base-->× is a lower bound.** It assumes synthesis success does not depend on how a candidate was found, and that assumption has a likely direction: MLIPs are trained on databases dominated by materials that have actually been made, so a pre-filter plausibly favours candidates that are *more* synthesisable. If so the true spread is wider. Section 7 treats this as the primary threat to validity.
 
 ### 5.6 Under uncertainty: ordered but immaterial
 
@@ -286,11 +286,11 @@ Across 20,000<!--k:mc_draws--> draws respecting the documented correlations, wit
 
 | Level | P(B < A) | P(differ > 10%) | Overlap of marginals |
 |---|---|---|---|
-| 1 | 99.5%<!--k:kill_l1_p_B_lt_A--> | 98%<!--k:kill_l1_material_BA--> | 89%<!--k:kill_l1_overlap_BA--> |
-| 2 | 99.5%<!--k:kill_l2_p_B_lt_A--> | 1%<!--k:kill_l2_material_BA--> | 98%<!--k:kill_l2_overlap_BA--> |
-| 3 | 99.5%<!--k:kill_l3_p_B_lt_A--> | 1%<!--k:kill_l3_material_BA--> | 99%<!--k:kill_l3_overlap_BA--> |
+| 1 | 99.4%<!--k:kill_l1_p_B_lt_A--> | 98%<!--k:kill_l1_material_BA--> | 89%<!--k:kill_l1_overlap_BA--> |
+| 2 | 99.4%<!--k:kill_l2_p_B_lt_A--> | 1%<!--k:kill_l2_material_BA--> | 99%<!--k:kill_l2_overlap_BA--> |
+| 3 | 99.4%<!--k:kill_l3_p_B_lt_A--> | 1%<!--k:kill_l3_material_BA--> | 99%<!--k:kill_l3_overlap_BA--> |
 
-At level 1 the pipelines separate. At level 2 the ordering survives draw by draw — B is cheaper in 99.5%<!--k:kill_l2_p_B_lt_A--> of worlds, because the synthesis term is shared and the compute term is not — but the difference exceeds 10% in only 1%<!--k:kill_l2_material_BA--> of draws. We call this *ordered but immaterial*.
+At level 1 the pipelines separate. At level 2 the ordering survives draw by draw — B is cheaper in 99.4%<!--k:kill_l2_p_B_lt_A--> of worlds, because the synthesis term is shared and the compute term is not — but the difference exceeds 10% in only 1%<!--k:kill_l2_material_BA--> of draws. We call this *ordered but immaterial*.
 
 The marginal distributions overlap heavily at every level, including level 1. Absolute cost is dominated by uncertainty all pipelines share. Only the paired comparison separates them, and only at level 1.
 
@@ -298,13 +298,13 @@ The marginal distributions overlap heavily at every level, including level 1. Ab
 
 | Reading | Level 2, pipeline B (90% interval) |
 |---|---|
-| Optimistic | $2,653<!--k:reading_optimistic_alab_B--> ($1,872–$3,725<!--k:reading_optimistic_alab_B_interval-->) |
-| Middle | $5,004<!--k:reading_middle_prein_B--> ($2,859–$9,923<!--k:reading_middle_prein_B_interval-->) |
-| Pessimistic | $63,072<!--k:reading_pessimistic_leeman_B--> ($27,021–$184,697<!--k:reading_pessimistic_leeman_B_interval-->) |
+| Optimistic | $2,975<!--k:reading_optimistic_alab_B--> ($2,000–$4,379<!--k:reading_optimistic_alab_B_interval-->) |
+| Middle | $5,008<!--k:reading_middle_prein_B--> ($2,724–$10,109<!--k:reading_middle_prein_B_interval-->) |
+| Pessimistic | $49,917<!--k:reading_pessimistic_leeman_B--> ($21,013–$149,247<!--k:reading_pessimistic_leeman_B_interval-->) |
 
-Between the extremes that is a factor of 24<!--k:reading_factor_B-->. Within any one reading, pipeline choice moves the median by at most 1.07<!--k:within_reading_max-->×.
+Between the extremes that is a factor of 17<!--k:reading_factor_B-->. Within any one reading, pipeline choice moves the median by at most 1.07<!--k:within_reading_max-->×.
 
-**This factor of 24<!--k:reading_factor_B--> is not measurement uncertainty.** Two of the three readings interpret the same experiment and disagree about what was made. No reanalysis of existing data closes the gap; it requires new synthesis campaigns with phase identification both sides accept.
+**This factor of 17<!--k:reading_factor_B--> is not measurement uncertainty.** Two of the three readings interpret the same experiment and disagree about what was made. No reanalysis of existing data closes the gap; it requires new synthesis campaigns with phase identification both sides accept.
 
 Where a single number is unavoidable we quote the middle reading with the spread beside it, and note that the middle reading is the least established of the three.
 
@@ -315,21 +315,21 @@ We report log-elasticity: the percentage fall in cost per 1% improvement in a le
 | Lever | A | B | C |
 |---|---|---|---|
 | Synthesis success rate | 1.000<!--k:el_success_A--> | 1.000<!--k:el_success_B--> | 1.000<!--k:el_success_C--> |
-| Recipes per target | 0.980<!--k:el_recipes_A--> | 0.988<!--k:el_recipes_B--> | 0.953<!--k:el_recipes_C--> |
-| Cost per synthesis attempt | 0.980<!--k:el_attempt_A--> | 0.988<!--k:el_attempt_B--> | 0.953<!--k:el_attempt_C--> |
-| Best compute lever | 0.020<!--k:el_compute_A--> | 0.012<!--k:el_compute_B--> | 0.047<!--k:el_compute_C--> |
+| Recipes per target | 0.984<!--k:el_recipes_A--> | 0.991<!--k:el_recipes_B--> | 0.963<!--k:el_recipes_C--> |
+| Cost per synthesis attempt | 0.984<!--k:el_attempt_A--> | 0.991<!--k:el_attempt_B--> | 0.963<!--k:el_attempt_C--> |
+| Best compute lever | 0.016<!--k:el_compute_A--> | 0.009<!--k:el_compute_B--> | 0.037<!--k:el_compute_C--> |
 
 **The synthesis levers are tied at unit elasticity and should not be ranked against each other.** Level-2 synthesis cost is recipes times cost per attempt divided by success, so each has elasticity one by construction. Success is exactly one because it also divides the compute term; the other two equal the synthesis share of total cost, and the small gap between them *is* the compute share rather than a difference in leverage.
 
-The finding is the magnitude gap: per percentage point, synthesis levers are worth 20<!--k:returns_ratio_lo--> to 114<!--k:returns_ratio_hi--> times the best computational lever.
+The finding is the magnitude gap: per percentage point, synthesis levers are worth 26<!--k:returns_ratio_lo--> to 136<!--k:returns_ratio_hi--> times the best computational lever.
 
-**One lever's cost is known, and it is zero.** Switching from on-demand to spot compute pricing is a 62%<!--k:spot_cpu_discount--> discount available today at no research cost. It changes cost per validated material by 0.7%<!--k:spot_lo--> to 2.9%<!--k:spot_hi-->. The levers worth up to two orders of magnitude more all require synthesis research whose cost nobody has measured. Ranking returns per dollar rather than per percentage point would need those costs; we observe only that the free lever is the negligible one.
+**One lever's cost is known, and it is zero.** Switching from on-demand to spot compute pricing is a 62%<!--k:spot_cpu_discount--> discount available today at no research cost. It changes cost per validated material by 0.6%<!--k:spot_lo--> to 2.3%<!--k:spot_hi-->. The levers worth up to two orders of magnitude more all require synthesis research whose cost nobody has measured. Ranking returns per dollar rather than per percentage point would need those costs; we observe only that the free lever is the negligible one.
 
 ### 5.9 Break-evens
 
 **The filter's fixed cost is a non-result.** There is no batch size at which it fails to pay for itself: loading the potential costs 0.00024<!--k:fixed_extra_core_h--> core-hours and the filter saves 29.5<!--k:fixed_saving_core_h--> core-hours per candidate. The informative quantity is the per-candidate saving — any additional fixed cost of X core-hours, such as fine-tuning, repays after X/29.5<!--k:fixed_saving_core_h--> candidates.
 
-**Synthesis cost at which compute begins to matter.** Taking "matters" as compute reaching 10% of level-2 cost: at base DFT cost, attempt cost would have to fall from $213<!--k:attempt--> to between $23.26<!--k:threshold_lo--> and $93.52<!--k:threshold_hi--> depending on pipeline. At the top of the DFT span compute already matters at today's attempt cost.
+**Synthesis cost at which compute begins to matter.** Taking "matters" as compute reaching 10% of level-2 cost: at base DFT cost, attempt cost would have to fall from $271<!--k:attempt--> to between $23.26<!--k:threshold_lo--> and $93.52<!--k:threshold_hi--> depending on pipeline. At the top of the DFT span compute already matters at today's attempt cost.
 
 **Generative-pool parity.** C matches B at level 1 when filter purity on the generative pool reaches 15.5%<!--k:parity_purity-->, 4.1<!--k:parity_ratio--> times the measured value.
 
@@ -337,7 +337,7 @@ The finding is the magnitude gap: per percentage point, synthesis levers are wor
 
 ### 5.10 Where the evidence is weakest
 
-One-at-a-time sensitivity is dominated by a single parameter at each level: DFT cost at level 1 (99.8%<!--k:tornado_l1_share--> of variance) and synthesis success at level 2 (98.8%<!--k:tornado_l2_share-->). These dominate because they have the widest ranges, not because cost responds most strongly to them. **The tornado maps where the evidence is weakest rather than where the leverage is.** The two quantities most in need of better measurement are DFT cost on modern hardware and synthesis success from independent campaigns.
+One-at-a-time sensitivity is dominated by a single parameter at each level: DFT cost at level 1 (99.8%<!--k:tornado_l1_share--> of variance) and synthesis success at level 2 (98.6%<!--k:tornado_l2_share-->). These dominate because they have the widest ranges, not because cost responds most strongly to them. **The tornado maps where the evidence is weakest rather than where the leverage is.** The two quantities most in need of better measurement are DFT cost on modern hardware and synthesis success from independent campaigns.
 
 ---
 
@@ -345,7 +345,7 @@ One-at-a-time sensitivity is dominated by a single parameter at each level: DFT 
 
 ### 6.1 For research groups
 
-The choice between computational pipelines is, in cost terms, a choice about a line item worth 1%<!--k:compute_share_lo--> to 5%<!--k:compute_share_hi--> of the total. A group that intends to take candidates into the laboratory should optimise the laboratory. A group that stops at computational screening faces a real and substantial choice — the pipelines differ by a factor of four at that stage — but should not describe that choice as affecting the cost of discovering a material, because it does not.
+The choice between computational pipelines is, in cost terms, a choice about a line item worth 1%<!--k:compute_share_lo--> to 4%<!--k:compute_share_hi--> of the total. A group that intends to take candidates into the laboratory should optimise the laboratory. A group that stops at computational screening faces a real and substantial choice — the pipelines differ by a factor of four at that stage — but should not describe that choice as affecting the cost of discovering a material, because it does not.
 
 Our results also suggest two specific practices. Report an MLIP's convergence rate alongside its accuracy, because a potential that fails to converge on most structures from a cold start has an effective cost unrelated to its per-step speed. And run screening single-threaded across many structures rather than multi-threaded on one, which on our platform was the difference between one core-hour and eighty.
 
@@ -353,7 +353,7 @@ Our results also suggest two specific practices. Report an MLIP's convergence ra
 
 The next dollar of improvement goes to synthesis, by between one and two orders of magnitude. That is the paper's clearest practical conclusion and it is robust across every parameter configuration we tested.
 
-But the more valuable expenditure may be one the model cannot price. The factor of 24<!--k:reading_factor_B--> between readings of the synthesis evidence exceeds every methodological difference in the paper combined. Funding independent synthesis campaigns with phase identification that both sides of the current dispute would accept would do more to establish what materials discovery costs than any improvement to the discovery methods themselves. At present the field does not know this number to within an order of magnitude.
+But the more valuable expenditure may be one the model cannot price. The factor of 17<!--k:reading_factor_B--> between readings of the synthesis evidence exceeds every methodological difference in the paper combined. Funding independent synthesis campaigns with phase identification that both sides of the current dispute would accept would do more to establish what materials discovery costs than any improvement to the discovery methods themselves. At present the field does not know this number to within an order of magnitude.
 
 ### 6.3 For autonomous laboratory programmes
 
@@ -367,21 +367,21 @@ Our Section 5.4 result is addressed to a different literature than the rest of t
 
 ### 6.5 For investors and the public account of AI in science
 
-Claims that AI accelerates materials discovery by one or two orders of magnitude are, on our accounting, claims about a stage representing 1%<!--k:compute_share_lo--> to 5%<!--k:compute_share_hi--> of the cost of producing a validated material. They may well be true as stated. They do not imply a comparable reduction in the cost of discovery, and the gap between the two statements is where most of the money is. The same caution applies to output measures more generally: large language models have measurably raised the volume of scientific writing [@kusumegi2025], and volume of output is not the cost of a validated result.
+Claims that AI accelerates materials discovery by one or two orders of magnitude are, on our accounting, claims about a stage representing 1%<!--k:compute_share_lo--> to 4%<!--k:compute_share_hi--> of the cost of producing a validated material. They may well be true as stated. They do not imply a comparable reduction in the cost of discovery, and the gap between the two statements is where most of the money is. The same caution applies to output measures more generally: large language models have measurably raised the volume of scientific writing [@kusumegi2025], and volume of output is not the cost of a validated result.
 
 ---
 
 ## 7. Limitations
 
-1. **Primary threat to validity: synthesis success is assumed independent of pipeline.** No source we found measures this. The expected direction makes the 1.04<!--k:l2_spread_base-->× spread a lower bound. The follow-up study is to attempt matched sets of filtered and unfiltered DFT-stable candidates and compare success rates.
+1. **Primary threat to validity: synthesis success is assumed independent of pipeline.** No source we found measures this. The expected direction makes the 1.03<!--k:l2_spread_base-->× spread a lower bound. The follow-up study is to attempt matched sets of filtered and unfiltered DFT-stable candidates and compare success rates.
 2. **Filter recall is not measured on these pools.** Measured purity and benchmark recall come from different sources and cannot both be exactly right.
 3. **The generative-pool result's magnitude depends on a figure-read value.** Across its range the ratio spans 2.2 to 6.7; the direction does not change.
-4. **Overhead treatment is an accounting choice** moving level 2 by 37%<!--k:basis_move_pct--> between extreme variants, though not the spread. The rate is the effective indirect cost recovery rate from NIH records [@azoulay2025icr], not a census of universities.
+4. **Overhead treatment is an accounting choice** moving level 2 by 41%<!--k:basis_move_pct--> between extreme variants, though not the spread. The rate is the effective indirect cost recovery rate from NIH records [@azoulay2025icr], not a census of universities.
 5. **Level 3 rests on one disputed count** of zero of 36 and is reported only as a lower bound. At the observed share of zero the cost is unbounded.
 6. **DFT cost spans more than two orders of magnitude.** Results are reported across the span.
 7. **The wrong-verdict share is a proxy** — flips under a higher level of theory, not failures against experiment.
 8. **Precursor mass per attempt is unsourced** for the autonomous-laboratory case.
-9. **Monte Carlo choices shape the distribution.** The three readings receive equal weight, an assumption with no basis; named scenarios are reported so readers can apply their own. The level-2 95th percentile is a statement about whose re-analysis to believe and falls from about $118,000<!--k:mc_l2_B_p95_thousands--> to $8,430<!--k:mc_l2_B_p95_no_leeman--> if the pessimistic reading is given zero weight.
+9. **Monte Carlo choices shape the distribution.** The three readings receive equal weight, an assumption with no basis; named scenarios are reported so readers can apply their own. The level-2 95th percentile is a statement about whose re-analysis to believe and falls from about $94,000<!--k:mc_l2_B_p95_thousands--> to $8,507<!--k:mc_l2_B_p95_no_leeman--> if the pessimistic reading is given zero weight.
 10. **The enrichment gap has an unresolved competing explanation:** the two studies judge stability against different convex hulls.
 11. **Our hardware is unusual.** An ARM64 laptop under virtualisation produced two platform artefacts that we document and correct for; the DFT timings should not be generalised to server hardware.
 12. **Facility recharge rates understate true resource cost.** User-fee income alone does not fully support most shared instrumentation facilities [@strom2020], so the XRD and furnace fees we use, which are recharge rates, are lower bounds on the resources an attempt consumes. Our synthesis cost is therefore conservative. A higher synthesis cost widens the gap between synthesis and compute, so this strengthens the conclusion rather than weakening it.
@@ -398,11 +398,11 @@ The model is a pure function from parameters to results, so a reader who disagre
 
 ## 9. Conclusion
 
-The field's standard claim that synthesis is the bottleneck in AI-driven materials discovery is correct, and we can now say by how much: per percentage point of improvement, synthesis levers are worth between 20<!--k:returns_ratio_lo--> and 114<!--k:returns_ratio_hi--> times the best computational lever, and the single compute improvement available at zero cost moves the total by under 3%.
+The field's standard claim that synthesis is the bottleneck in AI-driven materials discovery is correct, and we can now say by how much: per percentage point of improvement, synthesis levers are worth between 26<!--k:returns_ratio_lo--> and 136<!--k:returns_ratio_hi--> times the best computational lever, and the single compute improvement available at zero cost moves the total by under 3%.
 
-The consequence is that the choice between computational pipelines, which the field treats as consequential, is economically immaterial once the laboratory is included. An MLIP pre-filter cuts computational cost by 39%<!--k:l1_B_cheaper_pct--> and a generative candidate pool costs four times an ion-exchange one at the DFT gate, yet all three pipelines deliver a validated material within 4%<!--k:l2_spread_base_pct--> of the same price.
+The consequence is that the choice between computational pipelines, which the field treats as consequential, is economically immaterial once the laboratory is included. An MLIP pre-filter cuts computational cost by 39%<!--k:l1_B_cheaper_pct--> and a generative candidate pool costs four times an ion-exchange one at the DFT gate, yet all three pipelines deliver a validated material within 3%<!--k:l2_spread_base_pct--> of the same price.
 
-What does govern the price is a number the field does not currently know. Three groups read the synthesis evidence three ways, producing cost estimates spanning a factor of 24<!--k:reading_factor_B-->, and two of those readings interpret the same experiment. Closing that gap requires new synthesis data, not better analysis and not better models. Until it closes, statements about what AI-driven materials discovery costs are statements about which re-analysis one believes.
+What does govern the price is a number the field does not currently know. Three groups read the synthesis evidence three ways, producing cost estimates spanning a factor of 17<!--k:reading_factor_B-->, and two of those readings interpret the same experiment. Closing that gap requires new synthesis data, not better analysis and not better models. Until it closes, statements about what AI-driven materials discovery costs are statements about which re-analysis one believes.
 
 ---
 

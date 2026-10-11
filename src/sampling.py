@@ -90,11 +90,15 @@ def apply_worldview(p: dict, reading: dict, budget: float) -> dict:
     """Set success, novelty, wrong-verdict share and the recipes they imply (scenarios and Monte Carlo)."""
     out = {
         **p,
-        "synth_success_given_correct": reading["success"],
+        "synth_success_unconditional": reading["success"],
         "novelty_science_frac": reading["novelty"],
         "dft_wrong_verdict_frac": reading["wrong_verdict"],
     }
-    out["synth_recipes_per_target"] = recipes_for_success((1 - reading["wrong_verdict"]) * reading["success"], budget)
+    # CHANGED 2026-10-11: was (1 - wrong_verdict) * success. Success is now the campaign-observed
+    # unconditional rate, and the method note says it reproduces A-Lab's 6.19 recipes at p = 36/57,
+    # which IS that unconditional rate -- so keying on it makes the calibration self-consistent and
+    # stops the recipe budget being charged for computational failure a second time.
+    out["synth_recipes_per_target"] = recipes_for_success(reading["success"], budget)
     return out
 
 

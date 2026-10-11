@@ -130,8 +130,8 @@ def test_derived_synthesis_numbers(recs):
     assert recs["synth.recipes_per_target"]["base"] == pytest.approx(353 / 57, rel=REL)
     assert recs["synth.recipes_per_target"]["high"] == pytest.approx(355 / 57, rel=REL)
     assert recs["synth.furnace_hours_per_attempt"]["base"] == pytest.approx(17 * 24 * 8 / 353, rel=REL)
-    assert recs["synth.success_given_correct_label"]["base"] == pytest.approx(7 / 16)
-    assert recs["synth.success_given_correct_label"]["high"] == pytest.approx(38 / 54, rel=REL)
+    assert recs["synth.success_unconditional"]["base"] == pytest.approx(7 / 16)
+    assert recs["synth.success_unconditional"]["high"] == pytest.approx(36 / 57, rel=REL)   # unconditional; was 38/54
     assert recs["synth.furnace_hourly"]["base"] == pytest.approx((3.15 + 3.75) / 2)
     assert recs["synth.labour_attempts_per_week"]["base"] == pytest.approx((10 + 20) / 2)
 

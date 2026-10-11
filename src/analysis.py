@@ -20,7 +20,7 @@ def multiplier_for_level2_spread(p: dict, target: float, steps: int = 2000, tol:
     bisection refines it. Returns the multiplier and the success rate it implies, or
     multiplier=None with the largest spread reachable.
     """
-    success = p["synth_success_given_correct"]
+    success = p["synth_success_unconditional"]
     if success <= 0:
         return {"multiplier": None, "filtered_success": None, "spread": level2_spread(p)}
     m_max = 1.0 / success
@@ -180,7 +180,7 @@ def levers() -> dict:
         return f
 
     return {
-        "synthesis success rate": {"apply": scale(("synth_success_given_correct",),
+        "synthesis success rate": {"apply": scale(("synth_success_unconditional",),
                                                   cap=lambda p: 1.0 / p["synth_success_multiplier_filtered"]),
                                    "improve": +1, "group": "synthesis"},
         "recipes per target": {"apply": scale(("synth_recipes_per_target",)), "improve": -1, "group": "synthesis"},
@@ -345,7 +345,7 @@ def scenarios(doc: dict) -> dict:
     recs = records(doc)
     base = resolve(doc)
     budget = recs["synth.recipe_budget"]["base"]
-    key = {"synth.success_given_correct_label": "success", "novelty.science_frac": "novelty",
+    key = {"synth.success_unconditional": "success", "novelty.science_frac": "novelty",
            "dft.wrong_verdict_frac": "wrong_verdict"}
     out = {}
     for name, sc in doc["scenarios"].items():
