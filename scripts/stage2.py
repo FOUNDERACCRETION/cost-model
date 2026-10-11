@@ -710,6 +710,117 @@ def threshold_coefficients(p, probe=(10.0, 1000.0), check=(3.0, 30.0, 54.5, 200.
             "alpha_ratio_C_over_B": alpha["C"] / alpha["B"]}
 
 
+def upstream_per_target(p, dft=None):
+    """c0_i: upstream compute expenditure per candidate reaching synthesis, by pipeline.
+
+    This is the quantity the pipelines differ in. Everything downstream of the DFT gate -- recipes
+    per target, cost per attempt, synthesis success -- is shared across pipelines in the base
+    model, which is the assumption Section 5.5 calls the primary threat to validity.
+    """
+    q = p if dft is None else {**p, "dft_cost_per_candidate": dft}
+    r = funnel(q)["pipelines"]
+    out = {}
+    for k in ("A", "B", "C"):
+        pl = r[k]
+        o = pl["outputs"]["experimentally_validated"]
+        verdicts = next(s["surviving"] for s in pl["stages"] if s["stage"] == "DFT check")
+        out[k] = o["compute_usd_per"] * o["count"] / verdicts
+    return out
+
+
+def synthesis_decision_boundaries(p, points=(3, 10, 30, 54.5, 100, 200, 500, 1000)):
+    """How large a pipeline-specific synthesis difference would overturn the cost ordering?
+
+    The base model assumes synthesis success S, recipes per target r and cost per attempt a do not
+    depend on how a candidate was found, which makes level-2 cost (c0_i + ra)/S and leaves the
+    pipelines differing only through c0. Relaxing that assumption gives the general ratio
+
+        C_i/C_j = [(c0_i + r_i a_i) / (c0_j + r_j a_j)] * (S_j / S_i)
+
+    and the question a reader who rejects the shared-synthesis assumption actually has is not
+    "might it fail" but "how far would it have to fail to matter". Each boundary below is the
+    value of one relaxed quantity at which two pipelines cost the same, with the others held
+    shared. They are break-even solves on the model, not measurements: no source gives any of
+    these differences, so every boundary is a hypothetical and is labelled as one.
+
+    success_ratio[(i, j)]  S_i/S_j at which C_i = C_j, with r and a shared. From the ratio above,
+      this is just (c0_i + ra)/(c0_j + ra): pipeline i must convert its candidates into materials
+      this many times more often to pay for its extra compute.
+
+    extra_recipes[(i, j)]  how many MORE recipes per target pipeline j would have to run, with S
+      and a shared, before its cost advantage over i disappears: (c0_i - c0_j)/a. Reported also as
+      a share of the baseline recipe count, which is what makes it interpretable.
+
+    attempt_ratio[(i, j)]  a_j/a_i at which C_i = C_j with S and r shared.
+    """
+    a = synthesis_cost_per_attempt(p)["usd"]
+    r = p["synth_recipes_per_target"]
+    bill = r * a
+    rows = []
+    for d in points:
+        c0 = upstream_per_target(p, d)
+        row = {"dft": d, "c0": dict(c0), "bill": bill}
+        for i, j in (("C", "B"), ("A", "B"), ("C", "A")):
+            row[f"success_{i}{j}"] = (c0[i] + bill) / (c0[j] + bill)
+            row[f"recipes_{i}{j}"] = (c0[i] - c0[j]) / a
+            row[f"recipes_share_{i}{j}"] = (c0[i] - c0[j]) / a / r
+            row[f"attempt_{i}{j}"] = (c0[i] + bill - c0[j]) / bill if bill else float("nan")
+        rows.append(row)
+    return {"rows": rows, "attempt_usd": a, "recipes": r, "bill": bill}
+
+
+def boundary_sensitivity(p, dft=54.5):
+    """The two boundaries at base, under the inputs the paper grades as least secure.
+
+    Purity and compute price are what set c0, so they are what move the boundaries. Each variant
+    changes one input and re-solves; the point is whether the boundary stays small enough that the
+    shared-synthesis assumption remains the binding one.
+    """
+    a = synthesis_cost_per_attempt(p)["usd"]
+    r = p["synth_recipes_per_target"]
+    # Generative purity cannot be pushed far below its measured 3.8%: the filter's pass fraction
+    # is prevalence x recall / purity, and at the generative pool's 3.0% prevalence and recall
+    # 0.76 a purity under about 2.3% implies a pass fraction above one. funnel() raises on it, so
+    # the downward variant is the largest the model admits rather than an arbitrary halving.
+    variants = [
+        ("base", p),
+        ("generative purity at pool purity, 15.2%", {**p, "gen_filter_purity": p["pool_filter_purity"]}),
+        ("generative purity at 2.4%, near the feasibility floor",
+         {**p, "gen_filter_purity": 0.024}),
+        ("compute price 10x", {**p, "price_per_core_hour": p["price_per_core_hour"] * 10}),
+        ("compute price 100x", {**p, "price_per_core_hour": p["price_per_core_hour"] * 100}),
+        ("DFT cost at the span top, 1,000 core-h", p),
+    ]
+    out = []
+    for name, q in variants:
+        d = 1000.0 if "span top" in name else dft
+        c0 = upstream_per_target(q, d)
+        bill = r * synthesis_cost_per_attempt(q)["usd"]
+        out.append({
+            "variant": name,
+            "success_CB": (c0["C"] + bill) / (c0["B"] + bill),
+            "recipes_AB": (c0["A"] - c0["B"]) / a,
+            "recipes_share_AB": (c0["A"] - c0["B"]) / a / r,
+        })
+    return out
+
+
+def boundaries_section(p):
+    """Section 5.8: how far the shared-synthesis assumption has to fail before it matters."""
+    b = synthesis_decision_boundaries(p)
+    rows = [[f"{r['dft']:,.1f}".rstrip("0").rstrip("."),
+             f"{r['success_CB']:.3f}x", f"{(r['success_CB'] - 1):.1%}",
+             f"{r['recipes_AB']:.3f}", f"{r['recipes_share_AB']:.2%}"] for r in b["rows"]]
+    table = md_table(["DFT core-h per candidate", "S_C/S_B for parity", "i.e. better by",
+                      "Extra recipes to erase the filter", "as share of 6.193"], rows)
+    srows = [[v["variant"], f"{v['success_CB']:.3f}x", f"{v['recipes_share_AB']:.2%}"]
+             for v in boundary_sensitivity(p)]
+    stable = md_table(["Variant", "S_C/S_B for parity", "Extra recipes, share of baseline"], srows)
+    return (table + "\n\nBoth columns are break-even solves on the model with every other quantity held "
+            "shared, not measurements: no source reports a pipeline-specific synthesis difference, so each "
+            "figure is the size a hypothetical difference would have to reach.\n\n" + stable)
+
+
 def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     """Formatted numbers the paper draft quotes, written to results/key_numbers.json (the draft's single source)."""
     P = an.PIPELINES
@@ -799,6 +910,34 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
             nm = f"cross_{label}_{int(tgt * 100)}pct"
             k[nm] = "never within 20,000 core-h" if val is None else f"{val:,.0f}"
     k["sweep_AB_max"] = f"{max(r['AB'] for r in sw['rows']):.1%}"
+    # Section 5.8 decision boundaries: how far shared synthesis has to fail to matter.
+    bd = synthesis_decision_boundaries(p)
+    at_base = next(r for r in bd["rows"] if abs(r["dft"] - 54.5) < 0.6)
+    at_top = next(r for r in bd["rows"] if r["dft"] >= 1000)
+    k["bound_success_CB"] = f"{at_base['success_CB']:.3f}"
+    k["bound_success_CB_pct"] = f"{at_base['success_CB'] - 1:.1%}"
+    k["bound_success_CB_top"] = f"{at_top['success_CB']:.2f}"
+    k["bound_success_CB_top_pct"] = f"{at_top['success_CB'] - 1:.0%}"
+    k["bound_recipes_AB"] = f"{at_base['recipes_AB']:.3f}"
+    k["bound_recipes_AB_share"] = f"{at_base['recipes_share_AB']:.2%}"
+    k["bound_recipes_AB_top_share"] = f"{at_top['recipes_share_AB']:.1%}"
+    k["bound_attempt_CB_pct"] = f"{at_base['attempt_CB'] - 1:.1%}"
+    bs = {v["variant"]: v for v in boundary_sensitivity(p)}
+    k["bound_success_CB_price100"] = f"{bs['compute price 100x']['success_CB']:.2f}"
+    k["bound_recipes_AB_price100_share"] = f"{bs['compute price 100x']['recipes_share_AB']:.0%}"
+    k["bound_success_CB_at_pool_purity"] = f"{bs['generative purity at pool purity, 15.2%']['success_CB']:.3f}"
+    # Every row of the Section 5.6 table, so the new section is audited like the rest of the paper.
+    for row in bd["rows"]:
+        tag = f"{row['dft']:g}".replace(".", "p")
+        k[f"bdrow_{tag}_success"] = f"{row['success_CB']:.3f}"
+        k[f"bdrow_{tag}_success_pct"] = f"{row['success_CB'] - 1:.1%}"
+        k[f"bdrow_{tag}_recipes"] = f"{row['recipes_AB']:.3f}"
+        k[f"bdrow_{tag}_recipes_share"] = f"{row['recipes_share_AB']:.2%}"
+    for name, v in bs.items():
+        tag = (name.split(",")[0].replace(" ", "_").replace("%", "pct")
+               .replace("1,000", "1000").lower())
+        k[f"bdsens_{tag}_success"] = f"{v['success_CB']:.3f}"
+        k[f"bdsens_{tag}_recipes_share"] = f"{v['recipes_share_AB']:.2%}"
     k["sweep_b_cheapest_everywhere"] = "yes" if all(r["b_cheapest"] for r in sw["rows"]) else "no"
     # Threshold-equation archive: unrounded coefficients, residuals, root comparison.
     tc = threshold_coefficients(p)
@@ -840,6 +979,14 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         # The superseded directional convention, kept so the size of the correction is visible.
         k[f"kill_{tag}_material_BA_directional"] = pct(kk["p_material_directional"][("B", "A")], 1)
         k[f"kill_{tag}_overlap_BA"] = pct(kk["overlap"][("B", "A")])
+    # An overlap coefficient means nothing without the sparsity floor: what two samples from the
+    # SAME distribution score at this bin count. At the floor the marginals are indistinguishable.
+    for lv, tag in (("dft_confirmed_stable", "l1"), ("experimentally_validated", "l2")):
+        floor = an.overlap_null_floor(mc, lv, bins=60)
+        meas = kill[lv]["overlap"][("B", "A")]
+        k[f"overlap_{tag}_floor"] = pct(floor)
+        k[f"overlap_{tag}_gap_pp"] = f"{(meas - floor) * 100:+.0f}"
+        k[f"overlap_{tag}_at_or_above_floor"] = "yes" if meas >= floor else "no"
     # Bin-count sensitivity of the overlap coefficient (Section 5.6 reports the 60-bin value).
     osens = an.overlap_sensitivity(mc)
     k["overlap_bin_counts"] = ", ".join(str(n) for n in osens)
@@ -938,6 +1085,7 @@ def main():
         "kill": kill_section(kill),
         "returns": returns_section(p, mc_ret),
         "breakevens": breakeven_section(doc, p),
+        "boundaries": boundaries_section(p),
     }
     s1 = stage1_numbers(doc, p)
     sections.update({
@@ -956,10 +1104,16 @@ def main():
                        ("Discovery acceleration factor", "daf"), ("Marginal returns", "returns"),
                        ("Kill-condition check", "kill"), ("Monte Carlo and named scenarios", "montecarlo"),
                        ("Distributions", "distributions"), ("Break-evens", "breakevens"),
+                       ("Synthesis decision boundaries", "boundaries"),
                        ("Tornado (summary)", "tornado")):
         report += [f"## {title}", "", sections[key], ""]
     report += ["## Tornado (full)", "", tornado_full(tor), ""]
     (out_dir / "stage2.md").write_text("\n".join(report))
+    # The reconstruction package (manifests + hand-checkable worksheet) is part of the build, so
+    # it cannot fall behind the parameter file.
+    import subprocess
+    subprocess.run([sys.executable, str(ROOT / "scripts" / "manifest.py")],
+                   cwd=ROOT, check=True, capture_output=True)
     keys = key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor)
     (out_dir / "key_numbers.json").write_text(json.dumps(keys, indent=1, ensure_ascii=False) + "\n")
 

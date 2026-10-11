@@ -337,6 +337,34 @@ def kill_condition(mc: dict, bins: int = 60, material: float = 0.10) -> dict:
     return out
 
 
+def overlap_null_floor(mc: dict, lvl: str, pipeline: str = "A", bins: int = 60,
+                       seed: int = 20261011) -> float:
+    """The overlap coefficient two samples from the SAME distribution score at this bin count.
+
+    An overlap coefficient has no absolute meaning on its own, because a finite histogram of two
+    independent samples from one distribution does not score 1 -- each bin holds a different
+    number of draws by chance, and the shortfall grows as the bins get finer until, with as many
+    bins as draws, the statistic collapses towards zero whatever the distributions are.
+
+    So this resamples one pipeline's own draws twice, independently, and returns what the
+    statistic reports. The true overlap of that pair is 1 by construction, so the number returned
+    is the sparsity floor for this distribution and bin count, and a measured overlap is only
+    interpretable against it: at the floor the two marginals are indistinguishable, and below it
+    they differ.
+
+    This replaces the explanation revision 12 gave for the fine-bin decline, which attributed it
+    to A and B differing in nearly every draw. That cannot be the reason: the coefficient is
+    computed on MARGINAL histograms, which ignore pairing entirely -- permuting one pipeline's
+    draws changes every paired difference and leaves its histogram, and therefore the
+    coefficient, exactly as it was. An external reviewer caught this.
+    """
+    rng = random.Random(seed)
+    xs = [d["costs"][lvl][pipeline] for d in mc["draws"]]
+    rows = [{"costs": {lv: {k: rng.choice(xs) for k in PIPELINES} for lv in LEVELS}}
+            for _ in range(len(xs))]
+    return kill_condition({"draws": rows}, bins=bins)[LEVELS[0]]["overlap"][("B", "A")]
+
+
 def overlap_sensitivity(mc: dict, counts=(20, 40, 60, 120, 240)) -> dict:
     """Overlap coefficient at several bin counts, for each level and pair.
 

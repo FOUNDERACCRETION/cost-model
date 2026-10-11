@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+"""Check every number printed in a manuscript against the model's generated figures.
+
+Four transcription errors reached revision 12 of the paper and none was caught by rereading:
+P(B < A) printed as 99.5% in five places against the generator's 99.4%, a level-2 overlap of 98%
+against 99%, a tornado share of 98.8% against 98.6%, and a title page still reading "revision 10"
+in revision 11. Each was a number read off an earlier run and retyped. Prose review does not find
+these, so this check exists and belongs in the build rather than in someone's scratch directory.
+
+What it does, in two directions:
+
+  DRIFT     every value in results/key_numbers.json that the manuscript ought to contain but does
+            not appear verbatim. A hit is not automatically an error -- a key the paper
+            deliberately does not quote shows up here too -- so keys may be waived by listing
+            them in paper/audit-waivers.txt with a reason.
+
+  ORPHANS   percentages and dollar amounts in the manuscript that match no generated key. These
+            are hand-written figures. They may be perfectly correct (arithmetic in prose, a figure
+            from a cited source) but each one is a number no test guards, so the count is reported
+            and can be held to a ceiling.
+
+Exit status is nonzero when an unwaived key is missing, so CI fails on drift.
+
+Run: python scripts/audit_numbers.py paper/p1-revision13.md
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+WAIVERS = ROOT / "paper" / "audit-waivers.txt"
+
+
+def normalise(s: str) -> str:
+    """Strip the formatting that differs between the generator and the manuscript.
+
+    The manuscript is pandoc markdown, so dollar signs are backslash-escaped and en dashes are
+    written as `--`; the generator emits plain text with real dashes. Comparing without
+    normalising produces false hits on nearly every currency figure.
+    """
+    return (s.replace("\\", "").replace("$", "").replace(",", "")
+             .replace("\u2013", "-").replace("\u2014", "-").replace("--", "-")
+             .replace("\u00d7", "x").strip())
+
+
+def load_waivers() -> dict:
+    out = {}
+    if WAIVERS.exists():
+        for line in WAIVERS.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            name, _, reason = line.partition(":")
+            out[name.strip()] = reason.strip() or "no reason given"
+    return out
+
+
+def audit(paper: Path, keys_path: Path) -> int:
+    text = paper.read_text()
+    keys = json.loads(keys_path.read_text())
+    waived = load_waivers()
+    body = normalise(text)
+
+    missing, waived_hits = [], []
+    for name in sorted(keys):
+        value = normalise(str(keys[name]))
+        # Skip values too short or too generic to match meaningfully: a bare "0" or a yes/no flag
+        # would match somewhere in any document and tell us nothing.
+        if len(value) < 3 or value in ("yes", "no"):
+            continue
+        if value in body:
+            continue
+        (waived_hits if name in waived else missing).append((name, keys[name]))
+
+    print(f"{paper.name}: {len(keys)} generated keys")
+    print(f"  {len(missing)} MISSING (in the model, not in the paper, not waived)")
+    for name, value in missing:
+        print(f"     {name} = {value}")
+    print(f"  {len(waived_hits)} waived")
+
+    # Orphans: figures in the manuscript that no key accounts for. LaTeX math is stripped first:
+    # an inline $...$ span makes the dollar-amount pattern match fragments of equations, which
+    # inflates the count with things that are not figures at all.
+    quoted = {normalise(str(v)) for v in keys.values()}
+    prose = re.sub(r"\$\$.*?\$\$", " ", text, flags=re.S)
+    prose = re.sub(r"(?<!\\)\$(?!\s)[^$\n]{1,200}?(?<!\\)\$", " ", prose)
+    found = re.findall(r"\\\$[\d,]+(?:\.\d+)?|\d+(?:\.\d+)?%", prose)
+    orphans = sorted({f for f in found if normalise(f) not in quoted})
+    print(f"  {len(orphans)} hand-written figures matching no key")
+    if orphans:
+        print("     " + ", ".join(orphans[:40]) + (" ..." if len(orphans) > 40 else ""))
+
+    if missing:
+        print("\nFAIL: a generated figure is absent from the manuscript. Either the manuscript is")
+        print("stale, or the key is one the paper does not quote -- in which case add it to")
+        print("paper/audit-waivers.txt with a reason.")
+        return 1
+    print("\nOK: every unwaived generated figure appears in the manuscript.")
+    return 0
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print(__doc__)
+        return 2
+    paper = Path(sys.argv[1])
+    if not paper.is_absolute():
+        paper = ROOT / paper
+    return audit(paper, ROOT / "results" / "key_numbers.json")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -2,7 +2,7 @@
 title: "What Does It Cost to Discover a Material?"
 subtitle: "An end-to-end cost model of AI-driven inorganic materials discovery"
 author: "Karthikeya"
-date: "Working paper, revision 10 --- 11 October 2026"
+date: "Working paper, revision 11 --- 11 October 2026"
 abstract: |
   Artificial intelligence has made the computational stages of inorganic materials discovery extremely cheap, and the field widely asserts that synthesis is now the bottleneck. We did not find it priced in dollars anywhere in our search. We build an end-to-end cost model that follows a candidate material from generation through machine-learned screening, density functional theory verification and laboratory synthesis, and we report cost at three output levels: a cross-functionally robust DFT-stable prediction, an experimentally validated material, and one that is genuinely new to science. The third we can define and compare across pipelines but not price, because the only published novelty count for the reference campaign is zero. Every parameter is graded for evidence quality, three are graded as having no source at all, several are measured first-hand, and the complete model is to be released as a replication package. Along the way we build a bottom-up estimate of the cost of a solid-state synthesis attempt, \$271, from eleven US institutional fee schedules together with assumed throughput, a compensation proxy and an overhead treatment. We did not locate a comparable published figure within our search scope. It is an illustrative US academic manual-laboratory estimate, not a measured or universal rate.
 

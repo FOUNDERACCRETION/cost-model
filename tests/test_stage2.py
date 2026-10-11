@@ -333,7 +333,8 @@ def test_readme_generated_blocks_filled():
     text = open("README.md").read()
     names = re.findall(r"<!-- generated:(\w+):begin -->", text)
     assert set(names) == {"headline", "spot", "daf", "returns", "kill", "montecarlo", "tornado", "breakevens",
-                          "distributions", "basecase", "costbasis", "dftspan", "attempt", "level3", "multiplier"}
+                          "distributions", "basecase", "costbasis", "dftspan", "attempt", "level3", "multiplier",
+                          "boundaries"}
     for name in names:
         body = re.search(rf"<!-- generated:{name}:begin -->\n(.*?)<!-- generated:{name}:end -->", text, re.S).group(1)
         assert body.strip(), f"generated block {name} is empty: run scripts/stage2.py"
@@ -486,3 +487,40 @@ def test_overlap_does_not_approach_zero_for_identical_samples():
             f"identical samples must retain overlap 1 at {n} bins")
     # and the pipelines that DO differ separate as bins refine, which is the observed behaviour
     assert s[20000][lvl][("C", "A")] < s[20][lvl][("C", "A")]
+
+
+def test_overlap_null_floor_calibrates_the_coefficient():
+    """An overlap coefficient has no absolute scale, so Section 5.6 reports it against a floor.
+
+    Revision 12 explained the fine-bin decline by A and B "differing in nearly every draw". That
+    cannot be the reason: the coefficient is built from MARGINAL histograms, which ignore pairing.
+    This test asserts that directly -- permuting one pipeline's draws destroys every paired
+    relationship and leaves the coefficient unchanged -- and then checks the floor behaves as a
+    floor.
+    """
+    rng = random.Random(5)
+    base = [math.exp(rng.gauss(0, 1)) for _ in range(3000)]
+    rows = [{"costs": {lv: {"A": x * 1.3, "B": x, "C": x * 2} for lv in an.LEVELS}} for x in base]
+    lvl = "dft_confirmed_stable"
+    before = an.kill_condition({"draws": rows})[lvl]["overlap"][("B", "A")]
+
+    # permute B's draws across rows: same multiset, so same histogram, so same overlap --
+    # but now nothing is paired with anything
+    bs = [r["costs"][lvl]["B"] for r in rows]
+    rng.shuffle(bs)
+    shuffled = [{"costs": {lv: {"A": r["costs"][lv]["A"], "B": b, "C": r["costs"][lv]["C"]}
+                           for lv in an.LEVELS}} for r, b in zip(rows, bs)]
+    after = an.kill_condition({"draws": shuffled})[lvl]["overlap"][("B", "A")]
+    assert after == pytest.approx(before), "marginal overlap must be invariant to pairing"
+    # the paired statistic is NOT invariant, which is why the two must not be explained alike
+    p_before = an.kill_condition({"draws": rows})[lvl]["p_lt"][("B", "A")]
+    p_after = an.kill_condition({"draws": shuffled})[lvl]["p_lt"][("B", "A")]
+    assert p_before != pytest.approx(p_after)
+
+    # the floor is what the statistic scores when the true overlap is 1, so it must exceed a
+    # measured coefficient for distributions that genuinely differ, and must fall as bins refine
+    floor_60 = an.overlap_null_floor({"draws": rows}, lvl, bins=60)
+    floor_600 = an.overlap_null_floor({"draws": rows}, lvl, bins=600)
+    assert floor_60 > before, "a real difference must read below the no-difference floor"
+    assert floor_600 < floor_60, "the floor must itself fall as bins refine"
+    assert floor_60 < 1.0, "a finite histogram of two samples does not score 1"

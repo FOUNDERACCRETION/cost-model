@@ -334,3 +334,127 @@ def test_the_crossing_does_not_depend_on_synthesis_success():
     r_lo = dft_threshold_sweep({**p, "synth_recipes_per_target": 3.0}, points=(54.5,))["crossings"]
     r_hi = dft_threshold_sweep({**p, "synth_recipes_per_target": 12.0}, points=(54.5,))["crossings"]
     assert r_lo["CB"][0.10] < base["CB"][0.10] < r_hi["CB"][0.10]
+
+
+def test_synthesis_decision_boundaries_solve_to_parity():
+    """Section 5.8's boundaries must actually equalise the two pipelines when substituted back.
+
+    Each boundary is a closed-form solve on the general ratio
+        C_i/C_j = [(c0_i + r_i a_i)/(c0_j + r_j a_j)] * (S_j/S_i)
+    so the test is the obvious one: put the solved value back and the two costs must coincide. A
+    boundary that does not reproduce parity is an algebra error, and this is new algebra.
+    """
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import synthesis_decision_boundaries, upstream_per_target, boundary_sensitivity
+    from src.funnel import synthesis_cost_per_attempt
+    from src.params import load, resolve
+
+    p = resolve(load())
+    a = synthesis_cost_per_attempt(p)["usd"]
+    r = p["synth_recipes_per_target"]
+    S = p["synth_success_unconditional"]
+
+    for row in synthesis_decision_boundaries(p)["rows"]:
+        c0 = upstream_per_target(p, row["dft"])
+        # success boundary: C given the solved success advantage costs what B costs
+        cost_C = (c0["C"] + r * a) / (S * row["success_CB"])
+        cost_B = (c0["B"] + r * a) / S
+        assert cost_C == pytest.approx(cost_B, rel=1e-12)
+        # recipe boundary: B given the extra recipes costs what A costs
+        cost_B2 = (c0["B"] + (r + row["recipes_AB"]) * a) / S
+        cost_A = (c0["A"] + r * a) / S
+        assert cost_B2 == pytest.approx(cost_A, rel=1e-12)
+        # attempt-cost boundary
+        cost_C3 = (c0["C"] + r * a) / S
+        cost_B3 = (c0["B"] + r * a * row["attempt_CB"]) / S
+        assert cost_C3 == pytest.approx(cost_B3, rel=1e-12)
+        # every boundary must exceed parity, since C is dearer than B and A dearer than B
+        assert row["success_CB"] > 1.0 and row["recipes_AB"] > 0.0
+
+    # monotone in verification cost: dearer DFT widens the gap the assumption must cover
+    rows = synthesis_decision_boundaries(p)["rows"]
+    assert all(x["success_CB"] < y["success_CB"] for x, y in zip(rows, rows[1:]))
+    assert all(x["recipes_AB"] < y["recipes_AB"] for x, y in zip(rows, rows[1:]))
+
+
+def test_boundary_vanishes_when_the_purity_difference_does():
+    """The generative boundary is driven by purity alone: set generative purity to pool purity and
+    C must become indistinguishable from B, so the required success advantage falls to zero. This
+    is the internal check that the boundary measures what Section 5.3 says it measures."""
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import boundary_sensitivity
+    from src.params import load, resolve
+
+    p = resolve(load())
+    by = {v["variant"]: v for v in boundary_sensitivity(p)}
+    assert by["generative purity at pool purity, 15.2%"]["success_CB"] == pytest.approx(1.0, abs=5e-4)
+    # and the filter boundary does NOT move with generative purity: A and B never see that pool
+    assert (by["generative purity at pool purity, 15.2%"]["recipes_AB"]
+            == pytest.approx(by["base"]["recipes_AB"], rel=1e-12))
+    # compute price scales the boundary, since it scales c0 against a fixed synthesis bill
+    assert by["compute price 100x"]["success_CB"] > by["compute price 10x"]["success_CB"] > by["base"]["success_CB"]
+
+
+def test_the_current_manuscript_passes_the_numeric_audit():
+    """Every generated figure appears in the manuscript, or is waived with a reason.
+
+    Four transcription errors reached revision 12 and none was found by rereading: P(B < A) at
+    99.5% against the generator's 99.4% in five places, a level-2 overlap of 98% against 99%, a
+    tornado share of 98.8% against 98.6%, and revision 11's title page still reading "revision
+    10". Prose review does not catch retyped numbers, so the check runs here.
+    """
+    import sys, pathlib as _p, re
+    root = _p.Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root / "scripts"))
+    from audit_numbers import audit
+
+    papers = sorted(root.glob("paper/p1-revision*.md"),
+                    key=lambda q: int(re.search(r"revision(\d+)", q.name).group(1)))
+    assert papers, "no manuscript found"
+    current = papers[-1]
+    assert audit(current, root / "results" / "key_numbers.json") == 0, (
+        f"{current.name} disagrees with results/key_numbers.json; regenerate or waive")
+
+
+def test_the_manuscript_revision_label_matches_its_filename():
+    """Revision 11 shipped with a title page reading "revision 10". Cheap to prevent."""
+    import pathlib as _p, re
+    root = _p.Path(__file__).resolve().parents[1]
+    for q in root.glob("paper/p1-revision*.md"):
+        n = int(re.search(r"revision(\d+)", q.name).group(1))
+        head = q.read_text()[:2000]
+        m = re.search(r'^date:.*revision (\d+)', head, re.M)
+        assert m, f"{q.name} has no revision number on its title page"
+        assert int(m.group(1)) == n, (
+            f"{q.name} title page says revision {m.group(1)}, filename says {n}")
+
+
+def test_reconstruction_worksheet_reproduces_the_attempt_cost():
+    """The worksheet is the reviewer's completion test: a reader reconstructs $271 from it without
+    running the code. So the arithmetic printed in it must close, and must match the model."""
+    import sys, pathlib as _p, re, subprocess
+    root = _p.Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root))
+    from src.funnel import synthesis_cost_per_attempt
+    from src.params import load, resolve
+
+    subprocess.run([sys.executable, str(root / "scripts" / "manifest.py")], cwd=root, check=True,
+                   capture_output=True)
+    text = (root / "results" / "RECONSTRUCTION.md").read_text()
+    model = synthesis_cost_per_attempt(resolve(load()))["usd"]
+
+    # the printed total must be the model's
+    m = re.search(r"\*\*Total per attempt\*\* \| \| \*\*\$([\d,.]+)\*\*", text)
+    assert m, "worksheet has no total line"
+    assert float(m.group(1).replace(",", "")) == pytest.approx(model, abs=0.005)
+
+    # and the printed component rows must sum to the printed direct subtotal
+    rows = re.findall(r"^\| (?!\*\*)(?!Component)([^|]+)\|[^|]*\| \$([\d,.]+) \|$", text, re.M)
+    comps = [float(v.replace(",", "")) for _, v in rows]
+    m2 = re.search(r"\*\*Direct subtotal\*\* \|[^|]*\| \*\*\$([\d,.]+)\*\*", text)
+    printed_direct = float(m2.group(1).replace(",", ""))
+    # the component rows are everything before the subtotal; the indirect row follows it
+    assert sum(comps[:7]) == pytest.approx(printed_direct, abs=0.02), (
+        f"worksheet components {comps[:7]} do not sum to its printed subtotal {printed_direct}")

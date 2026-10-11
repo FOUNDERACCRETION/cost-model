@@ -204,6 +204,30 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 
 **3. MLIP purity at which C becomes competitive.** C matches B at level 1 when CHGNet's purity on MatterGen's pool reaches 15.5%, 4.1× the measured 3.8%. Equivalently, enrichment on that pool would need to be 5.2× instead of 1.27×. C matches A (no filter, ion-exchange pool) at 9.3%, 2.5× the measured value. Parity at level 1 implies parity at level 2, because the synthesis term is shared. The purity cannot fall below 2.28% (prevalence × recall).
 
+## Synthesis decision boundaries
+
+| DFT core-h per candidate | S_C/S_B for parity | i.e. better by | Extra recipes to erase the filter | as share of 6.193 |
+|---|---|---|---|---|
+| 3 | 1.002x | 0.2% | 0.002 | 0.03% |
+| 10 | 1.005x | 0.5% | 0.007 | 0.11% |
+| 30 | 1.016x | 1.6% | 0.021 | 0.34% |
+| 54.5 | 1.029x | 2.9% | 0.039 | 0.62% |
+| 100 | 1.052x | 5.2% | 0.071 | 1.14% |
+| 200 | 1.102x | 10.2% | 0.141 | 2.28% |
+| 500 | 1.242x | 24.2% | 0.354 | 5.71% |
+| 1,000 | 1.447x | 44.7% | 0.707 | 11.42% |
+
+Both columns are break-even solves on the model with every other quantity held shared, not measurements: no source reports a pipeline-specific synthesis difference, so each figure is the size a hypothetical difference would have to reach.
+
+| Variant | S_C/S_B for parity | Extra recipes, share of baseline |
+|---|---|---|
+| base | 1.029x | 0.62% |
+| generative purity at pool purity, 15.2% | 1.000x | 0.62% |
+| generative purity at 2.4%, near the feasibility floor | 1.051x | 0.62% |
+| compute price 10x | 1.261x | 6.22% |
+| compute price 100x | 2.465x | 62.22% |
+| DFT cost at the span top, 1,000 core-h | 1.447x | 11.42% |
+
 ## Tornado (summary)
 
 **Read this tornado as a map of where the evidence is weakest, not of where the leverage is.** One parameter carries almost all of the one-at-a-time variance at each level: `dft.cost_per_candidate` (99.8% at level 1, B) and `synth.success_unconditional` (98.6% at level 2, B). They dominate because they have the widest ranges (3–1,000 core-h; 5–70% success), not because the cost responds more strongly to them. For leverage per unit change, see the marginal returns, where three synthesis levers are tied at unit elasticity. The two quantities the paper most needs better measurements of are DFT cost per candidate on modern hardware and synthesis success on independent campaigns.
