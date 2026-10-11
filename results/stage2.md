@@ -97,15 +97,15 @@ Return = % fall in cost per validated material per 1% PROPORTIONAL improvement i
 
 | Level | P(B < A) | P(C < B) | P(C < A) | overlap B–A | overlap C–B | P(B, A differ > 10%) | P(C, B differ > 10%) |
 |---|---|---|---|---|---|---|---|
-| L1 | 99.4% | 0.4% | 3.1% | 89% | 76% | 98% | 99% |
+| L1 | 99.4% | 0.4% | 3.1% | 89% | 76% | 98% | 99.5% |
 | L2 | 99.4% | 0.4% | 3.1% | 99% | 94% | 1% | 21% |
 | L3 | 99.4% | 61.1% | 66.9% | 99% | 98% | 1% | 15% |
 
-P(x < y) is paired: both pipelines see the same drawn world. Overlap is the overlap coefficient of the two marginal cost distributions (histogram on log cost), 100% = identical.
+P(x < y) is paired: both pipelines see the same drawn world. P(differ > 10%) is paired and symmetric: the dearer of the pair exceeds the cheaper by more than 10% in that draw, the same denominator convention as the DFT threshold sweep. Overlap is the overlap coefficient of the two marginal cost distributions on a 60-bin log10-cost histogram whose bins are normalised probabilities, not densities; 100% = identical. See results/overlap_bin_sensitivity.csv for its bin-count dependence.
 
 **Verdict** (an ordering survives if it holds in at least 95% of paired draws; it is material if the two differ by more than 10% in at least 50% of draws).
 
-- Level 1: B vs A **separates**: B is cheaper than A in 99.4% of draws and they differ by more than 10% in 98%; C vs B **separates**: B is cheaper than C in 99.6% of draws and they differ by more than 10% in 99%.
+- Level 1: B vs A **separates**: B is cheaper than A in 99.4% of draws and they differ by more than 10% in 98%; C vs B **separates**: B is cheaper than C in 99.6% of draws and they differ by more than 10% in 99.5%.
 - Level 2: B vs A **ordered but immaterial**: B is cheaper in 99.4% of draws, but they differ by more than 10% in only 1%; C vs B **ordered but immaterial**: B is cheaper in 99.6% of draws, but they differ by more than 10% in only 21%.
 - Level 3: B vs A **ordered but immaterial**: B is cheaper in 99.4% of draws, but they differ by more than 10% in only 1%; C vs B **no ordering survives**: C is cheaper than B in 61.1% of draws.
 
@@ -232,8 +232,8 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `dft.cost_per_candidate` | $3,834 | $4,939 | $1,105 | 0.1% |
 | `synth.labour_attempts_per_week` | $4,504 | $3,585 | $919 | 0.1% |
 | `synth.labour_tuition_remission` | $3,479 | $4,302 | $822 | 0.1% |
-| `synth.indirect_rate` | $3,433 | $3,972 | $540 | 0.0% |
-| `synth.other_consumables_per_attempt` | $3,814 | $4,282 | $468 | 0.0% |
+| `synth.indirect_rate` | $3,433 | $3,972 | $540 | 0.03% |
+| `synth.other_consumables_per_attempt` | $3,814 | $4,282 | $468 | 0.02% |
 
 **Tornado, level 2, pipeline B** (top 8; full tables in `results/stage2.md`):
 
@@ -244,9 +244,9 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `synth.furnace_hourly` | $3,812 | $4,983 | $1,171 | 0.1% |
 | `synth.labour_attempts_per_week` | $4,480 | $3,561 | $919 | 0.1% |
 | `synth.labour_tuition_remission` | $3,455 | $4,278 | $822 | 0.1% |
-| `dft.cost_per_candidate` | $3,833 | $4,502 | $669 | 0.0% |
-| `synth.indirect_rate` | $3,409 | $3,948 | $540 | 0.0% |
-| `synth.other_consumables_per_attempt` | $3,790 | $4,258 | $468 | 0.0% |
+| `dft.cost_per_candidate` | $3,833 | $4,502 | $669 | 0.05% |
+| `synth.indirect_rate` | $3,409 | $3,948 | $540 | 0.03% |
+| `synth.other_consumables_per_attempt` | $3,790 | $4,258 | $468 | 0.02% |
 
 **Tornado, level 2, pipeline C** (top 8; full tables in `results/stage2.md`):
 
@@ -258,8 +258,8 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `synth.furnace_hourly` | $3,922 | $5,093 | $1,171 | 0.1% |
 | `synth.labour_attempts_per_week` | $4,591 | $3,672 | $919 | 0.1% |
 | `synth.labour_tuition_remission` | $3,566 | $4,388 | $822 | 0.1% |
-| `synth.indirect_rate` | $3,519 | $4,059 | $540 | 0.0% |
-| `synth.other_consumables_per_attempt` | $3,900 | $4,368 | $468 | 0.0% |
+| `synth.indirect_rate` | $3,519 | $4,059 | $540 | 0.03% |
+| `synth.other_consumables_per_attempt` | $3,900 | $4,368 | $468 | 0.02% |
 
 **Tornado, level 1, pipeline B** (top 8):
 
@@ -268,11 +268,11 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `dft.cost_per_candidate` | $1.04 | $349 | $348 | 99.8% |
 | `price.cpu.on_demand` | $12.82 | $23.88 | $11.06 | 0.1% |
 | `gen.ion_exchange.frac_stable_after_chgnet_filter` | $25.01 | $14.70 | $10.31 | 0.1% |
-| `dft.wrong_verdict_frac` | $18.44 | $24.38 | $5.94 | 0.0% |
-| `mlip.chgnet.nonconv_frac` | $19.05 | $19.06 | $0.01 | 0.0% |
-| `mlip.chgnet.recall` | $19.05 | $19.05 | $0.00 | 0.0% |
-| `mlip.steps_per_relaxation` | $19.05 | $19.05 | $0.00 | 0.0% |
-| `batch.n_atoms` | $19.05 | $19.05 | $0.00 | 0.0% |
+| `dft.wrong_verdict_frac` | $18.44 | $24.38 | $5.94 | 0.03% |
+| `mlip.chgnet.nonconv_frac` | $19.05 | $19.06 | $0.01 | 0.0000% |
+| `mlip.chgnet.recall` | $19.05 | $19.05 | $0.00 | 0.0000% |
+| `mlip.steps_per_relaxation` | $19.05 | $19.05 | $0.00 | 0.0000% |
+| `batch.n_atoms` | $19.05 | $19.05 | $0.00 | 0.0000% |
 
 ## Tornado (full)
 
@@ -282,39 +282,39 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 |---|---|---|---|---|---|
 | `dft.cost_per_candidate` | $1.72 | $577 | $575 | 99.78% | 99.8% |
 | `price.cpu.on_demand` | $21.17 | $39.45 | $18.28 | 0.10% | 99.9% |
-| `gen.ion_exchange.frac_stable_strict` | $41.55 | $24.03 | $17.52 | 0.09% | 100.0% |
-| `dft.wrong_verdict_frac` | $30.46 | $40.27 | $9.81 | 0.03% | 100.0% |
-| `gen.ion_exchange.frac_novel_vs_mp` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `batch.n_atoms` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `dft.ionic_steps` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_cost_at_ref` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_per_ionic_step` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_size_exponent` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_novel_all_databases` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_all_databases` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_vs_mp` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_after_chgnet_filter` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_strict` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `mlip.chgnet.nonconv_frac` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `mlip.chgnet.recall` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `mlip.chgnet.step_cost_per_atom` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `mlip.steps_per_relaxation` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `novelty.science_frac` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `price.gpu_a100.on_demand` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.attempts_per_crucible` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.crucible_cost` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.furnace_fixed_fee` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.furnace_hourly` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.indirect_rate` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.labour_attempts_per_week` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.labour_tuition_remission` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.other_consumables_per_attempt` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.precursor_mass_g_per_attempt` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.precursor_usd_per_g` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.recipes_per_target` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.success_unconditional` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
-| `synth.xrd_cost_per_sample` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0% |
+| `gen.ion_exchange.frac_stable_strict` | $41.55 | $24.03 | $17.52 | 0.09% | 99.97% |
+| `dft.wrong_verdict_frac` | $30.46 | $40.27 | $9.81 | 0.03% | 100.0000% |
+| `gen.ion_exchange.frac_novel_vs_mp` | $31.48 | $31.48 | $0.00 | 0.0000% | 100.0000% |
+| `batch.n_atoms` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `dft.ionic_steps` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_cost_at_ref` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_per_ionic_step` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_size_exponent` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `gen.ion_exchange.frac_novel_all_databases` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_novel_all_databases` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_novel_vs_mp` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_stable_after_chgnet_filter` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_stable_strict` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `mlip.chgnet.nonconv_frac` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `mlip.chgnet.recall` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `mlip.chgnet.step_cost_per_atom` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `mlip.steps_per_relaxation` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `novelty.science_frac` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `price.gpu_a100.on_demand` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.attempts_per_crucible` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.crucible_cost` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.furnace_fixed_fee` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.furnace_hourly` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.indirect_rate` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.labour_attempts_per_week` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.labour_tuition_remission` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.other_consumables_per_attempt` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.precursor_mass_g_per_attempt` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.precursor_usd_per_g` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.recipes_per_target` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.success_unconditional` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
+| `synth.xrd_cost_per_sample` | $31.48 | $31.48 | $0.00 | 0.00% | 100.0000% |
 
 #### Level 1: per DFT-confirmed stable, pipeline B
 
@@ -322,15 +322,15 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 |---|---|---|---|---|---|
 | `dft.cost_per_candidate` | $1.04 | $349 | $348 | 99.78% | 99.8% |
 | `price.cpu.on_demand` | $12.82 | $23.88 | $11.06 | 0.10% | 99.9% |
-| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $25.01 | $14.70 | $10.31 | 0.09% | 100.0% |
-| `dft.wrong_verdict_frac` | $18.44 | $24.38 | $5.94 | 0.03% | 100.0% |
-| `mlip.chgnet.nonconv_frac` | $19.05 | $19.06 | $0.01 | 0.00% | 100.0% |
-| `mlip.chgnet.recall` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
-| `mlip.steps_per_relaxation` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
-| `batch.n_atoms` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_strict` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
-| `mlip.chgnet.step_cost_per_atom` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_novel_vs_mp` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
+| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $25.01 | $14.70 | $10.31 | 0.09% | 99.97% |
+| `dft.wrong_verdict_frac` | $18.44 | $24.38 | $5.94 | 0.03% | 100.0000% |
+| `mlip.chgnet.nonconv_frac` | $19.05 | $19.06 | $0.01 | 0.0000% | 100.0000% |
+| `mlip.chgnet.recall` | $19.05 | $19.05 | $0.00 | 0.0000% | 100.0000% |
+| `mlip.steps_per_relaxation` | $19.05 | $19.05 | $0.00 | 0.0000% | 100.0000% |
+| `batch.n_atoms` | $19.05 | $19.05 | $0.00 | 0.0000% | 100.0000% |
+| `gen.ion_exchange.frac_stable_strict` | $19.05 | $19.05 | $0.00 | 0.0000% | 100.0000% |
+| `mlip.chgnet.step_cost_per_atom` | $19.05 | $19.05 | $0.00 | 0.0000% | 100.0000% |
+| `gen.ion_exchange.frac_novel_vs_mp` | $19.05 | $19.05 | $0.00 | 0.0000% | 100.0% |
 | `dft.ionic_steps` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_cost_at_ref` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_per_ionic_step` | $19.05 | $19.05 | $0.00 | 0.00% | 100.0% |
@@ -361,16 +361,16 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | Parameter | cost at low | cost at high | swing | share | cumulative |
 |---|---|---|---|---|---|
 | `dft.cost_per_candidate` | $4.56 | $1,398 | $1,393 | 99.87% | 99.9% |
-| `price.cpu.on_demand` | $51.66 | $95.92 | $44.26 | 0.10% | 100.0% |
-| `dft.wrong_verdict_frac` | $74.14 | $98.01 | $23.87 | 0.03% | 100.0% |
-| `mlip.chgnet.recall` | $76.97 | $76.53 | $0.44 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_strict` | $76.87 | $76.45 | $0.41 | 0.00% | 100.0% |
-| `mlip.chgnet.nonconv_frac` | $76.61 | $76.85 | $0.24 | 0.00% | 100.0% |
-| `price.gpu_a100.on_demand` | $76.50 | $76.62 | $0.12 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_vs_mp` | $76.62 | $76.60 | $0.02 | 0.00% | 100.0% |
-| `mlip.steps_per_relaxation` | $76.61 | $76.61 | $0.00 | 0.00% | 100.0% |
-| `batch.n_atoms` | $76.61 | $76.61 | $0.00 | 0.00% | 100.0% |
-| `mlip.chgnet.step_cost_per_atom` | $76.61 | $76.61 | $0.00 | 0.00% | 100.0% |
+| `price.cpu.on_demand` | $51.66 | $95.92 | $44.26 | 0.10% | 99.97% |
+| `dft.wrong_verdict_frac` | $74.14 | $98.01 | $23.87 | 0.03% | 100.0000% |
+| `mlip.chgnet.recall` | $76.97 | $76.53 | $0.44 | 0.0000% | 100.0000% |
+| `gen.mattergen.frac_stable_strict` | $76.87 | $76.45 | $0.41 | 0.0000% | 100.0000% |
+| `mlip.chgnet.nonconv_frac` | $76.61 | $76.85 | $0.24 | 0.0000% | 100.0000% |
+| `price.gpu_a100.on_demand` | $76.50 | $76.62 | $0.12 | 0.0000% | 100.0000% |
+| `gen.mattergen.frac_novel_vs_mp` | $76.62 | $76.60 | $0.02 | 0.0000% | 100.0000% |
+| `mlip.steps_per_relaxation` | $76.61 | $76.61 | $0.00 | 0.0000% | 100.0000% |
+| `batch.n_atoms` | $76.61 | $76.61 | $0.00 | 0.0000% | 100.0000% |
+| `mlip.chgnet.step_cost_per_atom` | $76.61 | $76.61 | $0.00 | 0.0000% | 100.0% |
 | `dft.ionic_steps` | $76.61 | $76.61 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_cost_at_ref` | $76.61 | $76.61 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_per_ionic_step` | $76.61 | $76.61 | $0.00 | 0.00% | 100.0% |
@@ -406,17 +406,17 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `dft.cost_per_candidate` | $3,834 | $4,939 | $1,105 | 0.13% | 99.8% |
 | `synth.labour_attempts_per_week` | $4,504 | $3,585 | $919 | 0.09% | 99.9% |
 | `synth.labour_tuition_remission` | $3,479 | $4,302 | $822 | 0.07% | 99.9% |
-| `synth.indirect_rate` | $3,433 | $3,972 | $540 | 0.03% | 100.0% |
-| `synth.other_consumables_per_attempt` | $3,814 | $4,282 | $468 | 0.02% | 100.0% |
-| `synth.precursor_usd_per_g` | $3,844 | $4,121 | $277 | 0.01% | 100.0% |
-| `synth.precursor_mass_g_per_attempt` | $3,856 | $4,015 | $159 | 0.00% | 100.0% |
-| `synth.furnace_fixed_fee` | $3,891 | $4,032 | $141 | 0.00% | 100.0% |
-| `synth.attempts_per_crucible` | $3,962 | $3,835 | $126 | 0.00% | 100.0% |
-| `synth.crucible_cost` | $3,859 | $3,978 | $119 | 0.00% | 100.0% |
-| `price.cpu.on_demand` | $3,872 | $3,907 | $35.10 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_strict` | $3,911 | $3,877 | $33.63 | 0.00% | 100.0% |
-| `synth.recipes_per_target` | $3,891 | $3,913 | $21.65 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_novel_vs_mp` | $3,891 | $3,891 | $0.00 | 0.00% | 100.0% |
+| `synth.indirect_rate` | $3,433 | $3,972 | $540 | 0.03% | 99.96% |
+| `synth.other_consumables_per_attempt` | $3,814 | $4,282 | $468 | 0.02% | 99.98% |
+| `synth.precursor_usd_per_g` | $3,844 | $4,121 | $277 | 0.01% | 99.99% |
+| `synth.precursor_mass_g_per_attempt` | $3,856 | $4,015 | $159 | 0.003% | 99.99% |
+| `synth.furnace_fixed_fee` | $3,891 | $4,032 | $141 | 0.002% | 99.996% |
+| `synth.attempts_per_crucible` | $3,962 | $3,835 | $126 | 0.002% | 99.998% |
+| `synth.crucible_cost` | $3,859 | $3,978 | $119 | 0.002% | 99.9997% |
+| `price.cpu.on_demand` | $3,872 | $3,907 | $35.10 | 0.0001% | 99.9998% |
+| `gen.ion_exchange.frac_stable_strict` | $3,911 | $3,877 | $33.63 | 0.0001% | 99.9999% |
+| `synth.recipes_per_target` | $3,891 | $3,913 | $21.65 | 0.0001% | 100.0% |
+| `gen.ion_exchange.frac_novel_vs_mp` | $3,891 | $3,891 | $0.00 | 0.0000% | 100.0% |
 | `batch.n_atoms` | $3,891 | $3,891 | $0.00 | 0.00% | 100.0% |
 | `dft.ionic_steps` | $3,891 | $3,891 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_cost_at_ref` | $3,891 | $3,891 | $0.00 | 0.00% | 100.0% |
@@ -446,35 +446,35 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `synth.labour_attempts_per_week` | $4,480 | $3,561 | $919 | 0.09% | 99.8% |
 | `synth.labour_tuition_remission` | $3,455 | $4,278 | $822 | 0.07% | 99.9% |
 | `dft.cost_per_candidate` | $3,833 | $4,502 | $669 | 0.05% | 99.9% |
-| `synth.indirect_rate` | $3,409 | $3,948 | $540 | 0.03% | 100.0% |
-| `synth.other_consumables_per_attempt` | $3,790 | $4,258 | $468 | 0.02% | 100.0% |
-| `synth.precursor_usd_per_g` | $3,820 | $4,098 | $277 | 0.01% | 100.0% |
-| `synth.precursor_mass_g_per_attempt` | $3,832 | $3,991 | $159 | 0.00% | 100.0% |
-| `synth.furnace_fixed_fee` | $3,868 | $4,008 | $141 | 0.00% | 100.0% |
-| `synth.attempts_per_crucible` | $3,938 | $3,811 | $126 | 0.00% | 100.0% |
-| `synth.crucible_cost` | $3,835 | $3,954 | $119 | 0.00% | 100.0% |
-| `synth.recipes_per_target` | $3,868 | $3,889 | $21.65 | 0.00% | 100.0% |
-| `price.cpu.on_demand` | $3,856 | $3,877 | $21.24 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $3,879 | $3,859 | $19.79 | 0.00% | 100.0% |
-| `mlip.chgnet.nonconv_frac` | $3,868 | $3,868 | $0.01 | 0.00% | 100.0% |
-| `mlip.chgnet.recall` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `mlip.steps_per_relaxation` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `batch.n_atoms` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_strict` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `mlip.chgnet.step_cost_per_atom` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_novel_vs_mp` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `dft.ionic_steps` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_cost_at_ref` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_per_ionic_step` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_size_exponent` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `dft.wrong_verdict_frac` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_novel_all_databases` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_all_databases` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_vs_mp` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_after_chgnet_filter` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_strict` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `novelty.science_frac` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
-| `price.gpu_a100.on_demand` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0% |
+| `synth.indirect_rate` | $3,409 | $3,948 | $540 | 0.03% | 99.96% |
+| `synth.other_consumables_per_attempt` | $3,790 | $4,258 | $468 | 0.02% | 99.98% |
+| `synth.precursor_usd_per_g` | $3,820 | $4,098 | $277 | 0.01% | 99.99% |
+| `synth.precursor_mass_g_per_attempt` | $3,832 | $3,991 | $159 | 0.003% | 99.99% |
+| `synth.furnace_fixed_fee` | $3,868 | $4,008 | $141 | 0.002% | 99.997% |
+| `synth.attempts_per_crucible` | $3,938 | $3,811 | $126 | 0.002% | 99.998% |
+| `synth.crucible_cost` | $3,835 | $3,954 | $119 | 0.002% | 99.9999% |
+| `synth.recipes_per_target` | $3,868 | $3,889 | $21.65 | 0.0001% | 99.9999% |
+| `price.cpu.on_demand` | $3,856 | $3,877 | $21.24 | 0.0000% | 100.0000% |
+| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $3,879 | $3,859 | $19.79 | 0.0000% | 100.0000% |
+| `mlip.chgnet.nonconv_frac` | $3,868 | $3,868 | $0.01 | 0.0000% | 100.0000% |
+| `mlip.chgnet.recall` | $3,868 | $3,868 | $0.00 | 0.0000% | 100.0000% |
+| `mlip.steps_per_relaxation` | $3,868 | $3,868 | $0.00 | 0.0000% | 100.0000% |
+| `batch.n_atoms` | $3,868 | $3,868 | $0.00 | 0.0000% | 100.0000% |
+| `gen.ion_exchange.frac_stable_strict` | $3,868 | $3,868 | $0.00 | 0.0000% | 100.0000% |
+| `mlip.chgnet.step_cost_per_atom` | $3,868 | $3,868 | $0.00 | 0.0000% | 100.0000% |
+| `gen.ion_exchange.frac_novel_vs_mp` | $3,868 | $3,868 | $0.00 | 0.0000% | 100.0000% |
+| `dft.ionic_steps` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_cost_at_ref` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_per_ionic_step` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_size_exponent` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `dft.wrong_verdict_frac` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `gen.ion_exchange.frac_novel_all_databases` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_novel_all_databases` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_novel_vs_mp` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_stable_after_chgnet_filter` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_stable_strict` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `novelty.science_frac` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
+| `price.gpu_a100.on_demand` | $3,868 | $3,868 | $0.00 | 0.00% | 100.0000% |
 
 #### Level 2: per validated material, pipeline C
 
@@ -486,23 +486,23 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `synth.furnace_hourly` | $3,922 | $5,093 | $1,171 | 0.14% | 99.8% |
 | `synth.labour_attempts_per_week` | $4,591 | $3,672 | $919 | 0.09% | 99.9% |
 | `synth.labour_tuition_remission` | $3,566 | $4,388 | $822 | 0.07% | 99.9% |
-| `synth.indirect_rate` | $3,519 | $4,059 | $540 | 0.03% | 100.0% |
-| `synth.other_consumables_per_attempt` | $3,900 | $4,368 | $468 | 0.02% | 100.0% |
-| `synth.precursor_usd_per_g` | $3,931 | $4,208 | $277 | 0.01% | 100.0% |
-| `synth.precursor_mass_g_per_attempt` | $3,943 | $4,102 | $159 | 0.00% | 100.0% |
-| `synth.furnace_fixed_fee` | $3,978 | $4,119 | $141 | 0.00% | 100.0% |
-| `synth.attempts_per_crucible` | $4,048 | $3,922 | $126 | 0.00% | 100.0% |
-| `synth.crucible_cost` | $3,946 | $4,065 | $119 | 0.00% | 100.0% |
-| `price.cpu.on_demand` | $3,930 | $4,015 | $84.97 | 0.00% | 100.0% |
-| `synth.recipes_per_target` | $3,978 | $4,000 | $21.65 | 0.00% | 100.0% |
-| `mlip.chgnet.recall` | $3,979 | $3,978 | $0.85 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_strict` | $3,979 | $3,978 | $0.79 | 0.00% | 100.0% |
-| `mlip.chgnet.nonconv_frac` | $3,978 | $3,979 | $0.46 | 0.00% | 100.0% |
-| `price.gpu_a100.on_demand` | $3,978 | $3,978 | $0.22 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_vs_mp` | $3,978 | $3,978 | $0.04 | 0.00% | 100.0% |
-| `mlip.steps_per_relaxation` | $3,978 | $3,978 | $0.01 | 0.00% | 100.0% |
-| `batch.n_atoms` | $3,978 | $3,978 | $0.01 | 0.00% | 100.0% |
-| `mlip.chgnet.step_cost_per_atom` | $3,978 | $3,978 | $0.00 | 0.00% | 100.0% |
+| `synth.indirect_rate` | $3,519 | $4,059 | $540 | 0.03% | 99.96% |
+| `synth.other_consumables_per_attempt` | $3,900 | $4,368 | $468 | 0.02% | 99.98% |
+| `synth.precursor_usd_per_g` | $3,931 | $4,208 | $277 | 0.01% | 99.99% |
+| `synth.precursor_mass_g_per_attempt` | $3,943 | $4,102 | $159 | 0.003% | 99.99% |
+| `synth.furnace_fixed_fee` | $3,978 | $4,119 | $141 | 0.002% | 99.996% |
+| `synth.attempts_per_crucible` | $4,048 | $3,922 | $126 | 0.002% | 99.998% |
+| `synth.crucible_cost` | $3,946 | $4,065 | $119 | 0.001% | 99.999% |
+| `price.cpu.on_demand` | $3,930 | $4,015 | $84.97 | 0.001% | 100.0000% |
+| `synth.recipes_per_target` | $3,978 | $4,000 | $21.65 | 0.0000% | 100.0000% |
+| `mlip.chgnet.recall` | $3,979 | $3,978 | $0.85 | 0.0000% | 100.0000% |
+| `gen.mattergen.frac_stable_strict` | $3,979 | $3,978 | $0.79 | 0.0000% | 100.0000% |
+| `mlip.chgnet.nonconv_frac` | $3,978 | $3,979 | $0.46 | 0.0000% | 100.0000% |
+| `price.gpu_a100.on_demand` | $3,978 | $3,978 | $0.22 | 0.0000% | 100.0000% |
+| `gen.mattergen.frac_novel_vs_mp` | $3,978 | $3,978 | $0.04 | 0.0000% | 100.0000% |
+| `mlip.steps_per_relaxation` | $3,978 | $3,978 | $0.01 | 0.0000% | 100.0000% |
+| `batch.n_atoms` | $3,978 | $3,978 | $0.01 | 0.0000% | 100.0000% |
+| `mlip.chgnet.step_cost_per_atom` | $3,978 | $3,978 | $0.00 | 0.0000% | 100.0% |
 | `dft.ionic_steps` | $3,978 | $3,978 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_cost_at_ref` | $3,978 | $3,978 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_per_ionic_step` | $3,978 | $3,978 | $0.00 | 0.00% | 100.0% |
@@ -528,16 +528,16 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `synth.labour_tuition_remission` | $41,607 | $51,443 | $9,836 | 0.07% | 99.9% |
 | `synth.indirect_rate` | $41,053 | $47,506 | $6,453 | 0.03% | 99.9% |
 | `synth.other_consumables_per_attempt` | $45,608 | $51,206 | $5,599 | 0.02% | 99.9% |
-| `gen.ion_exchange.frac_novel_all_databases` | $49,418 | $44,061 | $5,357 | 0.02% | 100.0% |
-| `gen.ion_exchange.frac_novel_vs_mp` | $44,295 | $48,569 | $4,275 | 0.01% | 100.0% |
-| `synth.precursor_usd_per_g` | $45,975 | $49,289 | $3,314 | 0.01% | 100.0% |
-| `synth.precursor_mass_g_per_attempt` | $46,115 | $48,019 | $1,904 | 0.00% | 100.0% |
-| `synth.furnace_fixed_fee` | $46,538 | $48,221 | $1,683 | 0.00% | 100.0% |
-| `synth.attempts_per_crucible` | $47,376 | $45,867 | $1,509 | 0.00% | 100.0% |
-| `synth.crucible_cost` | $46,155 | $47,576 | $1,421 | 0.00% | 100.0% |
-| `price.cpu.on_demand` | $46,301 | $46,721 | $420 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_strict` | $46,769 | $46,367 | $402 | 0.00% | 100.0% |
-| `synth.recipes_per_target` | $46,538 | $46,797 | $259 | 0.00% | 100.0% |
+| `gen.ion_exchange.frac_novel_all_databases` | $49,418 | $44,061 | $5,357 | 0.02% | 99.97% |
+| `gen.ion_exchange.frac_novel_vs_mp` | $44,295 | $48,569 | $4,275 | 0.01% | 99.98% |
+| `synth.precursor_usd_per_g` | $45,975 | $49,289 | $3,314 | 0.01% | 99.99% |
+| `synth.precursor_mass_g_per_attempt` | $46,115 | $48,019 | $1,904 | 0.003% | 99.99% |
+| `synth.furnace_fixed_fee` | $46,538 | $48,221 | $1,683 | 0.002% | 99.996% |
+| `synth.attempts_per_crucible` | $47,376 | $45,867 | $1,509 | 0.002% | 99.998% |
+| `synth.crucible_cost` | $46,155 | $47,576 | $1,421 | 0.002% | 99.9997% |
+| `price.cpu.on_demand` | $46,301 | $46,721 | $420 | 0.0001% | 99.9998% |
+| `gen.ion_exchange.frac_stable_strict` | $46,769 | $46,367 | $402 | 0.0001% | 99.9999% |
+| `synth.recipes_per_target` | $46,538 | $46,797 | $259 | 0.0001% | 100.0% |
 | `batch.n_atoms` | $46,538 | $46,538 | $0.00 | 0.00% | 100.0% |
 | `dft.ionic_steps` | $46,538 | $46,538 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_cost_at_ref` | $46,538 | $46,538 | $0.00 | 0.00% | 100.0% |
@@ -568,32 +568,32 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `dft.cost_per_candidate` | $45,839 | $53,836 | $7,997 | 0.05% | 99.9% |
 | `synth.indirect_rate` | $40,768 | $47,221 | $6,453 | 0.03% | 99.9% |
 | `synth.other_consumables_per_attempt` | $45,322 | $50,921 | $5,599 | 0.02% | 99.9% |
-| `gen.ion_exchange.frac_novel_all_databases` | $49,115 | $43,791 | $5,324 | 0.02% | 100.0% |
-| `gen.ion_exchange.frac_novel_vs_mp` | $44,023 | $48,272 | $4,248 | 0.01% | 100.0% |
-| `synth.precursor_usd_per_g` | $45,689 | $49,003 | $3,314 | 0.01% | 100.0% |
-| `synth.precursor_mass_g_per_attempt` | $45,830 | $47,734 | $1,904 | 0.00% | 100.0% |
-| `synth.furnace_fixed_fee` | $46,253 | $47,935 | $1,683 | 0.00% | 100.0% |
-| `synth.attempts_per_crucible` | $47,091 | $45,582 | $1,509 | 0.00% | 100.0% |
-| `synth.crucible_cost` | $45,869 | $47,291 | $1,421 | 0.00% | 100.0% |
-| `synth.recipes_per_target` | $46,253 | $46,512 | $259 | 0.00% | 100.0% |
-| `price.cpu.on_demand` | $46,110 | $46,364 | $254 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $46,390 | $46,153 | $237 | 0.00% | 100.0% |
-| `mlip.chgnet.nonconv_frac` | $46,253 | $46,253 | $0.16 | 0.00% | 100.0% |
-| `mlip.chgnet.recall` | $46,253 | $46,253 | $0.05 | 0.00% | 100.0% |
-| `mlip.steps_per_relaxation` | $46,253 | $46,253 | $0.03 | 0.00% | 100.0% |
-| `batch.n_atoms` | $46,253 | $46,253 | $0.02 | 0.00% | 100.0% |
-| `gen.ion_exchange.frac_stable_strict` | $46,253 | $46,253 | $0.02 | 0.00% | 100.0% |
-| `mlip.chgnet.step_cost_per_atom` | $46,253 | $46,253 | $0.02 | 0.00% | 100.0% |
-| `dft.ionic_steps` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_cost_at_ref` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_per_ionic_step` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `dft.scf_size_exponent` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `dft.wrong_verdict_frac` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_all_databases` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_novel_vs_mp` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_after_chgnet_filter` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_strict` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
-| `price.gpu_a100.on_demand` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0% |
+| `gen.ion_exchange.frac_novel_all_databases` | $49,115 | $43,791 | $5,324 | 0.02% | 99.97% |
+| `gen.ion_exchange.frac_novel_vs_mp` | $44,023 | $48,272 | $4,248 | 0.01% | 99.98% |
+| `synth.precursor_usd_per_g` | $45,689 | $49,003 | $3,314 | 0.01% | 99.99% |
+| `synth.precursor_mass_g_per_attempt` | $45,830 | $47,734 | $1,904 | 0.003% | 99.99% |
+| `synth.furnace_fixed_fee` | $46,253 | $47,935 | $1,683 | 0.002% | 99.997% |
+| `synth.attempts_per_crucible` | $47,091 | $45,582 | $1,509 | 0.002% | 99.998% |
+| `synth.crucible_cost` | $45,869 | $47,291 | $1,421 | 0.002% | 99.9999% |
+| `synth.recipes_per_target` | $46,253 | $46,512 | $259 | 0.0001% | 99.9999% |
+| `price.cpu.on_demand` | $46,110 | $46,364 | $254 | 0.0000% | 100.0000% |
+| `gen.ion_exchange.frac_stable_after_chgnet_filter` | $46,390 | $46,153 | $237 | 0.0000% | 100.0000% |
+| `mlip.chgnet.nonconv_frac` | $46,253 | $46,253 | $0.16 | 0.0000% | 100.0000% |
+| `mlip.chgnet.recall` | $46,253 | $46,253 | $0.05 | 0.0000% | 100.0000% |
+| `mlip.steps_per_relaxation` | $46,253 | $46,253 | $0.03 | 0.0000% | 100.0000% |
+| `batch.n_atoms` | $46,253 | $46,253 | $0.02 | 0.0000% | 100.0000% |
+| `gen.ion_exchange.frac_stable_strict` | $46,253 | $46,253 | $0.02 | 0.0000% | 100.0000% |
+| `mlip.chgnet.step_cost_per_atom` | $46,253 | $46,253 | $0.02 | 0.0000% | 100.0000% |
+| `dft.ionic_steps` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_cost_at_ref` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_per_ionic_step` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `dft.scf_size_exponent` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `dft.wrong_verdict_frac` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_novel_all_databases` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_novel_vs_mp` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_stable_after_chgnet_filter` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `gen.mattergen.frac_stable_strict` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
+| `price.gpu_a100.on_demand` | $46,253 | $46,253 | $0.00 | 0.00% | 100.0000% |
 | `novelty.science_frac` | unbounded | $17,835 | unbounded at one end | n/a |  |
 
 #### Level 3: per validated new material (lower-bound quantity; see README), pipeline C
@@ -607,23 +607,23 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 | `synth.labour_attempts_per_week` | $52,547 | $42,024 | $10,523 | 0.09% | 99.8% |
 | `synth.labour_tuition_remission` | $40,812 | $50,226 | $9,413 | 0.07% | 99.9% |
 | `synth.indirect_rate` | $40,282 | $46,458 | $6,176 | 0.03% | 99.9% |
-| `synth.other_consumables_per_attempt` | $44,641 | $50,000 | $5,358 | 0.02% | 100.0% |
-| `gen.mattergen.frac_novel_all_databases` | $47,501 | $44,034 | $3,467 | 0.01% | 100.0% |
-| `synth.precursor_usd_per_g` | $44,992 | $48,164 | $3,172 | 0.01% | 100.0% |
-| `gen.mattergen.frac_novel_vs_mp` | $44,208 | $46,509 | $2,301 | 0.00% | 100.0% |
-| `synth.precursor_mass_g_per_attempt` | $45,127 | $46,949 | $1,822 | 0.00% | 100.0% |
-| `synth.furnace_fixed_fee` | $45,532 | $47,142 | $1,610 | 0.00% | 100.0% |
-| `synth.attempts_per_crucible` | $46,334 | $44,890 | $1,444 | 0.00% | 100.0% |
-| `synth.crucible_cost` | $45,165 | $46,525 | $1,360 | 0.00% | 100.0% |
-| `price.cpu.on_demand` | $44,983 | $45,956 | $973 | 0.00% | 100.0% |
-| `synth.recipes_per_target` | $45,532 | $45,779 | $248 | 0.00% | 100.0% |
-| `mlip.chgnet.recall` | $45,540 | $45,530 | $9.71 | 0.00% | 100.0% |
-| `gen.mattergen.frac_stable_strict` | $45,537 | $45,528 | $9.07 | 0.00% | 100.0% |
-| `mlip.chgnet.nonconv_frac` | $45,532 | $45,537 | $5.25 | 0.00% | 100.0% |
-| `price.gpu_a100.on_demand` | $45,529 | $45,532 | $2.57 | 0.00% | 100.0% |
-| `mlip.steps_per_relaxation` | $45,532 | $45,532 | $0.10 | 0.00% | 100.0% |
-| `batch.n_atoms` | $45,532 | $45,532 | $0.07 | 0.00% | 100.0% |
-| `mlip.chgnet.step_cost_per_atom` | $45,532 | $45,532 | $0.06 | 0.00% | 100.0% |
+| `synth.other_consumables_per_attempt` | $44,641 | $50,000 | $5,358 | 0.02% | 99.97% |
+| `gen.mattergen.frac_novel_all_databases` | $47,501 | $44,034 | $3,467 | 0.01% | 99.98% |
+| `synth.precursor_usd_per_g` | $44,992 | $48,164 | $3,172 | 0.01% | 99.99% |
+| `gen.mattergen.frac_novel_vs_mp` | $44,208 | $46,509 | $2,301 | 0.004% | 99.99% |
+| `synth.precursor_mass_g_per_attempt` | $45,127 | $46,949 | $1,822 | 0.003% | 99.99% |
+| `synth.furnace_fixed_fee` | $45,532 | $47,142 | $1,610 | 0.002% | 99.996% |
+| `synth.attempts_per_crucible` | $46,334 | $44,890 | $1,444 | 0.002% | 99.998% |
+| `synth.crucible_cost` | $45,165 | $46,525 | $1,360 | 0.001% | 99.999% |
+| `price.cpu.on_demand` | $44,983 | $45,956 | $973 | 0.001% | 100.0000% |
+| `synth.recipes_per_target` | $45,532 | $45,779 | $248 | 0.0000% | 100.0000% |
+| `mlip.chgnet.recall` | $45,540 | $45,530 | $9.71 | 0.0000% | 100.0000% |
+| `gen.mattergen.frac_stable_strict` | $45,537 | $45,528 | $9.07 | 0.0000% | 100.0000% |
+| `mlip.chgnet.nonconv_frac` | $45,532 | $45,537 | $5.25 | 0.0000% | 100.0000% |
+| `price.gpu_a100.on_demand` | $45,529 | $45,532 | $2.57 | 0.0000% | 100.0000% |
+| `mlip.steps_per_relaxation` | $45,532 | $45,532 | $0.10 | 0.0000% | 100.0000% |
+| `batch.n_atoms` | $45,532 | $45,532 | $0.07 | 0.0000% | 100.0000% |
+| `mlip.chgnet.step_cost_per_atom` | $45,532 | $45,532 | $0.06 | 0.0000% | 100.0% |
 | `dft.ionic_steps` | $45,532 | $45,532 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_cost_at_ref` | $45,532 | $45,532 | $0.00 | 0.00% | 100.0% |
 | `dft.scf_per_ionic_step` | $45,532 | $45,532 | $0.00 | 0.00% | 100.0% |

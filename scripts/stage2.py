@@ -49,7 +49,15 @@ def money(x):
 
 
 def pct(x, digits=0):
-    return "n/a" if x is None or math.isnan(x) else f"{100 * x:.{digits}f}%"
+    """Format a probability. A value short of certainty never prints as 100%, and one above zero
+    never prints as 0%: rounding either way would assert something the simulation did not find.
+    Such a value gains digits until it is distinguishable, up to four decimal places."""
+    if x is None or math.isnan(x):
+        return "n/a"
+    d = digits
+    while d < 4 and ((x < 1.0 and round(100 * x, d) >= 100) or (x > 0.0 and round(100 * x, d) <= 0)):
+        d += 1
+    return f"{100 * x:.{d}f}%"
 
 
 def md_table(headers, rows):
@@ -288,8 +296,12 @@ def kill_section(kill):
         "paired comparison, the same world under each pipeline, separates them, and only at level 1.")
     return (md_table(["Level", "P(B < A)", "P(C < B)", "P(C < A)", "overlap B–A", "overlap C–B",
                       f"P(B, A differ > {MATERIAL:.0%})", f"P(C, B differ > {MATERIAL:.0%})"], rows)
-            + "\n\nP(x < y) is paired: both pipelines see the same drawn world. Overlap is the overlap coefficient of "
-              "the two marginal cost distributions (histogram on log cost), 100% = identical.\n\n" + verdict)
+            + "\n\nP(x < y) is paired: both pipelines see the same drawn world. "
+              f"P(differ > {MATERIAL:.0%}) is paired and symmetric: the dearer of the pair exceeds the cheaper by "
+              f"more than {MATERIAL:.0%} in that draw, the same denominator convention as the DFT threshold sweep. "
+              "Overlap is the overlap coefficient of the two marginal cost distributions on a "
+              f"{60}-bin log10-cost histogram whose bins are normalised probabilities, not densities; 100% = "
+              "identical. See results/overlap_bin_sensitivity.csv for its bin-count dependence.\n\n" + verdict)
 
 
 def returns_section(p, mc_ret):
@@ -579,14 +591,27 @@ def dft_threshold_sweep(p, points=(3, 10, 30, 54.5, 100, 200, 300, 500, 1000),
     "at what verification cost does the choice of pipeline start to matter?" with synthesis
     success, recipes and attempt cost held shared across pipelines throughout.
 
-    Comparators are relative to B, the cheapest pipeline at base: (C - B)/B is the
-    generative-pool decision, (A - B)/B is the MLIP-filter decision.
+    Comparators are relative to B, the cheapest pipeline throughout the swept range: (C - B)/B is
+    the generative-pool decision, (A - B)/B is the MLIP-filter decision.
+
+    DENOMINATOR CONVENTION. Each comparator is the gap of the dearer pipeline over the cheaper
+    one, computed by analysis._ratio_gap, which is the same function the Monte Carlo materiality
+    statistic uses. The two are therefore the same quantity measured two ways, deterministically
+    here and across draws there, and a crossing in this table and a share of material draws in
+    Section 5.6 may be compared directly. Measuring the gap the other way round would give a
+    smaller number for the same difference -- A exceeding B by 10% is B falling short of A by
+    9.09% -- so the convention has to be stated rather than inferred. `_ratio_gap` is symmetric,
+    so where B is cheapest, as it is at every point swept here, these equal (C - B)/B and
+    (A - B)/B exactly; the sign is carried by naming which pipeline is dearer, not by the formula.
     """
     def gaps(d):
         r = funnel({**p, "dft_cost_per_candidate": d})["pipelines"]
         o = {k: r[k]["outputs"]["experimentally_validated"] for k in ("A", "B", "C")}
         cb = o["B"]["usd_per"]
-        return {"dft": d, "CB": (o["C"]["usd_per"] - cb) / cb, "AB": (o["A"]["usd_per"] - cb) / cb,
+        return {"dft": d,
+                "CB": an._ratio_gap(o["C"]["usd_per"], cb),
+                "AB": an._ratio_gap(o["A"]["usd_per"], cb),
+                "b_cheapest": cb <= min(o[k]["usd_per"] for k in ("A", "B", "C")),
                 "b_compute_share": o["B"]["compute_usd_per"] / cb}
 
     rows = [gaps(d) for d in points]
@@ -605,6 +630,84 @@ def dft_threshold_sweep(p, points=(3, 10, 30, 54.5, 100, 200, 300, 500, 1000),
 
     cross = {key: {t: crossing(key, t) for t in targets} for key in ("CB", "AB")}
     return {"rows": rows, "crossings": cross, "targets": targets}
+
+
+def threshold_coefficients(p, probe=(10.0, 1000.0), check=(3.0, 30.0, 54.5, 200.0, 500.0, 2000.0),
+                           targets=(0.05, 0.10, 0.20)):
+    """Unrounded coefficients of c0_i(d) = alpha_i d + beta_i, with residuals and root comparison.
+
+    Section 5.5 prints these to three or four figures. The claim that the relation is affine to
+    machine precision is a claim about THESE values, not about the printed ones: substituting the
+    rounded coefficients into the closed form moves d* by a fraction of a core-hour, which is why
+    the printed d* and the model's numerical root agree to the displayed digits but not exactly.
+    This function is the archive for the unrounded values, so a reader can reproduce either.
+
+    alpha and beta are recovered from two probe points, so by construction the relation passes
+    through both; the residuals at `check` are the actual test of affinity, and `check` extends
+    past the swept range so the fit is not only validated where it was fitted.
+
+    For each target tau the closed form
+
+        d*(tau) = (tau*b + (1+tau)*beta_B - beta_C) / (alpha_C - (1+tau)*alpha_B)
+
+    is reported next to the model's bisected root. A positive denominator is necessary but NOT
+    sufficient for a usable crossing: the solution must also be nonnegative and inside the
+    physically meaningful domain d >= 0. A negative d* with a positive denominator means the gap
+    already exceeds tau at zero DFT cost, so there is no crossing to report, and the formula
+    returns a number that must be discarded rather than quoted. `usable` records that test.
+    """
+    def c0(d):
+        r = funnel({**p, "dft_cost_per_candidate": d})["pipelines"]
+        out = {}
+        for key in ("A", "B", "C"):
+            pl = r[key]
+            o = pl["outputs"]["experimentally_validated"]
+            verdicts = next(s["surviving"] for s in pl["stages"] if s["stage"] == "DFT check")
+            out[key] = o["compute_usd_per"] * o["count"] / verdicts
+        return out
+
+    lo, hi = probe
+    a, b = c0(lo), c0(hi)
+    alpha = {k: (b[k] - a[k]) / (hi - lo) for k in ("A", "B", "C")}
+    beta = {k: a[k] - alpha[k] * lo for k in ("A", "B", "C")}
+
+    residuals = []
+    for d in check:
+        act = c0(d)
+        for k in ("A", "B", "C"):
+            pred = alpha[k] * d + beta[k]
+            residuals.append({"dft_core_h": d, "pipeline": k, "predicted_usd": pred,
+                              "model_usd": act[k], "abs_usd": pred - act[k],
+                              "relative": (pred - act[k]) / act[k] if act[k] else 0.0})
+    worst = max(abs(r["relative"]) for r in residuals)
+
+    bill = p["synth_recipes_per_target"] * synthesis_cost_per_attempt(p)["usd"]
+    sweep = dft_threshold_sweep(p, points=(54.5,), targets=targets)
+    roots = {}
+    for tau in targets:
+        den = alpha["C"] - (1 + tau) * alpha["B"]
+        closed = ((tau * bill + (1 + tau) * beta["B"] - beta["C"]) / den) if den else None
+        solved = sweep["crossings"]["CB"][tau]
+        roots[tau] = {
+            "closed_form": closed,
+            "numerical_root": solved,
+            "denominator": den,
+            "usable": bool(den > 0 and closed is not None and closed >= 0),
+            "relative_gap": (abs(closed - solved) / solved) if (closed and solved) else None,
+        }
+    # Rounding cost: the same roots recomputed from the coefficients as printed in Section 5.5.
+    shown = {"alpha": {k: round(alpha[k], 3) for k in alpha},
+             "beta": {"A": round(beta["A"], 4), "B": round(beta["B"], 4), "C": round(beta["C"], 3)}}
+    rounded_roots = {}
+    for tau in targets:
+        den = shown["alpha"]["C"] - (1 + tau) * shown["alpha"]["B"]
+        rounded_roots[tau] = (((tau * bill + (1 + tau) * shown["beta"]["B"] - shown["beta"]["C"]) / den)
+                              if den else None)
+    return {"probe_points_core_h": list(probe), "synthesis_bill_usd": bill,
+            "alpha_usd_per_core_h": alpha, "beta_usd": beta, "as_printed": shown,
+            "residuals": residuals, "worst_relative_residual": worst,
+            "roots": roots, "roots_from_printed_coefficients": rounded_roots,
+            "alpha_ratio_C_over_B": alpha["C"] / alpha["B"]}
 
 
 def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
@@ -696,6 +799,27 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
             nm = f"cross_{label}_{int(tgt * 100)}pct"
             k[nm] = "never within 20,000 core-h" if val is None else f"{val:,.0f}"
     k["sweep_AB_max"] = f"{max(r['AB'] for r in sw['rows']):.1%}"
+    k["sweep_b_cheapest_everywhere"] = "yes" if all(r["b_cheapest"] for r in sw["rows"]) else "no"
+    # Threshold-equation archive: unrounded coefficients, residuals, root comparison.
+    tc = threshold_coefficients(p)
+    for x in ("A", "B", "C"):
+        k[f"thr_alpha_{x}"] = f"{tc['alpha_usd_per_core_h'][x]:.3f}"
+        k[f"thr_alpha_{x}_full"] = f"{tc['alpha_usd_per_core_h'][x]:.10f}"
+        k[f"thr_beta_{x}_full"] = f"{tc['beta_usd'][x]:.10f}"
+    k["thr_beta_A"] = f"{tc['beta_usd']['A']:.4f}"
+    k["thr_beta_B"] = f"{tc['beta_usd']['B']:.4f}"
+    k["thr_beta_C"] = f"{tc['beta_usd']['C']:.3f}"
+    k["thr_alpha_ratio_C_B"] = f"{tc['alpha_ratio_C_over_B']:.1f}"
+    k["thr_worst_residual"] = f"{tc['worst_relative_residual']:.1e}"
+    k["thr_residual_check_max_core_h"] = f"{max(r['dft_core_h'] for r in tc['residuals']):,.0f}"
+    k["thr_synthesis_bill"] = money(tc["synthesis_bill_usd"])
+    r10 = tc["roots"][0.10]
+    k["thr_closed_10"] = f"{r10['closed_form']:.1f}"
+    k["thr_numerical_10"] = f"{r10['numerical_root']:.1f}"
+    k["thr_root_relgap_10"] = f"{r10['relative_gap']:.0e}"
+    k["thr_denominator_10"] = f"{r10['denominator']:.3f}"
+    k["thr_printed_coeff_root_10"] = f"{tc['roots_from_printed_coefficients'][0.10]:.1f}"
+    k["thr_printed_coeff_shift_10"] = f"{abs(tc['roots_from_printed_coefficients'][0.10] - r10['closed_form']):.2f}"
     # Monte Carlo and readings
     lvl = "experimentally_validated"
     med = {}
@@ -712,7 +836,35 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         kk = kill[lv]
         k[f"kill_{tag}_p_B_lt_A"] = pct(kk["p_lt"][("B", "A")], 1)
         k[f"kill_{tag}_material_BA"] = pct(kk["p_material"][("B", "A")])
+        k[f"kill_{tag}_material_BA_1dp"] = pct(kk["p_material"][("B", "A")], 1)
+        # The superseded directional convention, kept so the size of the correction is visible.
+        k[f"kill_{tag}_material_BA_directional"] = pct(kk["p_material_directional"][("B", "A")], 1)
         k[f"kill_{tag}_overlap_BA"] = pct(kk["overlap"][("B", "A")])
+    # Bin-count sensitivity of the overlap coefficient (Section 5.6 reports the 60-bin value).
+    osens = an.overlap_sensitivity(mc)
+    k["overlap_bin_counts"] = ", ".join(str(n) for n in osens)
+    for lv, tag in (("dft_confirmed_stable", "l1"), ("experimentally_validated", "l2")):
+        vals = [osens[n][lv][("B", "A")] for n in osens]
+        k[f"overlap_{tag}_BA_range"] = f"{min(vals):.0%}–{max(vals):.0%}"
+        k[f"overlap_{tag}_BA_span_pp"] = f"{(max(vals) - min(vals)) * 100:.1f}"
+    # How the deterministic crossings of Section 5.5 relate to the material-draw shares of 5.6.
+    # They are the same comparator on the same pair, but one is NOT the prior mass above the other:
+    # the crossing itself moves draw to draw with attempt cost, recipes and success, so draws can be
+    # material below the deterministic crossing and immaterial above it. Stating this is the point.
+    dfts = [d["dft_cost"] for d in mc["draws"]]
+    k["mc_dft_prior_max"] = f"{max(dfts):,.0f}"
+    for pair, label, crossing in ((("A", "B"), "filter", 1034.0), (("C", "B"), "gen", 197.0)):
+        mat = [d for d in mc["draws"]
+               if an._ratio_gap(d["costs"][lvl][pair[0]], d["costs"][lvl][pair[1]]) > MATERIAL]
+        non = [d["dft_cost"] for d in mc["draws"]
+               if an._ratio_gap(d["costs"][lvl][pair[0]], d["costs"][lvl][pair[1]]) <= MATERIAL]
+        md = sorted(d["dft_cost"] for d in mat)
+        k[f"xp_{label}_material_share"] = pct(len(mat) / len(mc["draws"]), 1)
+        k[f"xp_{label}_prior_above_crossing"] = pct(sum(x > crossing for x in dfts) / len(dfts), 1)
+        k[f"xp_{label}_material_dft_min"] = f"{md[0]:,.0f}" if md else "n/a"
+        k[f"xp_{label}_material_dft_median"] = f"{md[len(md) // 2]:,.0f}" if md else "n/a"
+        k[f"xp_{label}_material_dft_max"] = f"{md[-1]:,.0f}" if md else "n/a"
+        k[f"xp_{label}_immaterial_dft_max"] = f"{max(non):,.0f}" if non else "n/a"
     k["mc_draws"] = f"{len(mc['draws']):,}"
     k["mc_l2_B_p95"] = money(summ[lvl]["B"][95])
     k["mc_l2_B_p95_thousands"] = f"${summ[lvl]['B'][95] / 1000:,.0f},000"
@@ -810,6 +962,22 @@ def main():
     (out_dir / "stage2.md").write_text("\n".join(report))
     keys = key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor)
     (out_dir / "key_numbers.json").write_text(json.dumps(keys, indent=1, ensure_ascii=False) + "\n")
+
+    # Archives behind two claims the paper makes to limited precision: the affine threshold
+    # coefficients (Section 5.5) and the bin-count dependence of the overlap coefficient (5.6).
+    tc = threshold_coefficients(p)
+    tc["roots"] = {str(t): v for t, v in tc["roots"].items()}
+    tc["roots_from_printed_coefficients"] = {str(t): v for t, v in tc["roots_from_printed_coefficients"].items()}
+    (out_dir / "threshold_coefficients.json").write_text(json.dumps(tc, indent=1) + "\n")
+    osens = an.overlap_sensitivity(mc)
+    with open(out_dir / "overlap_bin_sensitivity.csv", "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["# overlap coefficient vs bin count; bins hold normalised probabilities, not densities"])
+        w.writerow(["bins", "level", "pair", "overlap"])
+        for n in osens:
+            for lv in an.LEVELS:
+                for pr, v in osens[n][lv].items():
+                    w.writerow([n, lv, f"{pr[0]} vs {pr[1]}", f"{v:.6f}"])
 
     with open(out_dir / "tornado.csv", "w", newline="") as fh:
         w = csv.writer(fh)

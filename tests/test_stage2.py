@@ -400,3 +400,63 @@ def test_key_numbers_match_model(doc):
         assert keys[f"l1_{k}"] == money(c["dft_confirmed_stable"][k])
         assert keys[f"l2_{k}"] == money(c["experimentally_validated"][k])
     assert keys["indirect_rate"] == f"{records(doc)['synth.indirect_rate']['base']:.0%}"
+
+
+def test_materiality_is_symmetric_and_matches_the_sweep_convention():
+    """The denominator fix of revision 11.
+
+    Up to revision 10 the Monte Carlo reported P(|C_B/C_A - 1| > 0.10), with the dearer pipeline
+    in the denominator, while the DFT sweep reported each pipeline's gap over the cheaper one. The
+    two are not the same question: A exceeding B by 10% is B falling short of A by 9.09%, so the
+    simulation's statistic was the stricter of the two and the crossings in the sweep could not be
+    compared with it. Both now use analysis._ratio_gap.
+    """
+    rng = random.Random(7)
+    rows = []
+    for _ in range(4000):
+        base = math.exp(rng.gauss(0, 1))
+        # A is dearer than B by exactly 10.5%: material under the symmetric definition
+        # ((A-B)/B = 0.105), immaterial under the directional one ((A-B)/A = 0.095).
+        c = {lvl: {"A": base * 1.105, "B": base, "C": base * 1.105} for lvl in an.LEVELS}
+        rows.append({"costs": c})
+    k = an.kill_condition({"draws": rows})["dft_confirmed_stable"]
+    assert k["p_material"][("B", "A")] == 1.0
+    assert k["p_material_directional"][("B", "A")] == 0.0
+
+    # symmetric in its arguments, which the directional form is not
+    assert an._ratio_gap(1.105, 1.0) == an._ratio_gap(1.0, 1.105)
+    assert an._ratio_gap(2.0, 1.0) == pytest.approx(1.0)
+    # uncomparable pairs count as not material rather than raising
+    assert an._ratio_gap(float("inf"), 1.0) == 0.0
+    assert an._ratio_gap(0.0, 1.0) == 0.0
+    assert an._ratio_gap(float("nan"), 1.0) == 0.0
+
+
+def test_sweep_and_simulation_agree_on_a_constructed_gap():
+    """A pipeline pair sitting just above and just below the 10% line is classified the same way
+    by the sweep's comparator and the simulation's materiality test. This is the property the
+    unified denominator buys: a crossing in Section 5.5 and a material draw in 5.6 mean the
+    same thing."""
+    for ratio, expected in ((1.105, 1.0), (1.095, 0.0)):
+        rows = [{"costs": {lvl: {"A": 1.0 * ratio, "B": 1.0, "C": 1.0} for lvl in an.LEVELS}}] * 500
+        k = an.kill_condition({"draws": rows})["dft_confirmed_stable"]
+        assert k["p_material"][("B", "A")] == expected
+        assert (an._ratio_gap(ratio, 1.0) > 0.10) == bool(expected)
+
+
+def test_overlap_sensitivity_is_weakly_decreasing_in_bin_count():
+    """Section 5.6 reports one bin count, so the dependence has to be shown, not asserted.
+    Refining nested bins can only split mass that coarser bins merged, so the coefficient is
+    weakly decreasing. The paper's claim is that it is *insensitive* over a wide range, which is
+    a quantitative claim this pins."""
+    rng = random.Random(11)
+    rows = []
+    for _ in range(3000):
+        base = math.exp(rng.gauss(0, 1))
+        c = {lvl: {"A": base * 1.02, "B": base, "C": base * 3.0} for lvl in an.LEVELS}
+        rows.append({"costs": c})
+    s = an.overlap_sensitivity({"draws": rows}, counts=(20, 60, 240))
+    lvl = "dft_confirmed_stable"
+    vals = [s[n][lvl][("B", "A")] for n in (20, 60, 240)]
+    assert vals[0] >= vals[1] >= vals[2] - 1e-12
+    assert all(0.0 <= v <= 1.0 for v in vals)

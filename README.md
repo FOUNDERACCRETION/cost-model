@@ -318,15 +318,15 @@ Return = % fall in cost per validated material per 1% PROPORTIONAL improvement i
 <!-- generated:kill:begin -->
 | Level | P(B < A) | P(C < B) | P(C < A) | overlap B–A | overlap C–B | P(B, A differ > 10%) | P(C, B differ > 10%) |
 |---|---|---|---|---|---|---|---|
-| L1 | 99.4% | 0.4% | 3.1% | 89% | 76% | 98% | 99% |
+| L1 | 99.4% | 0.4% | 3.1% | 89% | 76% | 98% | 99.5% |
 | L2 | 99.4% | 0.4% | 3.1% | 99% | 94% | 1% | 21% |
 | L3 | 99.4% | 61.1% | 66.9% | 99% | 98% | 1% | 15% |
 
-P(x < y) is paired: both pipelines see the same drawn world. Overlap is the overlap coefficient of the two marginal cost distributions (histogram on log cost), 100% = identical.
+P(x < y) is paired: both pipelines see the same drawn world. P(differ > 10%) is paired and symmetric: the dearer of the pair exceeds the cheaper by more than 10% in that draw, the same denominator convention as the DFT threshold sweep. Overlap is the overlap coefficient of the two marginal cost distributions on a 60-bin log10-cost histogram whose bins are normalised probabilities, not densities; 100% = identical. See results/overlap_bin_sensitivity.csv for its bin-count dependence.
 
 **Verdict** (an ordering survives if it holds in at least 95% of paired draws; it is material if the two differ by more than 10% in at least 50% of draws).
 
-- Level 1: B vs A **separates**: B is cheaper than A in 99.4% of draws and they differ by more than 10% in 98%; C vs B **separates**: B is cheaper than C in 99.6% of draws and they differ by more than 10% in 99%.
+- Level 1: B vs A **separates**: B is cheaper than A in 99.4% of draws and they differ by more than 10% in 98%; C vs B **separates**: B is cheaper than C in 99.6% of draws and they differ by more than 10% in 99.5%.
 - Level 2: B vs A **ordered but immaterial**: B is cheaper in 99.4% of draws, but they differ by more than 10% in only 1%; C vs B **ordered but immaterial**: B is cheaper in 99.6% of draws, but they differ by more than 10% in only 21%.
 - Level 3: B vs A **ordered but immaterial**: B is cheaper in 99.4% of draws, but they differ by more than 10% in only 1%; C vs B **no ordering survives**: C is cheaper than B in 61.1% of draws.
 
@@ -407,8 +407,8 @@ Level 2, pipeline B, by worldview (the mixture is the main source of level-2 spr
 | `dft.cost_per_candidate` | $3,834 | $4,939 | $1,105 | 0.1% |
 | `synth.labour_attempts_per_week` | $4,504 | $3,585 | $919 | 0.1% |
 | `synth.labour_tuition_remission` | $3,479 | $4,302 | $822 | 0.1% |
-| `synth.indirect_rate` | $3,433 | $3,972 | $540 | 0.0% |
-| `synth.other_consumables_per_attempt` | $3,814 | $4,282 | $468 | 0.0% |
+| `synth.indirect_rate` | $3,433 | $3,972 | $540 | 0.03% |
+| `synth.other_consumables_per_attempt` | $3,814 | $4,282 | $468 | 0.02% |
 
 **Tornado, level 2, pipeline B** (top 8; full tables in `results/stage2.md`):
 
@@ -419,9 +419,9 @@ Level 2, pipeline B, by worldview (the mixture is the main source of level-2 spr
 | `synth.furnace_hourly` | $3,812 | $4,983 | $1,171 | 0.1% |
 | `synth.labour_attempts_per_week` | $4,480 | $3,561 | $919 | 0.1% |
 | `synth.labour_tuition_remission` | $3,455 | $4,278 | $822 | 0.1% |
-| `dft.cost_per_candidate` | $3,833 | $4,502 | $669 | 0.0% |
-| `synth.indirect_rate` | $3,409 | $3,948 | $540 | 0.0% |
-| `synth.other_consumables_per_attempt` | $3,790 | $4,258 | $468 | 0.0% |
+| `dft.cost_per_candidate` | $3,833 | $4,502 | $669 | 0.05% |
+| `synth.indirect_rate` | $3,409 | $3,948 | $540 | 0.03% |
+| `synth.other_consumables_per_attempt` | $3,790 | $4,258 | $468 | 0.02% |
 
 **Tornado, level 2, pipeline C** (top 8; full tables in `results/stage2.md`):
 
@@ -433,8 +433,8 @@ Level 2, pipeline B, by worldview (the mixture is the main source of level-2 spr
 | `synth.furnace_hourly` | $3,922 | $5,093 | $1,171 | 0.1% |
 | `synth.labour_attempts_per_week` | $4,591 | $3,672 | $919 | 0.1% |
 | `synth.labour_tuition_remission` | $3,566 | $4,388 | $822 | 0.1% |
-| `synth.indirect_rate` | $3,519 | $4,059 | $540 | 0.0% |
-| `synth.other_consumables_per_attempt` | $3,900 | $4,368 | $468 | 0.0% |
+| `synth.indirect_rate` | $3,519 | $4,059 | $540 | 0.03% |
+| `synth.other_consumables_per_attempt` | $3,900 | $4,368 | $468 | 0.02% |
 
 **Tornado, level 1, pipeline B** (top 8):
 
@@ -443,11 +443,11 @@ Level 2, pipeline B, by worldview (the mixture is the main source of level-2 spr
 | `dft.cost_per_candidate` | $1.04 | $349 | $348 | 99.8% |
 | `price.cpu.on_demand` | $12.82 | $23.88 | $11.06 | 0.1% |
 | `gen.ion_exchange.frac_stable_after_chgnet_filter` | $25.01 | $14.70 | $10.31 | 0.1% |
-| `dft.wrong_verdict_frac` | $18.44 | $24.38 | $5.94 | 0.0% |
-| `mlip.chgnet.nonconv_frac` | $19.05 | $19.06 | $0.01 | 0.0% |
-| `mlip.chgnet.recall` | $19.05 | $19.05 | $0.00 | 0.0% |
-| `mlip.steps_per_relaxation` | $19.05 | $19.05 | $0.00 | 0.0% |
-| `batch.n_atoms` | $19.05 | $19.05 | $0.00 | 0.0% |
+| `dft.wrong_verdict_frac` | $18.44 | $24.38 | $5.94 | 0.03% |
+| `mlip.chgnet.nonconv_frac` | $19.05 | $19.06 | $0.01 | 0.0000% |
+| `mlip.chgnet.recall` | $19.05 | $19.05 | $0.00 | 0.0000% |
+| `mlip.steps_per_relaxation` | $19.05 | $19.05 | $0.00 | 0.0000% |
+| `batch.n_atoms` | $19.05 | $19.05 | $0.00 | 0.0000% |
 <!-- generated:tornado:end -->
 
 ### Break-evens

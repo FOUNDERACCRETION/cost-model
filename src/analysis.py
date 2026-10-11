@@ -268,12 +268,45 @@ def summarise(mc: dict, qs=(5, 25, 50, 75, 95)) -> dict:
     return out
 
 
+def _ratio_gap(a: float, b: float) -> float:
+    """max(a, b)/min(a, b) - 1: by how much the dearer of the pair exceeds the cheaper.
+
+    Symmetric in its arguments, so the answer does not depend on which pipeline is named first.
+    Returns 0.0 when the pair cannot be compared (either value nonpositive or non-finite, or
+    both infinite), so an uncomparable draw counts as not materially different rather than
+    raising or silently counting as a difference.
+    """
+    if not (math.isfinite(a) and math.isfinite(b)) or a <= 0 or b <= 0:
+        return 0.0
+    return max(a, b) / min(a, b) - 1
+
+
 def kill_condition(mc: dict, bins: int = 60, material: float = 0.10) -> dict:
     """Does any ordering of A, B, C survive the uncertainty? Per level:
 
     p_lt[(x, y)]  probability that x is cheaper than y in the same draw (paired: both see the same world);
-    overlap[(x, y)]  overlap coefficient of the two marginal cost distributions (histogram on log10 cost);
-    p_material[(x, y)]  probability that the two differ by more than `material` (10%) in the same draw.
+
+    overlap[(x, y)]  overlap coefficient of the two marginal cost distributions. The histogram is
+      on log10 cost over the pooled finite positive range of ALL pipelines at this level, with
+      `bins` equal-width bins. Each bin holds a NORMALISED PROBABILITY, not a density: the count
+      is divided by the number of draws, so the bins sum to the finite positive share of draws
+      (1.0 when every draw is finite) and the coefficient is scale-free and comparable across
+      levels. It is NOT divided by bin width, so it must not be read as a density. Because the
+      bins are shared, sum_k min(h_x[k], h_y[k]) is the usual overlap coefficient. It is
+      bin-count dependent by construction; `overlap_sensitivity` reports the dependence.
+
+    p_material[(x, y)]  probability that the two differ materially in the same draw, defined
+      SYMMETRICALLY as max/min - 1 > `material`: the dearer of the pair exceeds the cheaper by
+      more than `material` (10%). This is the same denominator convention as the DFT threshold
+      sweep in scripts/stage2.py, which measures each pipeline's gap over the cheaper one, so the
+      two numbers answer the same question. It is deliberately not the directional
+      |x/y - 1| > material, whose answer depends on which pipeline is named first: A exceeding B
+      by 10% is B falling short of A by only 9.09%. Which pipeline is cheaper varies by draw, so
+      a directional denominator is also not draw-invariant.
+
+    p_material_directional[(x, y)]  the directional form |x/y - 1| > `material`, with y in the
+      denominator, retained so the difference between the two conventions is inspectable rather
+      than argued. Revisions up to 10 of the paper reported this quantity.
     """
     out = {}
     pairs = (("B", "A"), ("C", "B"), ("C", "A"))
@@ -291,13 +324,31 @@ def kill_condition(mc: dict, bins: int = 60, material: float = 0.10) -> dict:
             return [c / len(xs) for c in h]
 
         hists = {k: hist(vals[k]) for k in PIPELINES}
-        res = {"p_lt": {}, "overlap": {}, "p_material": {}}
+        res = {"p_lt": {}, "overlap": {}, "p_material": {}, "p_material_directional": {}}
         for x, y in pairs:
             n = len(vals[x])
             res["p_lt"][(x, y)] = sum(a < b for a, b in zip(vals[x], vals[y])) / n
             res["overlap"][(x, y)] = sum(min(a, b) for a, b in zip(hists[x], hists[y]))
-            res["p_material"][(x, y)] = sum(abs(a / b - 1) > material for a, b in zip(vals[x], vals[y])) / n
+            res["p_material"][(x, y)] = sum(
+                _ratio_gap(a, b) > material for a, b in zip(vals[x], vals[y])) / n
+            res["p_material_directional"][(x, y)] = sum(
+                abs(a / b - 1) > material for a, b in zip(vals[x], vals[y])) / n
         out[lvl] = res
+    return out
+
+
+def overlap_sensitivity(mc: dict, counts=(20, 40, 60, 120, 240)) -> dict:
+    """Overlap coefficient at several bin counts, for each level and pair.
+
+    The overlap coefficient of two histograms is not bin-count invariant: coarser bins can only
+    merge mass that finer bins separate, so the coefficient is weakly decreasing in `bins` for
+    nested refinements, and falls towards zero as bins approach the sample size. Reporting one
+    bin count without this is reporting a number whose magnitude is partly a binning artefact.
+    """
+    out = {}
+    for n in counts:
+        k = kill_condition(mc, bins=n)
+        out[n] = {lvl: dict(k[lvl]["overlap"]) for lvl in LEVELS}
     return out
 
 

@@ -237,3 +237,61 @@ def test_threshold_equation_coefficients():
     d_star = (tau * bill + (1 + tau) * beta["B"] - beta["C"]) / (alpha["C"] - (1 + tau) * alpha["B"])
     solved = dft_threshold_sweep(p, points=(54.5,))["crossings"]["CB"][0.10]
     assert d_star == pytest.approx(solved, rel=5e-3)
+
+
+def test_threshold_coefficient_archive():
+    """Revision 11 archives the unrounded coefficients, their residuals and the root comparison.
+
+    Three distinct claims are pinned here, because Section 5.5 makes all three:
+      1. the relation is affine to machine precision -- and this is a claim about the UNROUNDED
+         coefficients, tested outside the fitted range, not about the printed ones;
+      2. the closed form and the model's bisected root are the same number, not merely close;
+      3. substituting the printed coefficients moves the root by a stated, small amount.
+    """
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import threshold_coefficients
+    from src.params import load, resolve
+
+    tc = threshold_coefficients(resolve(load()))
+
+    # 1. affine to machine precision, including at 2,000 core-h, twice the top of the swept range
+    assert tc["worst_relative_residual"] < 1e-12
+    assert max(r["dft_core_h"] for r in tc["residuals"]) >= 2000.0
+
+    # the purity ratio identity of Section 5.3 holds exactly, not approximately
+    assert tc["alpha_ratio_C_over_B"] == pytest.approx(4.0, abs=1e-9)
+
+    # 2. closed form == numerical root
+    for tau in (0.05, 0.10, 0.20):
+        r = tc["roots"][tau]
+        assert r["usable"] is True
+        assert r["denominator"] > 0
+        assert r["closed_form"] >= 0
+        assert r["relative_gap"] < 1e-10, "closed form and bisected root must agree to machine precision"
+
+    # 3. rounding the printed coefficients moves the 10% root by well under a core-hour
+    shift = abs(tc["roots_from_printed_coefficients"][0.10] - tc["roots"][0.10]["closed_form"])
+    assert 0 < shift < 1.0
+
+
+def test_positive_denominator_is_not_sufficient_for_a_usable_crossing():
+    """Section 5.5 says the closed form is valid where the denominator is positive. That is
+    necessary, not sufficient: the solution must also be nonnegative to lie in the domain d >= 0.
+    With a synthesis bill small enough, the gap already exceeds tau at zero DFT cost and the
+    formula returns a negative d* with a positive denominator -- a number to discard, not quote."""
+    alpha = {"B": 0.2934210526, "C": 1.1736842105}
+    beta = {"B": 0.0015626629, "C": 0.3381360265}
+    tau = 0.10
+    den = alpha["C"] - (1 + tau) * alpha["B"]
+    assert den > 0
+
+    def d_star(bill):
+        return (tau * bill + (1 + tau) * beta["B"] - beta["C"]) / den
+
+    assert d_star(1676.05) > 0           # the paper's synthesis bill: a real crossing
+    assert d_star(0.0) < 0               # no synthesis spend at all: no crossing in the domain
+    # the boundary: the bill at which the crossing sits exactly at d = 0
+    bill_zero = (beta["C"] - (1 + tau) * beta["B"]) / tau
+    assert d_star(bill_zero) == pytest.approx(0.0, abs=1e-9)
+    assert d_star(bill_zero * 0.5) < 0
