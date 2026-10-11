@@ -127,8 +127,16 @@ def test_novelty_bound(recs):
 
 
 def test_derived_synthesis_numbers(recs):
+    # Both endpoints must pair a numerator and a denominator from the SAME version of the A-Lab
+    # paper. VERIFIED 2026-10-11: the corrected article prints 353 recipes and 57 targets; the
+    # original 2023 article prints 355 and 58. The previous version of this test asserted
+    # high == 355/57, which paired the original numerator with the corrected denominator -- a
+    # cross-version splice that this test was pinning rather than catching.
     assert recs["synth.recipes_per_target"]["base"] == pytest.approx(353 / 57, rel=REL)
-    assert recs["synth.recipes_per_target"]["high"] == pytest.approx(355 / 57, rel=REL)
+    assert recs["synth.recipes_per_target"]["low"] == pytest.approx(355 / 58, rel=REL)
+    assert recs["synth.recipes_per_target"]["high"] == pytest.approx(353 / 57, rel=REL)
+    # and the original pairing is BELOW the corrected one, so it cannot be a high endpoint
+    assert 355 / 58 < 353 / 57
     assert recs["synth.furnace_hours_per_attempt"]["base"] == pytest.approx(17 * 24 * 8 / 353, rel=REL)
     assert recs["synth.success_unconditional"]["base"] == pytest.approx(7 / 16)
     assert recs["synth.success_unconditional"]["high"] == pytest.approx(36 / 57, rel=REL)   # unconditional; was 38/54

@@ -735,13 +735,19 @@ parameters:
     evidence_grade: derived
 
   - name: synth.recipes_per_target
-    low: 6.193
+    low: 6.1207
     base: 6.193
-    high: 6.228
+    high: 6.193
     unit: recipes attempted per target
     source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133
     citations: [szymanski2023alab]
-    source_note: A-Lab, 353 recipes / 57 targets = 6.19. High 355/57 = 6.23 if the original paper's 355 is right (table says VERIFY).
+    source_note: "A-Lab. VERIFIED 2026-10-11 against both versions. The CORRECTED article prints 353 recipes
+      and 57 targets: 353/57 = 6.193, the base. The ORIGINAL 2023 article prints 355 recipes and 58 targets
+      (eScholarship qt4w49b5cb): 355/58 = 6.1207, the low. The 355 -> 353 change is silent -- the Author
+      Correction notice never mentions the recipe count -- so both pairings are defensible and the range
+      spans them. CHANGED 2026-10-11: high was 6.228 = 355/57, which paired the ORIGINAL numerator with the
+      CORRECTED denominator. That is a cross-version splice and was never a real reading; the original
+      pairing is LOWER than the corrected one, so the alternative is a low endpoint, not a high one."
     evidence_grade: derived
 
   - name: synth.success_unconditional
