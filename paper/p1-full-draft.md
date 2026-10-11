@@ -1,3 +1,9 @@
+<!-- SUPERSEDED 2026-10-11. The current manuscript is paper/p1-revision6.md.
+     This file keeps the <!--k:...--> tag system that scripts/fill_draft.py maintains, so its
+     NUMBERS are regenerated and current, but its PROSE is the revision-2 structure and still
+     describes model behaviour that the 2026-10-11 repairs changed. Re-tagging revision 6 is
+     the follow-up that restores a single source of truth. -->
+
 # What Does It Cost to Discover a Material?
 
 ### An end-to-end cost model of AI-driven inorganic materials discovery
@@ -71,7 +77,7 @@ Szymanski and Bartel compare generative and substitution-based candidate generat
 
 ### 2.2 The economics of AI-aided discovery
 
-Agrawal, McHale and Oettl model innovation as sequential search over a combinatorial design space in which a predictive model prioritises costly tests [@agrawal2024; @agrawal2023nber]. They show that improvements in prediction fidelity raise the probability of successful innovation and shorten search, and — centrally for us — that the gains from better prediction may not be realised without corresponding investment in testing capacity.
+Agrawal, McHale and Oettl model innovation as sequential search over a combinatorial design space in which a predictive model prioritises costly tests [@agrawal2024]. They show that improvements in prediction fidelity raise the probability of successful innovation and shorten search, and — centrally for us — that the gains from better prediction may not be realised without corresponding investment in testing capacity.
 
 That is our result in theoretical form. Their model is analytical and uncalibrated; it specifies the conditions under which prediction and testing are complements without saying, for any real discovery problem, how far apart the two stages actually are. Our contribution is to supply that calibration for inorganic materials: prediction is so much cheaper than testing that improving prediction cannot move the total cost, and the ratio is roughly two orders of magnitude per percentage point of improvement.
 
@@ -429,7 +435,7 @@ Every key below resolves in `paper/references.bib`, and its bibliographic fields
 - **§1, [@montoya2024; @chung2025synthesizability; @aziz2021]** for "synthesis is the bottleneck". Titles verified; that each paper makes the bottleneck claim in so many words is not.
 - **§1, [@zeni2025mattergen]** for "thousands of candidates an hour": the claim may not be supported (see the CITATION NEEDED next to it).
 - **§2.1, [@walker2026carbon]**: the bib entry is new (Materials Horizons 13(4), 1993-2004, 2026; first author Matthew Walker). The characterisation in §2.1 still comes from abstracts and search extracts (your original note).
-- **§2.2, [@agrawal2024; @agrawal2023nber]** and the new **[@agrawal2026aiinscience]** paragraph: from abstracts only. Marked FOR AUTHOR REVIEW in the text.
+- **§2.2, [@agrawal2024]** and the new **[@agrawal2026aiinscience]** paragraph: from abstracts only. Marked FOR AUTHOR REVIEW in the text.
 - **§3.1, [@dimasi2016]** as the precedent for funnel attribution (cost of failures charged to successes). Standard reading, not checked against the text.
 - **§3.1, [@buchner2018tea]** as licensing a static order-of-magnitude estimate at low TRL and explaining why we compute no NPV. Taken from the brief and the bib note, not from the paper's text.
 - **§3.5, [@jones2009burden]** at the labour term. The link (rising training burden → who does the synthesis) is my framing; check that it reads as intended.

@@ -73,7 +73,13 @@ def test_withdrawn_paper_cited_nowhere():
             text = path.read_text(errors="ignore").lower()
         except OSError:
             continue
-        hits += [f"{path.relative_to(ROOT)}: {f}" for f in FORBIDDEN if f in text]
+        # Strip comment lines first: a DO-NOT-CITE warning has to be able to name the paper
+        # it warns about. BibTeX comments start with %, Python/YAML with #, Markdown uses <!-- -->.
+        body = "\n".join(
+            ln for ln in text.splitlines()
+            if not ln.lstrip().startswith(("%", "#")) and "<!--" not in ln
+        )
+        hits += [f"{path.relative_to(ROOT)}: {f}" for f in FORBIDDEN if f in body]
     assert not hits, f"withdrawn paper referenced (DO NOT CITE): {hits}"
 
 

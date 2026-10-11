@@ -33,9 +33,16 @@ def test_fill_is_idempotent():
     assert fill(text, keys) == text
 
 
+REVISION6 = DRAFT.parent / "p1-revision6.md"
+
+
+def test_current_manuscript_exists():
+    assert REVISION6.exists(), "paper/p1-revision6.md is the current manuscript"
+
+
 def test_no_stale_overhead_figures():
     """Values from before the effective-rate fix (negotiated 58% as base) must not survive untagged."""
-    text = DRAFT.read_text()
+    text = REVISION6.read_text()
     # Figures superseded by the 2026-10-11 repairs (unconditional success; matched indirect base).
     # "within 3%" is deliberately NOT listed: the repaired model gives a 3% spread again.
     for stale in ("$3,794", "$3,765 / $3,897", "$3,722", "$2,751", "$65,403", "$5,186", "21 to 119",
