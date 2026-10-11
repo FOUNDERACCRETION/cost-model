@@ -35,6 +35,7 @@ READING_SHORT = {"optimistic_alab": "A-Lab", "middle_prein": "Prein", "pessimist
 COMPUTE_SHARE = 0.10
 SPREAD = 1.10
 MATERIAL = 0.10
+OVERLAP_REPS = 60  # resampling replicates behind the overlap reference range in Section 5.7
 ORDER_SURVIVES = 0.95
 MATERIAL_MAJORITY = 0.50
 TOP_SHARE = 0.80
@@ -728,7 +729,8 @@ def upstream_per_target(p, dft=None):
     return out
 
 
-def synthesis_decision_boundaries(p, points=(3, 10, 30, 54.5, 100, 200, 500, 1000)):
+def synthesis_decision_boundaries(p, points=(3, 10, 30, 54.5, 100, 200, 500, 1000),
+                                  material=MATERIAL):
     """How large a pipeline-specific synthesis difference would overturn the cost ordering?
 
     The base model assumes synthesis success S, recipes per target r and cost per attempt a do not
@@ -761,10 +763,22 @@ def synthesis_decision_boundaries(p, points=(3, 10, 30, 54.5, 100, 200, 500, 100
         c0 = upstream_per_target(p, d)
         row = {"dft": d, "c0": dict(c0), "bill": bill}
         for i, j in (("C", "B"), ("A", "B"), ("C", "A")):
-            row[f"success_{i}{j}"] = (c0[i] + bill) / (c0[j] + bill)
+            q_i, q_j = c0[i] + bill, c0[j] + bill
+            row[f"success_{i}{j}"] = q_i / q_j
             row[f"recipes_{i}{j}"] = (c0[i] - c0[j]) / a
             row[f"recipes_share_{i}{j}"] = (c0[i] - c0[j]) / a / r
-            row[f"attempt_{i}{j}"] = (c0[i] + bill - c0[j]) / bill if bill else float("nan")
+            row[f"attempt_{i}{j}"] = (q_i - c0[j]) / bill if bill else float("nan")
+            # PARITY is not MATERIALITY. Parity is where the two cost the same; a slightly larger
+            # difference reverses the ranking while leaving them nearly equal. The paper's own
+            # materiality standard is a 10% gap on the max/min convention, which needs a much
+            # larger difference. Both are reported because they answer different questions, and
+            # revision 13 conflated them.
+            lo, hi = (q_i / q_j) / (1 + material), (q_i / q_j) * (1 + material)
+            row[f"success_{i}{j}_mat_lo"] = lo      # below this, i costs >10% more than j
+            row[f"success_{i}{j}_mat_hi"] = hi      # above this, i costs >10% less than j
+            # extra recipes in j that make j cost (1+material) times i
+            row[f"recipes_{i}{j}_mat"] = ((1 + material) * q_i - c0[j]) / a - r
+            row[f"recipes_share_{i}{j}_mat"] = (((1 + material) * q_i - c0[j]) / a - r) / r
         rows.append(row)
     return {"rows": rows, "attempt_usd": a, "recipes": r, "bill": bill}
 
@@ -810,15 +824,24 @@ def boundaries_section(p):
     b = synthesis_decision_boundaries(p)
     rows = [[f"{r['dft']:,.1f}".rstrip("0").rstrip("."),
              f"{r['success_CB']:.3f}x", f"{(r['success_CB'] - 1):.1%}",
-             f"{r['recipes_AB']:.3f}", f"{r['recipes_share_AB']:.2%}"] for r in b["rows"]]
-    table = md_table(["DFT core-h per candidate", "S_C/S_B for parity", "i.e. better by",
-                      "Extra recipes to erase the filter", "as share of 6.193"], rows)
+             f"{r['success_CB_mat_lo']:.3f}-{r['success_CB_mat_hi']:.3f}",
+             f"{r['recipes_share_AB']:.2%}", f"{r['recipes_share_AB_mat']:.2%}"] for r in b["rows"]]
+    table = md_table(["DFT core-h per candidate", "S_C/S_B for C-B parity", "i.e. C better by",
+                      f"S_C/S_B keeping C-B within {MATERIAL:.0%}",
+                      "Extra recipes in B for B-A parity", f"and for B {MATERIAL:.0%} dearer than A"],
+                     rows)
     srows = [[v["variant"], f"{v['success_CB']:.3f}x", f"{v['recipes_share_AB']:.2%}"]
              for v in boundary_sensitivity(p)]
     stable = md_table(["Variant", "S_C/S_B for parity", "Extra recipes, share of baseline"], srows)
-    return (table + "\n\nBoth columns are break-even solves on the model with every other quantity held "
-            "shared, not measurements: no source reports a pipeline-specific synthesis difference, so each "
-            "figure is the size a hypothetical difference would have to reach.\n\n" + stable)
+    note = ("\n\nPARITY IS NOT MATERIALITY. The parity columns say where two pipelines cost the same, so a "
+            "slightly larger difference reverses their ranking while leaving them nearly equal in cost. The "
+            f"materiality columns say where the gap reaches {MATERIAL:.0%}, the standard used everywhere else in "
+            "these results, and they require a much larger difference. The success columns compare C against B; "
+            "the recipe columns compare B against A. They are different pairs and different units, and are not "
+            "interchangeable measures of one assumption failing.\n\nAll are break-even solves on the model with "
+            "every other quantity held shared, not measurements: no source reports a pipeline-specific synthesis "
+            "difference, so each figure is the size a hypothetical difference would have to reach.\n\n")
+    return table + note + stable
 
 
 def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
@@ -925,7 +948,27 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     bs = {v["variant"]: v for v in boundary_sensitivity(p)}
     k["bound_success_CB_price100"] = f"{bs['compute price 100x']['success_CB']:.2f}"
     k["bound_recipes_AB_price100_share"] = f"{bs['compute price 100x']['recipes_share_AB']:.0%}"
-    k["bound_success_CB_at_pool_purity"] = f"{bs['generative purity at pool purity, 15.2%']['success_CB']:.3f}"
+    # At pool purity the ratio is NOT exactly 1: alpha matches but beta does not, because C pays a
+    # generation cost B never pays. Revision 13 printed "exactly 1.000" from a rounded display.
+    pool_ratio = bs["generative purity at pool purity, 15.2%"]["success_CB"]
+    k["bound_success_CB_at_pool_purity"] = f"{pool_ratio:.6f}"
+    k["bound_success_CB_at_pool_purity_excess"] = f"{pool_ratio - 1:.4%}"
+    _tcb = threshold_coefficients(p)["beta_usd"]
+    k["bound_beta_gap_CB"] = money(_tcb["C"] - _tcb["B"])
+    # Parity expressed in percentage points of success, not relative percent: different units.
+    S = p["synth_success_unconditional"]
+    k["bound_success_S_base_pct"] = f"{S:.2%}"
+    k["bound_success_S_parity_pct"] = f"{S * at_base['success_CB']:.2%}"
+    k["bound_success_parity_pp"] = f"{(S * at_base['success_CB'] - S) * 100:.2f}"
+    # The 10% materiality band, which parity does not give.
+    k["bound_mat_lo"] = f"{at_base['success_CB_mat_lo']:.3f}"
+    k["bound_mat_hi"] = f"{at_base['success_CB_mat_hi']:.3f}"
+    k["bound_mat_worse_pct"] = f"{1 - at_base['success_CB_mat_lo']:.1%}"
+    k["bound_mat_better_pct"] = f"{at_base['success_CB_mat_hi'] - 1:.1%}"
+    k["bound_recipes_AB_mat"] = f"{at_base['recipes_AB_mat']:.3f}"
+    k["bound_recipes_AB_mat_share"] = f"{at_base['recipes_share_AB_mat']:.2%}"
+    k["bound_recipes_AB_mat_top_share"] = f"{at_top['recipes_share_AB_mat']:.2%}"
+    k["bound_recipes_AB_mat_lo_share"] = f"{min(x['recipes_share_AB_mat'] for x in bd['rows']):.2%}"
     # Every row of the Section 5.6 table, so the new section is audited like the rest of the paper.
     for row in bd["rows"]:
         tag = f"{row['dft']:g}".replace(".", "p")
@@ -933,6 +976,9 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         k[f"bdrow_{tag}_success_pct"] = f"{row['success_CB'] - 1:.1%}"
         k[f"bdrow_{tag}_recipes"] = f"{row['recipes_AB']:.3f}"
         k[f"bdrow_{tag}_recipes_share"] = f"{row['recipes_share_AB']:.2%}"
+        k[f"bdrow_{tag}_mat_lo"] = f"{row['success_CB_mat_lo']:.3f}"
+        k[f"bdrow_{tag}_mat_hi"] = f"{row['success_CB_mat_hi']:.3f}"
+        k[f"bdrow_{tag}_recipes_mat_share"] = f"{row['recipes_share_AB_mat']:.2%}"
     for name, v in bs.items():
         tag = (name.split(",")[0].replace(" ", "_").replace("%", "pct")
                .replace("1,000", "1000").lower())
@@ -982,11 +1028,14 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     # An overlap coefficient means nothing without the sparsity floor: what two samples from the
     # SAME distribution score at this bin count. At the floor the marginals are indistinguishable.
     for lv, tag in (("dft_confirmed_stable", "l1"), ("experimentally_validated", "l2")):
-        floor = an.overlap_null_floor(mc, lv, bins=60)
+        ref = an.overlap_reference(mc, lv, bins=60, reps=OVERLAP_REPS)
         meas = kill[lv]["overlap"][("B", "A")]
-        k[f"overlap_{tag}_floor"] = pct(floor)
-        k[f"overlap_{tag}_gap_pp"] = f"{(meas - floor) * 100:+.0f}"
-        k[f"overlap_{tag}_at_or_above_floor"] = "yes" if meas >= floor else "no"
+        k[f"overlap_{tag}_ref_median"] = pct(ref["p50"])
+        k[f"overlap_{tag}_ref_min"] = f"{ref['min']:.1%}"
+        k[f"overlap_{tag}_ref_max"] = f"{ref['max']:.1%}"
+        k[f"overlap_{tag}_ref_reps"] = str(ref["reps"])
+        k[f"overlap_{tag}_vs_ref"] = ("below" if meas < ref["min"]
+                                      else "above" if meas > ref["max"] else "inside")
     # Bin-count sensitivity of the overlap coefficient (Section 5.6 reports the 60-bin value).
     osens = an.overlap_sensitivity(mc)
     k["overlap_bin_counts"] = ", ".join(str(n) for n in osens)

@@ -378,18 +378,35 @@ def test_synthesis_decision_boundaries_solve_to_parity():
     assert all(x["recipes_AB"] < y["recipes_AB"] for x, y in zip(rows, rows[1:]))
 
 
-def test_boundary_vanishes_when_the_purity_difference_does():
-    """The generative boundary is driven by purity alone: set generative purity to pool purity and
-    C must become indistinguishable from B, so the required success advantage falls to zero. This
-    is the internal check that the boundary measures what Section 5.3 says it measures."""
+def test_matching_purity_does_not_quite_equalise_the_pipelines():
+    """Setting generative purity to pool purity takes the parity ratio CLOSE to one, not to one.
+
+    Revision 13 printed "exactly 1.000" from a rounded display, and an external reviewer pointed
+    out that a rounded value does not establish exact equality. It does not: matching purity
+    equalises the slope alpha but not the intercept beta, because C pays a generation cost B never
+    pays. The residual is small but nonzero and this test pins its size and sign, which the
+    earlier version of this test (approx 1.0 to within 5e-4) was too loose to catch.
+    """
     import sys, pathlib as _p
     sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
-    from stage2 import boundary_sensitivity
+    from stage2 import boundary_sensitivity, threshold_coefficients
     from src.params import load, resolve
 
     p = resolve(load())
     by = {v["variant"]: v for v in boundary_sensitivity(p)}
-    assert by["generative purity at pool purity, 15.2%"]["success_CB"] == pytest.approx(1.0, abs=5e-4)
+    ratio = by["generative purity at pool purity, 15.2%"]["success_CB"]
+    assert ratio > 1.0, "C still pays a generation cost B does not, so parity is not exact"
+    assert ratio == pytest.approx(1.0001989, rel=1e-3)
+    # The residual is exactly the intercept gap over Q_B = c0_B + ra, NOT over the bill ra alone:
+    # (c0_C + ra)/(c0_B + ra) - 1 = (c0_C - c0_B)/(c0_B + ra), and at matched purity the numerator
+    # is the beta gap. Using ra as the denominator is wrong by the size of c0_B, about 1%.
+    from stage2 import upstream_per_target
+    tc = threshold_coefficients(p)
+    beta_gap = tc["beta_usd"]["C"] - tc["beta_usd"]["B"]
+    assert beta_gap > 0
+    q = {**p, "gen_filter_purity": p["pool_filter_purity"]}
+    Q_B = upstream_per_target(q, 54.5)["B"] + tc["synthesis_bill_usd"]
+    assert (ratio - 1) == pytest.approx(beta_gap / Q_B, rel=1e-6)
     # and the filter boundary does NOT move with generative purity: A and B never see that pool
     assert (by["generative purity at pool purity, 15.2%"]["recipes_AB"]
             == pytest.approx(by["base"]["recipes_AB"], rel=1e-12))
@@ -458,3 +475,69 @@ def test_reconstruction_worksheet_reproduces_the_attempt_cost():
     # the component rows are everything before the subtotal; the indirect row follows it
     assert sum(comps[:7]) == pytest.approx(printed_direct, abs=0.02), (
         f"worksheet components {comps[:7]} do not sum to its printed subtotal {printed_direct}")
+
+
+def test_parity_and_materiality_boundaries_are_distinct_and_both_correct():
+    """Revision 13 reported only parity boundaries and described them as the point where the
+    pipelines become unequal. Parity is where they cost the SAME; a materiality boundary is where
+    the gap reaches 10%, which the rest of the paper uses as its standard. Conflating them was the
+    error, so this test checks that each boundary delivers the gap it claims, and that the two are
+    far apart.
+    """
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import synthesis_decision_boundaries, upstream_per_target
+    from src.funnel import synthesis_cost_per_attempt
+    from src.params import load, resolve
+
+    p = resolve(load())
+    a = synthesis_cost_per_attempt(p)["usd"]
+    r = p["synth_recipes_per_target"]
+    S = p["synth_success_unconditional"]
+
+    for row in synthesis_decision_boundaries(p)["rows"]:
+        c0 = upstream_per_target(p, row["dft"])
+
+        def gap(ci, cj):
+            return max(ci, cj) / min(ci, cj) - 1
+
+        cost_B = (c0["B"] + r * a) / S
+        # at the parity ratio the gap is zero; at the materiality bounds it is exactly 10%
+        assert gap((c0["C"] + r * a) / (S * row["success_CB"]), cost_B) == pytest.approx(0, abs=1e-12)
+        for key in ("success_CB_mat_lo", "success_CB_mat_hi"):
+            cost_C = (c0["C"] + r * a) / (S * row[key])
+            assert gap(cost_C, cost_B) == pytest.approx(0.10, rel=1e-9), key
+        # the materiality band must straddle parity
+        assert row["success_CB_mat_lo"] < row["success_CB"] < row["success_CB_mat_hi"]
+
+        # recipes: parity gives equal cost, the materiality value gives B exactly 10% dearer
+        cost_A = (c0["A"] + r * a) / S
+        assert ((c0["B"] + (r + row["recipes_AB"]) * a) / S) == pytest.approx(cost_A, rel=1e-12)
+        dearer = (c0["B"] + (r + row["recipes_AB_mat"]) * a) / S
+        assert dearer / cost_A == pytest.approx(1.10, rel=1e-9)
+        # and it takes far more than parity: at least an order of magnitude more recipes at base
+        assert row["recipes_AB_mat"] > row["recipes_AB"]
+
+    base = next(x for x in synthesis_decision_boundaries(p)["rows"] if abs(x["dft"] - 54.5) < 0.6)
+    assert base["recipes_AB_mat"] / base["recipes_AB"] > 10, (
+        "the materiality boundary must be far from parity, which is the whole point")
+
+
+def test_overlap_reference_is_a_spread_not_a_single_value():
+    """Section 5.7 reports a reference RANGE over resampling replicates, because one resampled
+    value is itself a random draw and cannot calibrate a measured coefficient. A reviewer made
+    this point about revision 13's single "floor"."""
+    import sys, pathlib as _p, math, random
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1]))
+    from src import analysis as an
+
+    rng = random.Random(9)
+    rows = [{"costs": {lv: {"A": v, "B": v * 1.4, "C": v * 3} for lv in an.LEVELS}}
+            for v in (math.exp(rng.gauss(0, 1)) for _ in range(1500))]
+    ref = an.overlap_reference({"draws": rows}, "dft_confirmed_stable", bins=60, reps=25)
+    assert ref["reps"] == 25
+    assert ref["min"] < ref["p50"] < ref["max"], "a reference must have spread, or it is one value"
+    assert 0.0 < ref["min"] and ref["max"] <= 1.0
+    # the reference must be well above a genuinely different pair, which is what makes it useful
+    meas = an.kill_condition({"draws": rows}, bins=60)["dft_confirmed_stable"]["overlap"][("B", "A")]
+    assert meas < ref["min"]

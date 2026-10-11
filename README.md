@@ -473,18 +473,20 @@ At today's attempt cost, compute is at least 10% of level 2 only where the thres
 How far the shared-synthesis assumption has to fail before the level-2 ordering changes.
 
 <!-- generated:boundaries:begin -->
-| DFT core-h per candidate | S_C/S_B for parity | i.e. better by | Extra recipes to erase the filter | as share of 6.193 |
-|---|---|---|---|---|
-| 3 | 1.002x | 0.2% | 0.002 | 0.03% |
-| 10 | 1.005x | 0.5% | 0.007 | 0.11% |
-| 30 | 1.016x | 1.6% | 0.021 | 0.34% |
-| 54.5 | 1.029x | 2.9% | 0.039 | 0.62% |
-| 100 | 1.052x | 5.2% | 0.071 | 1.14% |
-| 200 | 1.102x | 10.2% | 0.141 | 2.28% |
-| 500 | 1.242x | 24.2% | 0.354 | 5.71% |
-| 1,000 | 1.447x | 44.7% | 0.707 | 11.42% |
+| DFT core-h per candidate | S_C/S_B for C-B parity | i.e. C better by | S_C/S_B keeping C-B within 10% | Extra recipes in B for B-A parity | and for B 10% dearer than A |
+|---|---|---|---|---|---|
+| 3 | 1.002x | 0.2% | 0.911-1.102 | 0.03% | 10.04% |
+| 10 | 1.005x | 0.5% | 0.914-1.106 | 0.11% | 10.14% |
+| 30 | 1.016x | 1.6% | 0.924-1.117 | 0.34% | 10.43% |
+| 54.5 | 1.029x | 2.9% | 0.935-1.131 | 0.62% | 10.78% |
+| 100 | 1.052x | 5.2% | 0.956-1.157 | 1.14% | 11.43% |
+| 200 | 1.102x | 10.2% | 1.002-1.212 | 2.28% | 12.86% |
+| 500 | 1.242x | 24.2% | 1.129-1.366 | 5.71% | 17.15% |
+| 1,000 | 1.447x | 44.7% | 1.316-1.592 | 11.42% | 24.31% |
 
-Both columns are break-even solves on the model with every other quantity held shared, not measurements: no source reports a pipeline-specific synthesis difference, so each figure is the size a hypothetical difference would have to reach.
+PARITY IS NOT MATERIALITY. The parity columns say where two pipelines cost the same, so a slightly larger difference reverses their ranking while leaving them nearly equal in cost. The materiality columns say where the gap reaches 10%, the standard used everywhere else in these results, and they require a much larger difference. The success columns compare C against B; the recipe columns compare B against A. They are different pairs and different units, and are not interchangeable measures of one assumption failing.
+
+All are break-even solves on the model with every other quantity held shared, not measurements: no source reports a pipeline-specific synthesis difference, so each figure is the size a hypothetical difference would have to reach.
 
 | Variant | S_C/S_B for parity | Extra recipes, share of baseline |
 |---|---|---|

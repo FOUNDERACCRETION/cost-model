@@ -337,9 +337,53 @@ def kill_condition(mc: dict, bins: int = 60, material: float = 0.10) -> dict:
     return out
 
 
+def overlap_reference(mc: dict, lvl: str, pipeline: str = "A", bins: int = 60, reps: int = 200,
+                      seed: int = 20261011) -> dict:
+    """The DISTRIBUTION of the overlap coefficient for two samples from one distribution.
+
+    overlap_null_floor returns a single resampled value. One value is not a calibrated reference:
+    it is itself a random draw, so a measured coefficient sitting above or below it establishes
+    nothing on its own. An external reviewer made this point about revision 13, which used the
+    single value to claim two marginals were "not distinguishable" and two others "do differ".
+
+    This repeats the resampling `reps` times and returns the spread, so a measured coefficient can
+    be placed against the reference's own variability rather than against one number.
+
+    Construction, stated because it determines what the comparison means:
+      - each replicate draws two independent bootstrap samples, with replacement, of the same size
+        as the original, from ONE pipeline's own draws, so the true overlap is 1 by construction;
+      - bins are the same equal-width log10 grid kill_condition uses, spanning the pooled finite
+        positive range of all three pipelines at this level, so the grid does not move between the
+        reference and the measurement;
+      - replicates are independent of each other but each is an independent pair, whereas the
+        measured A and B samples are DEPENDENT: they come from the same parameter draws. That
+        dependence is not reproduced here, and it makes the two measured marginals more alike than
+        two independent samples would be. The reference is therefore a descriptive yardstick for
+        finite-sample histogram variability, NOT a null distribution for a test of distributional
+        equality, and nothing in this module computes a p-value.
+    """
+    rng = random.Random(seed)
+    xs = [d["costs"][lvl][pipeline] for d in mc["draws"]]
+    n = len(xs)
+    vals = []
+    for _ in range(reps):
+        rows = [{"costs": {lv: {"A": rng.choice(xs), "B": rng.choice(xs), "C": rng.choice(xs)}
+                           for lv in LEVELS}} for _ in range(n)]
+        vals.append(kill_condition({"draws": rows}, bins=bins)[LEVELS[0]]["overlap"][("B", "A")])
+    vals.sort()
+    def q(f):
+        return vals[min(len(vals) - 1, max(0, int(round(f * (len(vals) - 1)))))]
+    return {"reps": reps, "bins": bins, "min": vals[0], "max": vals[-1],
+            "p1": q(0.01), "p50": q(0.50), "p99": q(0.99),
+            "mean": sum(vals) / len(vals)}
+
+
 def overlap_null_floor(mc: dict, lvl: str, pipeline: str = "A", bins: int = 60,
                        seed: int = 20261011) -> float:
-    """The overlap coefficient two samples from the SAME distribution score at this bin count.
+    """One resampled overlap coefficient for two samples from the SAME distribution.
+
+    Prefer overlap_reference, which returns the spread over many replicates; a single value is a
+    random draw and cannot calibrate anything by itself.
 
     An overlap coefficient has no absolute meaning on its own, because a finite histogram of two
     independent samples from one distribution does not score 1 -- each bin holds a different

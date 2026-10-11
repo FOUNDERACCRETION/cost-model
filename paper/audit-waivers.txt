@@ -45,3 +45,15 @@ thr_beta_A_full: unrounded coefficient, archived in results/threshold_coefficien
 thr_beta_B_full: unrounded coefficient, archived in results/threshold_coefficients.json
 thr_beta_C_full: unrounded coefficient, archived in results/threshold_coefficients.json
 thr_printed_coeff_shift_10: the rounding cost is stated in 5.5 as "gives 196.4 instead"
+
+# --- Revision 14: absolute recipe counts; the table reports shares of the 6.193 baseline -----
+bound_recipes_AB: the 5.6 table and prose give the share, 0.62% of 6.193
+bdrow_3_recipes: the 5.6 table gives the share, not the absolute count
+bdrow_10_recipes: the 5.6 table gives the share, not the absolute count
+bdrow_30_recipes: the 5.6 table gives the share, not the absolute count
+bdrow_54p5_recipes: the 5.6 table gives the share, not the absolute count
+bdrow_100_recipes: the 5.6 table gives the share, not the absolute count
+bdrow_200_recipes: the 5.6 table gives the share, not the absolute count
+bdrow_500_recipes: the 5.6 table gives the share, not the absolute count
+bdrow_1000_recipes: the 5.6 table gives the share, not the absolute count
+bound_success_CB_at_pool_purity_excess: 5.6 quotes this rounded as "0.02% of the ratio"
