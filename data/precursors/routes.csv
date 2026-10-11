@@ -1,0 +1,15 @@
+target,precursor,moles_per_formula_unit,note
+NaMnF3,NaF,1,
+NaMnF3,MnF2,1,
+ZnIn2O4,ZnO,1,
+ZnIn2O4,In2O3,1,
+TiSiN2,TiO2,1,cost proxy: a real nitride route needs ammonolysis or TiN (no TiN price fetched)
+TiSiN2,Si3N4,0.3333333333333333,
+BaTiS3,BaS,1,cost proxy: sulfur source for Ti (TiS2 or elemental S) not priced
+BaTiS3,TiO2,1,
+LiMnPO4,Li2CO3,0.5,
+LiMnPO4,MnO,1,
+LiMnPO4,NH4H2PO4,1,
+Li2MnSiO4,Li2CO3,1,
+Li2MnSiO4,MnO,1,
+Li2MnSiO4,SiO2,1,

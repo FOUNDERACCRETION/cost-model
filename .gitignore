@@ -1,0 +1,4 @@
+__pycache__/
+.venv/
+.pytest_cache/
+results/monte_carlo_draws.csv

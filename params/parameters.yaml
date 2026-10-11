@@ -1,0 +1,1144 @@
+# Parameters for the cost model. Every number the model uses is here, as one record.
+#
+# Record fields
+#   name           dotted identifier used by src/params.py
+#   low/base/high  bounds on the PARAMETER VALUE (not on the resulting cost: a high
+#                  throughput, for example, gives a low cost)
+#   unit
+#   source_url     a URL, or a repo-relative path for first-hand benchmark data
+#   citations      (optional) bib keys in paper/references.bib for the record's source(s); the single source of
+#                  bibliographic truth. tests/test_citations.py fails if a key does not resolve.
+#   source_note    where in the source, and any arithmetic done
+#   evidence_grade one of
+#       first_hand   measured by us (data/), on a noisy, unusual platform (ARM64 laptop, WSL2)
+#       published    stated in the source
+#       derived      arithmetic on published numbers, shown in source_note
+#       proxy        a published number for a related, not identical, quantity
+#       assumption   a modelling convention with no source
+#       missing      no source found; placeholder value, flagged in the README
+#   role           (optional) primary | first_hand_comparison | cross_check
+#                  cross_check records are not used by the model; they test it.
+#
+# Binomial ranges "Wilson 95%" are computed by scripts/derive_benchmark_params.py.
+# Benchmark-derived values are checked against the raw data by tests/test_traceability.py.
+# Tables: sources/p1-compute-parameters.md, sources/p1-synthesis-parameters.md
+# (first pass, read through a web-fetch summary; every URL still needs checking by eye).
+
+choices:
+  # Candidate pool screened by pipelines A and B (charged its generation cost, like C).
+  pool_method: ion_exchange
+  # Generator used by pipeline C (charged generation cost). Selectable: ion_exchange, mattergen.
+  generator_c: mattergen
+  stability_threshold: strict        # strict | 100meV
+  mlip_model: chgnet                 # chgnet | mace-mp-0 | m3gnet
+  dft_cost_basis: span               # span (primary: 3-1,000 core-h) | first_hand (size-dependent)
+  mlip_filter_basis: measured        # measured (S&B post-filter purity; CHGNet only) | matbench (recall + FPR)
+  price_basis: on_demand             # on_demand | spot
+  # Whose cost: "funder" = full cost to the research funder, including institutional F&A (default; the
+  # question is the resource cost of a material, and F&A pays for real space, utilities and administration);
+  # "bench" = direct costs only, as a lab's own budget sees them. base_case.py prints both.
+  cost_basis: funder                 # funder | bench
+  # Put XRD and furnace recharge fees inside the F&A base? Default no: recharge rates already include the
+  # service centre's share of indirect costs (2 CFR 200.468(b)(2)). A reviewer may reject either choice.
+  fa_base_includes_service_fees: false
+
+parameters:
+
+  # ------------------------------------------------------------------ batch and size
+
+  - name: batch.candidates_per_chemistry
+    low: 500
+    base: 500
+    high: 500
+    unit: candidates per target chemistry
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Szymanski & Bartel 2025 generated and DFT-checked 500 structures per method. Used as the batch over which fixed cost per chemistry is amortised. It is per method, not per chemistry.
+    evidence_grade: proxy
+
+  - name: batch.n_atoms
+    low: 10
+    base: 18
+    high: 32
+    unit: atoms per cell
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: Median, min and max of the 6 native benchmark candidates (10, 14, 16, 20, 28, 32 atoms). Used only by the first-hand cost-vs-size paths.
+    evidence_grade: first_hand
+
+  # ------------------------------------------------------------------ generation (Szymanski & Bartel 2025, 500 per method, DFT-checked)
+
+  - name: gen.ion_exchange.frac_stable_strict
+    low: 0.0697
+    base: 0.092
+    high: 0.1205
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). Stable at <= 0 meV/atom vs MP hull, 9.2% (46/500). Range Wilson 95%.
+    evidence_grade: published
+
+  - name: gen.ion_exchange.frac_stable_100meV
+    low: 0.5403
+    base: 0.584
+    high: 0.6264
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). Within 100 meV/atom of MP hull, 58.4% (292/500). Range Wilson 95%.
+    evidence_grade: published
+
+  - name: gen.ion_exchange.frac_novel_vs_mp
+    low: 0.6891
+    base: 0.724
+    high: 0.7556
+    unit: fraction of generated structures absent from Materials Project
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: "Table 1 novelty rate, 72.4% (v2; published as Materials Horizons 12(19), 8000-8011 (2025), doi:10.1039/D5MH00010F). Generation continued until 500 MP-novel structures were obtained (~691 generated); non-novel ones are dropped before DFT. Range Wilson 95% on 500/691."
+    evidence_grade: published
+
+  - name: gen.ion_exchange.frac_novel_all_databases
+    low: 0.5914
+    base: 0.628
+    high: 0.6633
+    unit: fraction of generated structures absent from MP, Alexandria and ICSD
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: "Supplementary Table 3, 62.8% of generated structures. The model uses the share of MP-novel candidates also absent from Alexandria and ICSD, 0.628/0.724 = 0.867 (derived; assumes independence from stability). Range Wilson 95% on ~434/691."
+    evidence_grade: published
+
+  - name: gen.ion_exchange.gen_time
+    low: 3.45
+    base: 3.45
+    high: 3.45
+    unit: core-s per structure
+    compute: cpu
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: "Supplementary Table 1: 3.45 s per structure, run sequentially on a single core of an Apple M2 (MacBook Air)."
+    evidence_grade: published
+
+  - name: gen.ion_exchange.frac_stable_after_chgnet_filter
+    low: 0.1158
+    base: 0.152
+    high: 0.197
+    unit: filter purity (DFT-stable share of CHGNet-passed MP-novel structures, strict)
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: "Results, 'Filtering stability with CHGNet': 15.2% of 300 novel structures that CHGNet (relaxed to 0.1 eV/A) predicts at Delta E_d <= 0 vs MP are DFT-stable (v2; published as Materials Horizons 12(19), 8000-8011 (2025), doi:10.1039/D5MH00010F). Range Wilson 95% on n = 300. BASE value for the filter's output purity (mlip_filter_basis = measured)."
+    evidence_grade: published
+
+  - name: gen.ion_exchange.v1_filter_acceptance
+    low: 0.488
+    base: 0.488
+    high: 0.488
+    unit: fraction of generated structures CHGNet predicts stable (filter pass fraction)
+    role: cross_check
+    source_url: https://arxiv.org/abs/2501.02144v1
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: "v1 Table 2 (earlier dataset: non-novel structures included, no MatterGen). Not reported in v2. With v1's own unfiltered stability rate and filtered purity it implies recall > 1 (see the next two records), so v1's three figures are not from one population and cannot pin recall."
+    evidence_grade: published
+
+  - name: gen.ion_exchange.v1_frac_stable_strict
+    low: 0.191
+    base: 0.191
+    high: 0.191
+    unit: fraction of generated structures DFT-stable (v1, 500 structures)
+    role: cross_check
+    source_url: https://arxiv.org/abs/2501.02144v1
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: v1 Table 1, ion exchange stability rate 19.1%.
+    evidence_grade: published
+
+  - name: gen.ion_exchange.v1_filter_purity
+    low: 0.518
+    base: 0.518
+    high: 0.518
+    unit: filter purity (v1)
+    role: cross_check
+    source_url: https://arxiv.org/abs/2501.02144v1
+    citations: [szymanski2025baselines, hautier2011substitution]
+    source_note: v1 Table 2, ion exchange filtered stability rate 51.8%.
+    evidence_grade: published
+
+  - name: gen.mattergen.frac_stable_strict
+    low: 0.0183
+    base: 0.030
+    high: 0.0489
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines, zeni2025mattergen]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 3.0% (15/500); 5.4% with the Alex-MP-20 model. Range Wilson 95%. MatterGen's own paper reports 13% on/below MP hull (https://www.nature.com/articles/s41586-025-08628-5).
+    evidence_grade: published
+
+  - name: gen.mattergen.frac_stable_100meV
+    low: 0.1470
+    base: 0.178
+    high: 0.2139
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 17.8% (89/500). Range Wilson 95%. MatterGen's own paper reports 78% within 0.1 eV/atom.
+    evidence_grade: published
+
+  - name: gen.mattergen.frac_novel_vs_mp
+    low: 0.8913
+    base: 0.918
+    high: 0.9377
+    unit: fraction of generated structures absent from Materials Project
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Table 1 novelty rate, 91.8% (v2; published as Materials Horizons 12(19), 8000-8011 (2025), doi:10.1039/D5MH00010F). Generation continued until 500 MP-novel structures were obtained (~545 generated); non-novel ones are dropped before DFT. Range Wilson 95% on 500/545."
+    evidence_grade: published
+
+  - name: gen.mattergen.frac_novel_all_databases
+    low: 0.7975
+    base: 0.832
+    high: 0.8603
+    unit: fraction of generated structures absent from MP, Alexandria and ICSD
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Supplementary Table 3, 83.2% of generated structures. The model uses the share of MP-novel candidates also absent from Alexandria and ICSD, 0.832/0.918 = 0.906 (derived; assumes independence from stability). Range Wilson 95% on ~453/545."
+    evidence_grade: published
+
+  - name: gen.mattergen.gen_time
+    low: 9.22
+    base: 9.22
+    high: 9.22
+    unit: GPU-s per structure (A100)
+    compute: gpu
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: ~9.22 s per structure on an A100.
+    evidence_grade: published
+
+  - name: gen.mattergen.frac_stable_after_chgnet_filter
+    low: 0.0194
+    base: 0.038
+    high: 0.0698
+    unit: filter purity (DFT-stable share of CHGNet-passed MP-novel structures, strict)
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "FIGURE READ. The text prints only 'MatterGen and CDVAE ... updated stability rates ranging from 3.8% to 8.8%'; which value is MatterGen's comes from Supplementary Figure 13 (scatter of filtered stability rate vs CHGNet MAE), where the MatterGen point sits at ~3.75% and CDVAE at ~8.8% (read by eye, 18.4 px per percentage point). The labels are unambiguous and the text pins the value, so plot error is small (taken as +/-0.3 points). Range: Wilson 95% on n = 300 at 3.5% (low) and 4.1% (high), i.e. sampling error widened by the plot-reading error."
+    evidence_grade: figure_read
+
+  - name: gen.crystallm.frac_stable_strict
+    low: 0.0138
+    base: 0.024
+    high: 0.0415
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 2.4% (12/500). Range Wilson 95%. Recorded for stage 2; not selectable yet (generation hardware unknown).
+    evidence_grade: published
+
+  - name: gen.crystallm.frac_stable_100meV
+    low: 0.1015
+    base: 0.128
+    high: 0.1601
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 12.8% (64/500). Range Wilson 95%.
+    evidence_grade: published
+
+  - name: gen.crystallm.frac_novel_vs_mp
+    low: 0.9667
+    base: 0.982
+    high: 0.9907
+    unit: fraction of generated structures absent from Materials Project
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Table 1 novelty rate, 98.2% (v2; published as Materials Horizons 12(19), 8000-8011 (2025), doi:10.1039/D5MH00010F). Generation continued until 500 MP-novel structures were obtained (~509 generated); non-novel ones are dropped before DFT. Range Wilson 95% on 500/509."
+    evidence_grade: published
+
+  - name: gen.crystallm.frac_novel_all_databases
+    low: 0.8171
+    base: 0.85
+    high: 0.879
+    unit: fraction of generated structures absent from MP, Alexandria and ICSD
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Supplementary Table 3, 85.0% of generated structures. The model uses the share of MP-novel candidates also absent from Alexandria and ICSD, 0.85/0.982 = 0.866 (derived; assumes independence from stability). Range Wilson 95% on ~433/509."
+    evidence_grade: published
+
+  - name: gen.crystallm.gen_time
+    low: 38.27
+    base: 38.27
+    high: 38.27
+    unit: s per structure (hardware not stated)
+    compute: unknown
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: 38.27 s per structure. Hardware not in the table.
+    evidence_grade: published
+
+  - name: gen.cdvae.frac_stable_strict
+    low: 0.0095
+    base: 0.018
+    high: 0.0339
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 1.8% (9/500). Range Wilson 95%. Recorded for stage 2; not selectable yet.
+    evidence_grade: published
+
+  - name: gen.cdvae.frac_stable_100meV
+    low: 0.0873
+    base: 0.112
+    high: 0.1427
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 11.2% (56/500). Range Wilson 95%.
+    evidence_grade: published
+
+  - name: gen.cdvae.frac_novel_vs_mp
+    low: 0.9392
+    base: 0.96
+    high: 0.9735
+    unit: fraction of generated structures absent from Materials Project
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Table 1 novelty rate, 96.0% (v2; published as Materials Horizons 12(19), 8000-8011 (2025), doi:10.1039/D5MH00010F). Generation continued until 500 MP-novel structures were obtained (~521 generated); non-novel ones are dropped before DFT. Range Wilson 95% on 500/521."
+    evidence_grade: published
+
+  - name: gen.cdvae.frac_novel_all_databases
+    low: 0.8928
+    base: 0.92
+    high: 0.9398
+    unit: fraction of generated structures absent from MP, Alexandria and ICSD
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Supplementary Table 3, 92.0% of generated structures. The model uses the share of MP-novel candidates also absent from Alexandria and ICSD, 0.92/0.96 = 0.958 (derived; assumes independence from stability). Range Wilson 95% on ~479/521."
+    evidence_grade: published
+
+  - name: gen.cdvae.gen_time
+    low: 14.32
+    base: 14.32
+    high: 14.32
+    unit: s per structure (hardware not stated)
+    compute: unknown
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: 14.32 s per structure. Hardware not in the table.
+    evidence_grade: published
+
+  - name: gen.ftcp.frac_stable_strict
+    low: 0.0109
+    base: 0.020
+    high: 0.0364
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 2.0% (10/500). Range Wilson 95%. Recorded for stage 2; not selectable yet.
+    evidence_grade: published
+
+  - name: gen.ftcp.frac_stable_100meV
+    low: 0.1673
+    base: 0.200
+    high: 0.2373
+    unit: fraction of generated structures
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: Of 500 MP-novel structures (v2 Table 1 / Supp. Table 4). 20.0% (100/500). Range Wilson 95%.
+    evidence_grade: published
+
+  - name: gen.ftcp.frac_novel_vs_mp
+    low: 0.356
+    base: 0.382
+    high: 0.4086
+    unit: fraction of generated structures absent from Materials Project
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Table 1 novelty rate, 38.2% (v2; published as Materials Horizons 12(19), 8000-8011 (2025), doi:10.1039/D5MH00010F). Generation continued until 500 MP-novel structures were obtained (~1309 generated); non-novel ones are dropped before DFT. Range Wilson 95% on 500/1309."
+    evidence_grade: published
+
+  - name: gen.ftcp.frac_novel_all_databases
+    low: 0.3245
+    base: 0.35
+    high: 0.3761
+    unit: fraction of generated structures absent from MP, Alexandria and ICSD
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: "Supplementary Table 3, 35.0% of generated structures. The model uses the share of MP-novel candidates also absent from Alexandria and ICSD, 0.35/0.382 = 0.916 (derived; assumes independence from stability). Range Wilson 95% on ~458/1309."
+    evidence_grade: published
+
+  - name: gen.ftcp.gen_time
+    low: 0.03
+    base: 0.03
+    high: 0.03
+    unit: s per structure (hardware not stated)
+    compute: unknown
+    source_url: https://arxiv.org/pdf/2501.02144
+    citations: [szymanski2025baselines]
+    source_note: 0.03 s per structure. Hardware not in the table.
+    evidence_grade: published
+
+  # ------------------------------------------------------------------ MLIP (first-hand timing; Matbench Discovery accuracy)
+
+  - name: mlip.chgnet.step_cost_per_atom
+    low: 0.003209
+    base: 0.006109
+    high: 0.009057
+    unit: core-s per ionic step per atom
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: Config primary_1thread, 6 native structures. Base = pooled sum(core-s per step) / sum(atoms); range = per-structure min/max. Per-step cost grows ~linearly with size (log-log slope 1.05, PROTOCOL.md section 7).
+    evidence_grade: first_hand
+
+  - name: mlip.mace-mp-0.step_cost_per_atom
+    low: 0.03096
+    base: 0.03917
+    high: 0.04325
+    unit: core-s per ionic step per atom
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: As for CHGNet. Log-log slope 0.99.
+    evidence_grade: first_hand
+
+  - name: mlip.m3gnet.step_cost_per_atom
+    low: 0.001968
+    base: 0.003201
+    high: 0.003920
+    unit: core-s per ionic step per atom
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: As for CHGNet. Log-log slope 0.89. Five of six of these runs hit the step cap; the per-step cost is still valid.
+    evidence_grade: first_hand
+
+  - name: mlip.steps_per_relaxation
+    low: 18
+    base: 36.71
+    high: 81
+    unit: ionic steps per converged relaxation
+    distribution:
+      type: empirical
+      values: [18, 18, 20, 22, 25, 28, 32, 35, 39, 43, 44, 46, 63, 81]
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: Every converged CHGNet and MACE-MP-0 relaxation in primary_1thread (7 structures x 2 models). Base = mean, because cost is linear in steps so the expected cost uses the mean. No size dependence (PROTOCOL.md section 1). Stage 2 samples from the values.
+    evidence_grade: first_hand
+
+  - name: mlip.step_cap
+    low: 500
+    base: 500
+    high: 500
+    unit: ionic steps
+    source_url: data/mlip_benchmark/PROTOCOL.md
+    source_note: max_steps = 500, FIRE, fmax 0.05 eV/A (also the Matbench Discovery setting, data/matbench_discovery/*.yml).
+    evidence_grade: first_hand
+
+  - name: mlip.chgnet.nonconv_frac
+    low: 0.0
+    base: 0.0
+    high: 0.3543
+    unit: fraction of relaxations hitting the step cap
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: 0 of 7 structures in primary_1thread. High = Wilson 95% upper bound on 0/7.
+    evidence_grade: first_hand
+
+  - name: mlip.mace-mp-0.nonconv_frac
+    low: 0.0
+    base: 0.0
+    high: 0.3543
+    unit: fraction of relaxations hitting the step cap
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: 0 of 7. High = Wilson 95% upper bound.
+    evidence_grade: first_hand
+
+  - name: mlip.m3gnet.nonconv_frac
+    low: 0.4869
+    base: 0.8571
+    high: 0.9743
+    unit: fraction of relaxations hitting the step cap
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: 6 of 7 (PROTOCOL.md section 7.1, diagnosed as model behaviour, not configuration). Range Wilson 95%.
+    evidence_grade: first_hand
+
+  - name: mlip.chgnet.recall
+    low: 0.40
+    base: 0.7585
+    high: 0.95
+    unit: true-positive rate (fraction of DFT-stable flagged stable)
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/chgnet/chgnet-0.3.0.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: "Base: Unique-prototype WBM set, TP / (TP + FN) = 25313 / 33374 (file reports Recall 0.758). Copy in data/matbench_discovery/. The table's 0.66 is the 2023 version. WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
+    evidence_grade: proxy
+
+  - name: mlip.chgnet.false_positive_rate
+    low: 0.1315
+    base: 0.1315
+    high: 0.1315
+    unit: fraction of DFT-unstable flagged stable
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/chgnet/chgnet-0.3.0.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: FP / (FP + TN) = 23955 / 182114 (derived from the published confusion matrix).
+    evidence_grade: derived
+
+  - name: mlip.chgnet.precision
+    low: 0.514
+    base: 0.514
+    high: 0.514
+    unit: fraction of flagged-stable that are DFT-stable, at Matbench prevalence
+    source_url: https://matbench-discovery.materialsproject.org/
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: Unique-prototype set. Not used directly; the model recomputes precision at the pool's prevalence from recall and FPR (README, equation 3). Kept as a cross-check.
+    evidence_grade: published
+    role: cross_check
+
+  - name: mlip.mace-mp-0.recall
+    low: 0.40
+    base: 0.7965
+    high: 0.95
+    unit: true-positive rate
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/mace/mace-mp-0.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: "Base: TP / (TP + FN), unique-prototype set (file reports 0.796). WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
+    evidence_grade: proxy
+
+  - name: mlip.mace-mp-0.false_positive_rate
+    low: 0.1068
+    base: 0.1068
+    high: 0.1068
+    unit: fraction of DFT-unstable flagged stable
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/mace/mace-mp-0.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: FP / (FP + TN), derived from the published confusion matrix.
+    evidence_grade: derived
+
+  - name: mlip.mace-mp-0.precision
+    low: 0.577
+    base: 0.577
+    high: 0.577
+    unit: fraction of flagged-stable that are DFT-stable, at Matbench prevalence
+    source_url: https://matbench-discovery.materialsproject.org/
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: Cross-check only.
+    evidence_grade: published
+    role: cross_check
+
+  - name: mlip.m3gnet.recall
+    low: 0.40
+    base: 0.8029
+    high: 0.95
+    unit: true-positive rate
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/m3gnet/m3gnet.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: "Base: TP / (TP + FN), unique-prototype set (file reports 0.803). WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
+    evidence_grade: proxy
+
+  - name: mlip.m3gnet.false_positive_rate
+    low: 0.1869
+    base: 0.1869
+    high: 0.1869
+    unit: fraction of DFT-unstable flagged stable
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/m3gnet/m3gnet.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: FP / (FP + TN), derived from the published confusion matrix.
+    evidence_grade: derived
+
+  - name: mlip.m3gnet.precision
+    low: 0.441
+    base: 0.441
+    high: 0.441
+    unit: fraction of flagged-stable that are DFT-stable, at Matbench prevalence
+    source_url: https://matbench-discovery.materialsproject.org/
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: Cross-check only.
+    evidence_grade: published
+    role: cross_check
+
+  - name: mlip.matbench_prevalence
+    low: 0.1549
+    base: 0.1549
+    high: 0.1549
+    unit: fraction of the Matbench test set that is DFT-stable
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/chgnet/chgnet-0.3.0.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: (TP + FN) / total = 33374 / 215488, unique-prototype set (the table quotes 15.3%). Cross-check only.
+    evidence_grade: derived
+    role: cross_check
+
+  - name: mlip.chgnet.daf_wbm
+    low: 3.361
+    base: 3.361
+    high: 3.361
+    unit: discovery acceleration factor (precision / prevalence) on the WBM unique-prototype set
+    role: cross_check
+    source_url: https://github.com/janosh/matbench-discovery/blob/main/models/chgnet/chgnet-0.3.0.yml
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: "Matbench Discovery reports DAF 3.361 = precision 0.514 / prevalence 0.153 (paper text: 32,942 of 215,488 stable, https://arxiv.org/pdf/2308.14920, 'Formally the DAF is the ratio of the precision to the prevalence'). The confusion matrix in the same file gives prevalence 0.1549 (33,374 / 215,488), i.e. 3.32; the paper's count is used here. Compared with the measured enrichment purity / prevalence on Szymanski & Bartel's pools."
+    evidence_grade: published
+
+  - name: mlip.matbench_prevalence_paper
+    low: 0.1529
+    base: 0.1529
+    high: 0.1529
+    unit: fraction of the WBM unique-prototype set below the MP hull
+    role: cross_check
+    source_url: https://arxiv.org/pdf/2308.14920
+    citations: [riebesell2025, riebesell2025correction]
+    source_note: "32,942 of 215,488 (Matbench Discovery paper, section 2.1.2 and SI). Stability there is 'on or below the convex hull of the MP training set' (MP v2022.10.28); the paper notes only ~20k of ~33k remain on the joint MP+WBM hull."
+    evidence_grade: derived
+
+  - name: mlip.chgnet.model_load_s
+    low: 0.8189
+    base: 0.8599
+    high: 1.039
+    unit: s to load CHGNet once per worker (one core)
+    role: analysis
+    source_url: data/mlip_benchmark/timings.csv
+    source_note: "model_load_s, primary_1thread main runs, 7 structures (median, min, max). A one-off cost per process; used only by the fixed-cost break-even in src/analysis.py."
+    evidence_grade: first_hand
+
+  - name: mlip.dft_fraction_sent
+    low: 1.0
+    base: 1.0
+    high: 1.0
+    unit: fraction of MLIP-passed candidates sent to DFT
+    source_url: ""
+    source_note: Design choice. Below 1, a random subset is sent, so DFT spend and yield scale together.
+    evidence_grade: assumption
+
+  # ------------------------------------------------------------------ DFT cost
+
+  - name: dft.cost_per_candidate
+    low: 2.975
+    base: 54.54
+    high: 1000
+    unit: core-h per candidate (one DFT stability check)
+    role: primary
+    source_url: data/dft_benchmark/timings.csv
+    source_note: "A span, not a point. Low: our first-hand estimate at the base size (18 atoms), from the dft.scf_* and dft.ionic_steps records below (QE 6.7, PBE, GBRV ultrasoft, 4 ranks on an ARM64 laptop; 3.77 at 20 atoms). High: Materials Project, 1-5 calculations per material at ~200 CPU-h each (https://www.nersc.gov/assets/Uploads/NERSCuserday-jain.pdf). Base: geometric midpoint sqrt(low x high), a convention; the span covers more than two orders of magnitude, so stage 2 should sample it log-uniformly. Both provenance points are kept as the cross-check records dft.mp_2012_* below."
+    evidence_grade: derived
+
+  - name: dft.mp_2012_per_calculation
+    low: 200
+    base: 200
+    high: 200
+    unit: CPU-h per calculation
+    role: cross_check
+    source_url: https://www.nersc.gov/assets/Uploads/NERSCuserday-jain.pdf
+    source_note: "Materials Project early GGA runs, ~200 CPU-h per calculation; 1-5 calculations per material; 10-20% of jobs fail and are rerun. ~2012 hardware (slides). The stage-1 base value; now one point inside dft.cost_per_candidate."
+    evidence_grade: published
+
+  - name: dft.mp_2012_per_compound_from_totals
+    low: 100
+    base: 100
+    high: 100
+    unit: CPU-h per compound
+    role: cross_check
+    source_url: https://perssongroup.lbl.gov/papers/scc2012-materialsproject.pdf
+    source_note: "Derived: ~8M CPU-h / >80,000 compounds. Assumes the totals cover the same work."
+    evidence_grade: derived
+
+  - name: dft.scf_cost_at_ref
+    low: 67.29
+    base: 91.63
+    high: 129.1
+    unit: core-s per SCF iteration at the reference size
+    role: first_hand_comparison
+    source_url: data/dft_benchmark/timings.csv
+    source_note: Power-law fit c(N) = a (N / N_ref)^b to median core-s per SCF iteration, primary_4rank single points, 7 sizes (10-56 atoms). Range = smallest/largest observed-to-fit ratio x a. QE 6.7, PBE, GBRV ultrasoft, ecutwfc 40 Ry.
+    evidence_grade: first_hand
+
+  - name: dft.scf_size_exponent
+    low: 1.390
+    base: 1.788
+    high: 1.788
+    unit: dimensionless (b in c(N) = a (N / N_ref)^b)
+    role: first_hand_comparison
+    source_url: data/dft_benchmark/timings.csv
+    source_note: Base = fit on all 7 sizes; low = fit on the 6 native (<= 32 atoms) only. k-meshes shrink with cell size, so this is below the textbook N^2-N^3.
+    evidence_grade: first_hand
+
+  - name: dft.scf_ref_atoms
+    low: 20
+    base: 20
+    high: 20
+    unit: atoms
+    role: first_hand_comparison
+    source_url: data/dft_benchmark/timings.csv
+    source_note: Reference size for the fit (BaTiS3, 20 atoms, a measured point). A convention; changing it changes a, not the fitted curve.
+    evidence_grade: assumption
+
+  - name: dft.scf_per_ionic_step
+    low: 11.33
+    base: 11.76
+    high: 15.14
+    unit: SCF iterations per ionic step
+    role: first_hand_comparison
+    source_url: data/dft_benchmark/timings.csv
+    source_note: Median, min, max over the 3 converged vc-relaxes (PROTOCOL.md section 7.3). Counts do not depend on rank count.
+    evidence_grade: first_hand
+
+  - name: dft.ionic_steps
+    low: 7
+    base: 12
+    high: 21
+    unit: ionic steps per vc-relax
+    role: first_hand_comparison
+    source_url: data/dft_benchmark/timings.csv
+    source_note: Median, min, max over the 3 converged vc-relaxes, including the final fresh-basis SCF. BaTiS3 hit the cap at 11 steps and is excluded.
+    evidence_grade: first_hand
+
+  # ------------------------------------------------------------------ DFT label reliability
+
+  - name: dft.wrong_verdict_frac
+    low: 0.132
+    base: 0.16
+    high: 0.3434
+    unit: fraction of DFT-stable verdicts that are wrong
+    source_url: https://www.nature.com/articles/s41586-023-06735-9
+    citations: [merchant2023gnome, an2026, szymanski2023alab]
+    source_note: "Proxy: flip rate under a higher level of theory, not experimental failure. Base and low: GNoME under r2SCAN, 84% of binaries/ternaries (16% flip) and 86.8% of quaternaries (13.2% flip) stay stable. High: PBE->SCAN, 109 of 166 survive, 34.3% flip (An et al. 2026, 57/166, https://arxiv.org/html/2607.01713). A-Lab: 3 of 16 analysed failures were computational. No published direct error rate against experiment."
+    evidence_grade: proxy
+
+  # ------------------------------------------------------------------ fixed cost per new chemistry
+
+  - name: fixed.reference_phases_per_chemistry
+    low: 0
+    base: 0
+    high: 0
+    unit: reference phases relaxed (MLIP and DFT) to build the hull in a new chemistry
+    source_url: ""
+    source_note: "MISSING. Base 0 = reuse the precomputed Materials Project hull, which is what Szymanski & Bartel compare against. A source for the number of phases to recompute (e.g. an MP count per chemical system) is needed before fixed cost can be non-zero."
+    evidence_grade: missing
+
+  # ------------------------------------------------------------------ synthesis
+
+  - name: synth.success_multiplier_mlip_filtered
+    low: 1.0
+    base: 1.0
+    high: 1.0
+    unit: multiplier on synthesis success for pipelines B and C only
+    source_url: ""
+    source_note: "Sensitivity switch, default 1 (success does not depend on how a candidate was found). No source in sources/ measures this. The expected direction is above 1: MLIPs are trained on Materials Project data, mostly synthesised materials, so a pre-filter plausibly selects more synthesisable candidates. base_case.py reports the value needed for a 2x level-2 spread."
+    evidence_grade: assumption
+
+  - name: synth.recipe_budget
+    low: 9.283
+    base: 9.283
+    high: 9.283
+    unit: maximum recipes tried per target (budget model)
+    role: analysis
+    source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133
+    citations: [szymanski2023alab]
+    source_note: "Derived from two A-Lab figures with a budget model: each recipe succeeds with probability q, a target gets at most B recipes, so per-target success s = 1 - (1 - q)^B and expected recipes = s / q. A-Lab's s = 36/57 and 353/57 = 6.19 recipes per target give q = 0.102 and B = 9.29. Used by the Monte Carlo and scenarios to tie recipes to success (correlation recipes_vs_success); the deterministic base case keeps A-Lab's observed 6.19."
+    evidence_grade: derived
+
+  - name: synth.recipes_per_target
+    low: 6.193
+    base: 6.193
+    high: 6.228
+    unit: recipes attempted per target
+    source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133
+    citations: [szymanski2023alab]
+    source_note: A-Lab, 353 recipes / 57 targets = 6.19. High 355/57 = 6.23 if the original paper's 355 is right (table says VERIFY).
+    evidence_grade: derived
+
+  - name: synth.success_given_correct_label
+    low: 0.05
+    base: 0.4375
+    high: 0.7037
+    unit: fraction of targets made as the target phase, given the DFT verdict is right
+    source_url: https://arxiv.org/html/2511.01790v1
+    citations: [prein2025, szymanski2023alab, szymanski2026correction, leeman2024, chen2024jacs]
+    source_note: "Base: Prein et al. 2025, 7/16 characterised. High: A-Lab corrected, 38/54 excluding computational errors (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133); the 36/57 = 63% headline includes those 3 computational failures, which the model charges through dft.wrong_verdict_frac instead. Low: Leeman et al. 2024, 3/58 (https://par.nsf.gov/servlets/purl/10532478), which does not separate computational from experimental failure. Other: Prein 7/24 = 29% counting uncharacterisable; Chen et al. 2024, 1/4."
+    evidence_grade: published
+
+  - name: synth.xrd_cost_per_sample
+    low: 5
+    base: 80
+    high: 150
+    unit: USD per sample
+    source_url: https://sites.utexas.edu/chem-x-ray/xrd-pricing/
+    citations: [strom2020]
+    source_note: "Base: UT Austin internal service, 80 USD/sample. High: UT Austin external, 150. Low: Oregon State self-use, 5 USD per 30-min slot (https://xrd.science.oregonstate.edu/fees). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
+    evidence_grade: published
+
+  - name: synth.furnace_fixed_fee
+    low: 6
+    base: 6
+    high: 13
+    unit: USD per furnace booking
+    source_url: https://www.ccmr.cornell.edu/sites/default/files/2025-07/FY26%20Cornell.pdf
+    citations: [strom2020]
+    source_note: "Cornell CCMR internal 6 USD; industry 13 USD (FY26 Industry sheet). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
+    evidence_grade: published
+
+  - name: synth.furnace_hourly
+    low: 3.15
+    base: 3.45
+    high: 9.45
+    unit: USD per furnace-hour
+    source_url: https://www.ccmr.cornell.edu/sites/default/files/2025-07/FY26%20Cornell.pdf
+    citations: [strom2020]
+    source_note: "Cornell internal 3.15-3.75 (base = midpoint, derived); high = industry upper 9.45. LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
+    evidence_grade: published
+
+  - name: synth.furnace_hours_per_attempt
+    low: 9.246
+    base: 9.246
+    high: 9.246
+    unit: furnace-hours per recipe
+    source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133
+    citations: [szymanski2023alab]
+    source_note: "Derived: 17 days x 24 h x 8 furnaces / 353 recipes (A-Lab; 8 furnaces from https://newscenter.lbl.gov/2023/04/17/meet-the-autonomous-lab-of-the-future/). Includes idle time, so an upper bound on heating time; assumes one recipe per furnace load."
+    evidence_grade: derived
+
+  - name: synth.labour_annual_salary
+    low: 29364
+    base: 29364
+    high: 29364
+    unit: USD per year (stipend), graduate trainee
+    source_url: https://grants.nih.gov/grants/guide/notice-files/not-od-26-044.html
+    source_note: "PAIRING: a graduate trainee's cost with trainee throughput (synth.labour_attempts_per_week, Liverpool undergraduate researchers), the closest wage-paid role with a sourced rate. NIH NRSA predoctoral stipend FY2026, 29,364. Not used: postdoc 63,480-77,076 (same notice), because no source gives postdoc throughput for manual solid-state synthesis; a postdoc at trainee throughput would mix roles."
+    evidence_grade: published
+
+  - name: synth.labour_fringe_rate
+    low: 0.075
+    base: 0.075
+    high: 0.075
+    unit: fraction of stipend
+    source_url: https://ora.stanford.edu/news/final-fringe-benefits-rates-fy2026
+    source_note: Stanford FY2026 graduate assistant fringe, 7.5% (matches the trainee pairing; postdoc rate 27.4% not used).
+    evidence_grade: published
+
+  - name: synth.labour_tuition_remission
+    low: 0
+    base: 16000
+    high: 31914
+    unit: USD per year charged for the trainee's tuition
+    source_url: https://traininggrants.ucsd.edu/proposal-development/budget.html
+    source_note: "No national average for tuition remission on research grants was found. Base (proxy): NRSA predoctoral tuition allowance cap, 60% of tuition up to 16,000/yr (NOT-OD-26-044 as summarised by UCSD). High (derived): NIH caps graduate salary + fringe + tuition at the zero-year postdoc stipend, 63,480 (NOT-OD-17-003, https://grants.gatech.edu/sites/default/files/documents/main/nih_graduate_student_salary_cap_01-2018.pdf), leaving 63,480 - 29,364 x 1.075 = 31,914. Low 0: trainee on a fellowship that pays tuition. Excluded from F&A (not in MTDC)."
+    evidence_grade: proxy
+
+  - name: synth.indirect_rate
+    low: 0.25
+    base: 0.42
+    high: 0.58
+    unit: fraction of the indirect-cost base (modified total direct costs)
+    source_url: https://www.nber.org/papers/w33627
+    citations: [azoulay2025icr, cfr200468]
+    source_note: "Azoulay, Gross & Sampat (2025), 'Indirect Cost Recovery in U.S. Innovation Policy', NBER WP 33627. Base: the EFFECTIVE indirect cost recovery (ICR) rate, what NIH actually pays, averages 42% (abstract; Table 1, 2024: mean 42%, median 40%, s.d. 10%, min 14%, max 81%). High: the NEGOTIATED ICR rate, the ceiling an institution may charge, averages 58% (abstract; Table 1, 2024: mean 58%, median 56%). Low: 'effective rates in practice are generally between 25% and 45%' (section 3.3, p. 17), lower end. Applying the negotiated 58% would overstate indirect cost by about a third. Population: the underlying data are NIH indirect-cost records for 354 NIH grantee institutions (69% universities, 18% independent hospitals, 13% research institutes; NIH RePORTER since 2006 and the CGAF before), not a census of US universities. The effective rate is NIH ICR paid divided by direct costs for the institution as a whole, a total-direct-cost denominator, whereas the model applies it to an MTDC-like base that excludes tuition and service fees; on a narrower base the true rate per base dollar is somewhat higher, so 42% leans low. Vocabulary: the paper's headline term is 'indirect cost recovery'; it uses 'F&A rate' only for the negotiated agreement. Used only when cost_basis = funder. Base of the charge: labour, fringe, crucibles, precursors and other consumables (MTDC includes salaries, fringe, materials, supplies and services and excludes tuition remission, 2 CFR 200.1, https://www.law.cornell.edu/cfr/text/2/200.1). XRD and furnace recharge fees are left out of the base by default: service-centre rates 'must normally consist of its direct costs and an allocable share of all indirect costs' (2 CFR 200.468(b)(2), https://www.law.cornell.edu/cfr/text/2/200.468), so indirect cost on top would double-count. Institutional practice varies; choices.fa_base_includes_service_fees reverses this. Negotiated-rate examples, not used: Caltech FY2026 on-campus 70% (https://www.fundingopportunities.caltech.edu/static/guides/FY26_Rate_Memo.pdf), Stanford 54% (FY2025-26), Michigan 56% (FY2025-29), MIT 62% (FY2026). The 2025 NIH 15% cap was vacated (First Circuit, Jan 2026) and is not used."
+    evidence_grade: published
+
+  - name: synth.labour_attempts_per_week
+    low: 10
+    base: 15
+    high: 20
+    unit: compositions per researcher-week
+    source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10866347/
+    source_note: Liverpool manual solid-state, authors' estimate 10-20 per undergraduate researcher; base = midpoint (derived). A composition is taken as one recipe attempt.
+    evidence_grade: proxy
+
+  - name: synth.weeks_per_year
+    low: 52
+    base: 52
+    high: 52
+    unit: weeks
+    source_url: ""
+    source_note: Calendar weeks; spreads annual pay over all weeks, so it slightly understates the cost per working week.
+    evidence_grade: assumption
+
+  - name: synth.crucible_cost
+    low: 37.85
+    base: 69.75
+    high: 156.10
+    unit: USD per alumina crucible (10 mL)
+    source_url: https://www.fishersci.com/shop/products/x/FB960I
+    source_note: "Base: Fisherbrand 10 mL alumina, 99.7%, list $69.75 (its $1.00 web price looks like an error). Low: CP Lab Safety 10 mL, $37.85 (https://www.cplabsafety.com/high-alumina-crucible-cylindrical-form-10ml-each/un-jay010; not found at other vendors in a 2026-10-10 check). High: CoorsTek 10 mL cylindrical, 99.8%, $156.10 (https://www.fishersci.com/shop/products/x/0822612C)."
+    evidence_grade: published
+
+  - name: synth.attempts_per_crucible
+    low: 10
+    base: 20
+    high: 100
+    unit: firings per crucible
+    source_url: https://www.mdpi.com/1996-1944/16/2/653
+    citations: [szymanski2023alab]
+    source_note: "ASSUMPTION; no published firing life for small lab alumina crucibles. Base 20: midpoint of the 10-30 cycle life of cordierite-mullite saggars in LiCoO2 calcination (proxy, read from a search snippet). Lithium carbonate melts corrode alumina with no passivation (https://patents.justia.com/patent/11180377), and half our compositions contain Li, so the low end is 10. High 100: reuse with non-reactive chemistries. A-Lab lost ~0.5% of samples to broken crucibles (SI Note 10), which bounds breakage, not wear."
+    evidence_grade: assumption
+
+  - name: synth.precursor_mass_g_per_attempt
+    low: 0.5
+    base: 1.5
+    high: 5
+    unit: g of precursor mix per attempt
+    source_url: https://arxiv.org/abs/2501.03165
+    citations: [szymanski2023alab]
+    source_note: "No source gives a per-attempt mass; A-Lab says only 'multigram sample quantities' (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133). Base (proxy): ~1.5 g manual samples (Na-superionic paper, SI). Low (proxy): 'nominal 0.5 g sample' in the Precursor Genome air-sensitivity test (https://arxiv.org/pdf/2607.09903); XRD needs > 100 mg (https://arxiv.org/pdf/2609.29344). High (assumption): 5 g as an upper reading of 'multigram'. Unverified, not used: DASH thesis 'up to 1.8 g'."
+    evidence_grade: proxy
+
+  - name: synth.precursor_usd_per_g
+    low: 0.1973
+    base: 1.760
+    high: 9.388
+    unit: USD per g of stoichiometric precursor mix
+    source_url: data/precursors/fisher_prices_2026-10-10.csv
+    source_note: "Derived by src/derive.py from Fisher Scientific US list prices fetched 2026-10-10 (catalogue numbers and URLs in the CSV; USD, visible without login; contract prices may be lower) and the routes in data/precursors/routes.csv for our six compositions. Per target, precursors are mixed in stoichiometric mass. Low: cheapest target (Li2MnSiO4) at the largest pack. Base: median target at the smallest pack of >= 100 g. High: dearest target (BaTiS3) at the smallest pack. Rare and transition-metal precursors dominate: In2O3 5.92-10.95 $/g, BaS 10.70-12.80, MnF2 2.96-5.11, against ZnO 0.06-0.33 and Li2CO3 0.37-0.82. The TiSiN2 and BaTiS3 routes are cost proxies (no TiN or TiS2 price). Sigma-Aldrich (A-Lab's supplier) blocked fetching. Not modelled: buying a whole pack for a few grams, which raises cost per attempt for small campaigns."
+    evidence_grade: derived
+
+  - name: synth.other_consumables_per_attempt
+    low: 1.71
+    base: 5.58
+    high: 25
+    unit: USD per attempt
+    source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133
+    citations: [szymanski2023alab]
+    source_note: "A-Lab lists its consumables as 'plastic vials, ZrO2 balls and crucibles' and mixes with ethanol and 'ten 5-mm ZrO2 balls'; no costs are published. Base (derived, Fisher US list prices): ethanol 1 mL (ASTRAL robot volume, https://arxiv.org/pdf/2304.00743) at $267.50/L = 0.27; three weighing dishes at $147.50/500 = 0.89; one pair of nitrile gloves at $27.75/100 = 0.56; ten 5-mm YSZ balls, 3.93 g at density 6.0 g/cm3 (assumption) and $246.50/250 g = 3.87 if single use. Low: balls reused, 1.71. High (assumption): 25, for the unpriced items: plastic vials, glovebox consumables for air-sensitive work, agate mortar wear, sieves. XRD sample holders are reused (A-Lab SI) and not charged."
+    evidence_grade: derived
+
+  # ------------------------------------------------------------------ novelty to science
+
+  - name: novelty.science_frac
+    low: 0.0
+    base: 0.0964
+    high: 0.25
+    unit: fraction of synthesised, database-novel targets that are new to science
+    source_url: https://par.nsf.gov/servlets/purl/10532478
+    citations: [leeman2024, szymanski2026correction]
+    source_note: "Leeman et al.: 0 of 36 new (24 no evidence of the predicted ordering, 3 already reported). Low 0 = their verdict. Base = Wilson 95% upper bound on 0/36, i.e. the largest rate the data allow, so the base cost per new material is OPTIMISTIC. High = 9/36 not attributed to known or disordered phases (derived). A-Lab correction: 'new to the platform, not necessarily new to science' (https://pmc.ncbi.nlm.nih.gov/articles/PMC12872444)."
+    evidence_grade: derived
+
+  # ------------------------------------------------------------------ prices
+
+  - name: price.cpu.on_demand
+    low: 0.030
+    base: 0.0446
+    high: 0.0559
+    unit: USD per core-hour
+    source_url: https://instances.vantage.sh/aws/ec2/c7i.48xlarge
+    source_note: "Base: AWS c7i.48xlarge 0.0446/vCPU-h. Low: Azure HB120rs v3 0.030/core-h. High: GCP h3-standard-88 0.0559/vCPU-h. Aggregator pages; cite provider pages in the paper. vCPU (hyperthread) vs physical core not reconciled: our benchmark core-hours are physical cores."
+    evidence_grade: published
+
+  - name: price.cpu.spot
+    low: 0.0055
+    base: 0.0170
+    high: 0.0177
+    unit: USD per core-hour
+    source_url: https://instances.vantage.sh/aws/ec2/c7i.48xlarge
+    source_note: "Base: AWS c7i spot 0.0170. Low: Azure HB120rs v3 spot 0.0055. High: AWS c7a spot 0.0177."
+    evidence_grade: published
+
+  - name: price.gpu_a100.on_demand
+    low: 1.99
+    base: 2.74
+    high: 2.79
+    unit: USD per A100 GPU-hour
+    source_url: https://instances.vantage.sh/aws/ec2/p4d.24xlarge
+    source_note: "Base: AWS p4d per GPU 2.74. Low: Lambda A100-40GB 1.99; high: Lambda A100-80GB 2.79 (https://lambda.ai/pricing). Used only for GPU generation (pipeline C with MatterGen)."
+    evidence_grade: published
+
+  - name: price.gpu_a100.spot
+    low: 2.32
+    base: 2.32
+    high: 2.32
+    unit: USD per A100 GPU-hour
+    source_url: https://instances.vantage.sh/aws/ec2/p4d.24xlarge
+    source_note: AWS p4d spot, per GPU.
+    evidence_grade: published
+
+# ==================================================================== correlations (documentation; stage 1 does not use)
+# Parameters below are NOT independent. Sampling them independently in stage 2 would produce combinations that
+# cannot occur. Each entry names the parameters, the sign, why, and how stage 2 must draw them.
+
+correlations:
+
+  - name: recipes_vs_success
+    parameters: [synth.recipes_per_target, synth.success_given_correct_label]
+    sign: negative
+    reason: "A-Lab's 6.19 recipes per target averages successes and failures. Failed targets exhaust the recipe budget, successes stop early, so a world with high success also has fewer recipes per target. High recipes with high success is not physical."
+    stage2_handling: "Draw success, then recipes conditionally: recipes = success x (recipes per successful target) + (1 - success) x (recipes per failed target). Needs A-Lab's per-target recipe counts split by outcome (Supplementary data; not yet in sources/)."
+
+  - name: filter_purity_vs_pool
+    parameters:
+      - gen.ion_exchange.frac_stable_strict
+      - gen.ion_exchange.frac_stable_after_chgnet_filter
+      - gen.ion_exchange.frac_novel_vs_mp
+      - gen.ion_exchange.frac_novel_all_databases
+      - gen.mattergen.frac_stable_strict
+      - gen.mattergen.frac_stable_after_chgnet_filter
+      - gen.mattergen.frac_novel_vs_mp
+      - gen.mattergen.frac_novel_all_databases
+    sign: positive within a method
+    reason: "Pool stability, post-filter purity and novelty for one method come from the same Szymanski & Bartel experiment on the same generated structures. A draw with a high unfiltered stability rate but low filtered purity mixes worlds."
+    stage2_handling: "Draw each method's figures jointly, ideally by bootstrapping the per-structure DFT and CHGNet results the authors publish (https://github.com/Bartel-Group/matgen_baselines), not from independent Wilson intervals."
+
+  - name: recall_vs_purity
+    parameters: [mlip.chgnet.recall, gen.ion_exchange.frac_stable_after_chgnet_filter, gen.mattergen.frac_stable_after_chgnet_filter]
+    sign: constrained
+    reason: "Recall and purity describe the same classifier on the same pool. Given the pool's stable fraction, they fix the pass fraction (prevalence x recall / purity), which must be <= 1. They come from different sources (Matbench vs Szymanski & Bartel), so they cannot both be exactly right."
+    stage2_handling: "Reject draws whose implied pass fraction exceeds 1, and report the implied false-positive rate of accepted draws."
+
+  - name: success_vs_novelty_worldview
+    parameters: [synth.success_given_correct_label, novelty.science_frac, dft.wrong_verdict_frac]
+    sign: positive
+    reason: "Success and novelty come from the same contested re-analyses of the same experiments. A-Lab's 70% success and its novelty claim are one reading; Leeman et al.'s 5% success and zero new materials are another. Low success with high novelty mixes incompatible readings. The wrong-verdict share belongs to the same reading: A-Lab attributes only 3 of 57 failures to computation, while Leeman finds most targets are known disordered phases, i.e. the prediction was wrong."
+    stage2_handling: "Do not sample independently. Report the named scenarios below next to the Monte Carlo; within the Monte Carlo, condition novelty and w on a drawn scenario."
+
+  - name: price_basis
+    parameters: [price.cpu.on_demand, price.cpu.spot, price.gpu_a100.on_demand, price.gpu_a100.spot]
+    sign: positive
+    reason: "CPU and GPU prices are paid on the same basis (on-demand or spot) from the same market. A spot CPU price with an on-demand GPU price is a mixed purchasing strategy."
+    stage2_handling: "Draw the basis once per sample; then draw CPU and GPU prices within that basis."
+
+  - name: labour_role
+    parameters: [synth.labour_annual_salary, synth.labour_fringe_rate, synth.labour_tuition_remission, synth.labour_attempts_per_week]
+    sign: tied by role
+    reason: "Salary, fringe, tuition and throughput describe one person. Stage 1 fixes the role (graduate trainee) so only tuition and throughput vary. A postdoc role would change all four together."
+    stage2_handling: "If a postdoc role is added, draw the role first and the four values from that role."
+
+# ==================================================================== named scenarios (documentation; stage 1 does not run them)
+# Coherent worldviews about the same contested evidence, to be reported next to the Monte Carlo. Every value
+# must lie inside the record's [low, high] (tests/test_params.py). Parameters not listed stay at base.
+
+scenarios:
+
+  optimistic_alab:
+    description: "A-Lab's own reading (Szymanski et al. 2023, as corrected 2026)."
+    values:
+      synth.success_given_correct_label: 0.7037   # 38/54, computational failures excluded
+      dft.wrong_verdict_frac: 0.132               # lowest flip rate in sources; A-Lab: 3 of 57 targets failed computationally
+      novelty.science_frac: 0.25                  # most generous figure in sources (9/36 not attributed to known phases)
+    note: "A-Lab's correction makes no new-to-science claim ('new to the platform, not necessarily new to science'), so no A-Lab number exists for novelty; 0.25 is the most generous figure our sources allow."
+
+  middle_prein:
+    description: "Prein et al. 2025, an independent automated campaign (7 of 16 characterised targets made)."
+    values:
+      synth.success_given_correct_label: 0.4375
+      dft.wrong_verdict_frac: 0.16
+      novelty.science_frac: 0.0964                # Wilson upper bound on 0/36; Prein et al. report no novelty figure
+    note: "Matches the stage-1 base values."
+
+  pessimistic_leeman:
+    description: "Leeman et al. 2024's re-analysis of A-Lab."
+    values:
+      synth.success_given_correct_label: 0.05     # 3/58
+      dft.wrong_verdict_frac: 0.3434              # highest flip rate in sources; Leeman: most targets are known disordered phases
+      novelty.science_frac: 0.0                   # 0 of 36 new
+    note: "Novelty 0 makes level 3 unbounded (no new material at any spend). That is this worldview's result, not a numerical failure."
+
+# ==================================================================== Monte Carlo (stage 2)
+# Every sampled parameter has a distribution and a reason. Parameters not listed are held at base.
+# Distribution types:
+#   beta_counts   Jeffreys posterior Beta(k + 0.5, n - k + 0.5) for a proportion with a published count k of n.
+#   triangular    (low, mode, high) = the record's (low, base, high): a sourced range with a most-likely value.
+#   log_triangular  triangular in log space, for ranges spanning about 10x or more.
+#   log_uniform   uniform in log space: a span with no defensible mode.
+#   uniform       two published endpoints, no count and no mode.
+#   bootstrap_mean  mean of a resample (with replacement) of first-hand values: cost is linear, so the
+#                 uncertainty that matters is in the mean over many candidates.
+#   empirical     one of a set of equally likely values.
+# Joint structures (correlations block) are implemented in src/sampling.py and described under `joint`.
+
+monte_carlo:
+  n_draws: 20000
+  seed: 20261010
+  distributions:
+    batch.n_atoms:
+      type: empirical
+      values: [10, 14, 16, 20, 28, 32]
+      reason: "A candidate is one of the native benchmark sizes; only MLIP cost depends on it."
+    mlip.chgnet.step_cost_per_atom:
+      type: bootstrap_mean
+      values: [0.009057, 0.005104, 0.006011, 0.003209, 0.008215, 0.005646]
+      reason: "Per-structure core-s per step per atom, primary_1thread, 6 native structures (first-hand)."
+    mlip.steps_per_relaxation:
+      type: bootstrap_mean
+      values: [18, 18, 20, 22, 25, 28, 32, 35, 39, 43, 44, 46, 63, 81]
+      reason: "Every converged CHGNet and MACE relaxation (first-hand); no size dependence."
+    mlip.chgnet.nonconv_frac:
+      type: beta_counts
+      k: 0
+      n: 7
+      reason: "0 of 7 benchmark relaxations hit the cap."
+    mlip.chgnet.recall:
+      type: triangular
+      reason: "Matbench value as mode; 0.40-0.95 are plausibility bounds, not a measured interval."
+    dft.cost_per_candidate:
+      type: log_uniform
+      reason: "Spans 3-1,000 core-h (two and a half orders of magnitude) between our measurement and MP 2012; no defensible mode."
+    synth.xrd_cost_per_sample:
+      type: triangular
+      reason: "Three sourced fee points: self-use, internal service (mode), external."
+    synth.furnace_fixed_fee:
+      type: triangular
+      reason: "Internal fee (mode) to industry fee."
+    synth.furnace_hourly:
+      type: triangular
+      reason: "Internal range midpoint (mode) to industry upper rate."
+    synth.labour_tuition_remission:
+      type: triangular
+      reason: "0 (fellowship) to the NIH compensation-cap residual, mode at the NRSA tuition cap."
+    synth.indirect_rate:
+      type: triangular
+      reason: "NBER WP 33627: lower end of typical effective ICR rates (low), average effective rate NIH pays (mode), average negotiated rate (high)."
+    synth.labour_attempts_per_week:
+      type: triangular
+      reason: "Liverpool estimate 10-20 per researcher-week, midpoint mode."
+    synth.crucible_cost:
+      type: triangular
+      reason: "Three vendor prices for a 10 mL alumina crucible."
+    synth.attempts_per_crucible:
+      type: log_triangular
+      reason: "Assumed firing life 10-100 (mode 20); spans 10x."
+    synth.precursor_mass_g_per_attempt:
+      type: log_triangular
+      reason: "0.5-5 g (mode 1.5); spans 10x."
+    synth.precursor_usd_per_g:
+      type: empirical
+      values: [2.1703, 4.6569, 1.3503, 7.5814, 0.5194, 0.4404]
+      reason: "Blended $/g at base pack sizes for each of our six compositions (src/derive.py): the target chemistry is uncertain, not the catalogue price."
+    synth.other_consumables_per_attempt:
+      type: triangular
+      reason: "Derived base; low without milling balls, high an assumption covering unpriced items."
+    price.cpu.on_demand:
+      type: triangular
+      reason: "Three on-demand list prices; AWS c7i as mode."
+    price.gpu_a100.on_demand:
+      type: triangular
+      reason: "Three A100 on-demand prices; AWS p4d as mode."
+  joint:
+    pools:
+      reason: "Pool stability, novelty and filter purity for one method come from one Szymanski & Bartel experiment (correlation filter_purity_vs_pool)."
+      method: >-
+        prevalence ~ beta_counts(strict stable of 500). MP-novel share ~ beta_counts(500 of generated);
+        all-database share = MP-novel share x beta_counts(absent-from-all of 500). Filter purity = enrichment x
+        prevalence, with ln(enrichment) ~ Normal(ln(purity / prevalence), s), s^2 = (1 - P)/(n_P P) + (1 - pi)/(n_pi pi)
+        from the two binomial samples (plus the plot-reading error for MatterGen). At low prevalence a fixed
+        classifier's enrichment is roughly constant, so purity moves with the pool's stable fraction.
+      counts:
+        ion_exchange: {stable: 46, n_stable: 500, generated: 691, all_db: 434, purity: 0.152, n_purity: 300, plot_error: 0.0}
+        mattergen: {stable: 15, n_stable: 500, generated: 545, all_db: 453, purity: 0.038, n_purity: 300, plot_error: 0.003}
+    worldview:
+      reason: "Synthesis success, novelty and the wrong-verdict share come from the same contested re-analyses (correlation success_vs_novelty_worldview). Each draw picks one reading and draws all three from it."
+      weights: {optimistic_alab: 0.3333333333333333, middle_prein: 0.3333333333333333, pessimistic_leeman: 0.3333333333333333}
+      weights_reason: "ASSUMPTION: equal weight; no basis for preferring a reading. Named-scenario results are reported alongside so readers can apply their own weights."
+      headline: "No single point estimate is headlined. The headline is the cost conditional on each reading, because which reading is right moves the cost far more than any pipeline choice does, and the three sources differ in standing (see each reading's source)."
+      weight_sensitivity:
+        - {optimistic_alab: 0.5, middle_prein: 0.25, pessimistic_leeman: 0.25}
+        - {optimistic_alab: 0.25, middle_prein: 0.25, pessimistic_leeman: 0.5}
+        - {optimistic_alab: 0.5, middle_prein: 0.5, pessimistic_leeman: 0.0}
+        - {optimistic_alab: 0.0, middle_prein: 1.0, pessimistic_leeman: 0.0}
+      readings:
+        optimistic_alab:
+          source: "Szymanski et al., Nature (2023), corrected January 2026"
+          standing: "peer-reviewed (Nature), 57 targets; the experiment Leeman et al. re-analyse"
+          success: {type: beta_counts, k: 38, n: 54}
+          novelty: {type: beta_counts, k: 9, n: 36}
+          wrong_verdict: {type: uniform, low: 0.132, high: 0.16}
+        middle_prein:
+          source: "Prein et al., arXiv 2511.01790 (2025)"
+          standing: "arXiv preprint, no journal reference or venue listed as of 2026-10-10, 16 targets; a separate campaign"
+          success: {type: beta_counts, k: 7, n: 16}
+          novelty: {type: beta_counts, k: 0, n: 36}
+          wrong_verdict: {type: uniform, low: 0.132, high: 0.16}
+        pessimistic_leeman:
+          source: "Leeman et al., PRX Energy (2024)"
+          standing: "peer-reviewed (PRX Energy), re-analysis of the same A-Lab experiment (58 targets)"
+          success: {type: beta_counts, k: 3, n: 58}
+          novelty: {type: beta_counts, k: 0, n: 36}
+          wrong_verdict: {type: beta_counts, k: 57, n: 166}
+      notes: "A-Lab's novelty uses Leeman's 9 of 36 not attributed to known phases (A-Lab's correction makes no new-to-science claim). Prein reports no novelty figure and inherits the only count, 0 of 36. Wrong-verdict share: GNoME's 13.2-16% flip range (no counts) for A-Lab and Prein; An et al.'s 57 of 166 flips for Leeman."
+    recipes:
+      reason: "Recipes per target fall as per-target success rises (correlation recipes_vs_success)."
+      method: "recipes = p / q with q = 1 - (1 - p)^(1 / B), p = (1 - wrong verdict share) x success, B = synth.recipe_budget. Reproduces A-Lab's 6.19 at p = 36/57."

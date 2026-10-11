@@ -1,0 +1,14 @@
+[project]
+name = "materials-discovery-cost-model"
+version = "0.1.0"
+description = "Replication package: what does it cost to get one validated, stable, new material?"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["pyyaml>=6.0"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

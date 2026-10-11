@@ -1,0 +1,774 @@
+% References for "What Does It Cost to Discover a Material?"
+% Verified 2026-10-10/11 against publisher pages, DOI records, PMC, or institutional repositories.
+% Re-audited 2026-10-10 (overnight run): every DOI-bearing entry checked field by field against its Crossref
+% record (https://api.crossref.org/works/<doi>, the publisher-deposited metadata); author given names follow
+% that record. Single source of bibliographic truth: params/parameters.yaml `citations` and the draft's [@key]
+% citations must resolve here (tests/test_citations.py).
+% Fields that could NOT be verified are omitted and noted in a comment above the entry.
+% DO NOT fill omitted fields from memory. A fabricated page number is worse than a missing one.
+
+% ============================================================
+% THE SYNTHESIS EVIDENCE (the contested parameter)
+% ============================================================
+
+% NOTE: title changed on publication of the correction. Current title says
+% "inorganic materials"; the original November 2023 printing said "novel materials".
+% Use "inorganic".
+@article{szymanski2023alab,
+  author  = {Szymanski, Nathan J. and Rendy, Bernardus and Fei, Yuxing and Kumar, Rishi E. and He, Tanjin and Milsted, David and McDermott, Matthew J. and Gallant, Max and Cubuk, Ekin Dogus and Merchant, Amil and Kim, Haegyeom and Jain, Anubhav and Bartel, Christopher J. and Persson, Kristin and Zeng, Yan and Ceder, Gerbrand},
+  title   = {An autonomous laboratory for the accelerated synthesis of inorganic materials},
+  journal = {Nature},
+  volume  = {624},
+  number  = {7990},
+  pages   = {86--91},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06734-w}
+}
+
+@article{szymanski2026correction,
+  author  = {Szymanski, Nathan J. and Rendy, Bernardus and Fei, Yuxing and Kumar, Rishi E. and He, Tanjin and Milsted, David and McDermott, Matthew J. and Gallant, Max and Cubuk, Ekin Dogus and Merchant, Amil and Kim, Haegyeom and Jain, Anubhav and Bartel, Christopher J. and Persson, Kristin and Zeng, Yan and Ceder, Gerbrand},
+  title   = {Author Correction: An autonomous laboratory for the accelerated synthesis of inorganic materials},
+  journal = {Nature},
+  volume  = {650},
+  number  = {8100},
+  pages   = {E1},
+  year    = {2026},
+  doi     = {10.1038/s41586-025-09992-y}
+}
+
+% NOTE: title is "Materials" plural in the published version. The ChemRxiv preprint
+% used the singular. Use the published form.
+@article{leeman2024,
+  author  = {Leeman, Josh and Liu, Yuhan and Stiles, Joseph and Lee, Scott B. and Bhatt, Prajna and Schoop, Leslie M. and Palgrave, Robert G.},
+  title   = {Challenges in High-Throughput Inorganic Materials Prediction and Autonomous Synthesis},
+  journal = {PRX Energy},
+  volume  = {3},
+  number  = {1},
+  pages   = {011002},
+  year    = {2024},
+  doi     = {10.1103/PRXEnergy.3.011002}
+}
+
+% NOTE: preprint only, no DOI. Also presented as a poster at the NeurIPS 2025 workshop
+% "AI for Science: The Reach and Limits of AI for Scientific Discovery" if you prefer a venue.
+@misc{prein2025,
+  author       = {Prein, Timon and O'Leary, Will and Flessa Savvidou, Aikaterini and Bourneix, Edouard and Laulainen, Joonatan E. M.},
+  title        = {A Synthesizability-Guided Pipeline for Materials Discovery},
+  year         = {2025},
+  eprint       = {2511.01790},
+  archivePrefix= {arXiv},
+  primaryClass = {cond-mat.mtrl-sci}
+}
+
+% ============================================================
+% CANDIDATE GENERATION AND SCREENING
+% ============================================================
+
+% NOTE: NOW PUBLISHED. Citing arXiv:2501.02144 as a preprint is out of date.
+@article{szymanski2025baselines,
+  author  = {Szymanski, Nathan J. and Bartel, Christopher J.},
+  title   = {Establishing baselines for generative discovery of inorganic crystals},
+  journal = {Materials Horizons},
+  volume  = {12},
+  number  = {19},
+  pages   = {8000--8011},
+  year    = {2025},
+  doi     = {10.1039/d5mh00010f}
+}
+
+% NOTE: the published title DROPS the "Matbench Discovery --" prefix carried by the arXiv version.
+@article{riebesell2025,
+  author  = {Riebesell, Janosh and Goodall, Rhys E. A. and Benner, Philipp and Chiang, Yuan and Deng, Bowen and Ceder, Gerbrand and Asta, Mark and Lee, Alpha A. and Jain, Anubhav and Persson, Kristin A.},
+  title   = {A framework to evaluate machine learning crystal stability predictions},
+  journal = {Nature Machine Intelligence},
+  volume  = {7},
+  number  = {6},
+  pages   = {836--847},
+  year    = {2025},
+  doi     = {10.1038/s42256-025-01055-1}
+}
+
+@article{riebesell2025correction,
+  author  = {Riebesell, Janosh and Goodall, Rhys E. A. and Benner, Philipp and Chiang, Yuan and Deng, Bowen and Ceder, Gerbrand and Asta, Mark and Lee, Alpha A. and Jain, Anubhav and Persson, Kristin A.},
+  title   = {Author Correction: A framework to evaluate machine learning crystal stability predictions},
+  journal = {Nature Machine Intelligence},
+  volume  = {7},
+  number  = {9},
+  pages   = {1586},
+  year    = {2025},
+  doi     = {10.1038/s42256-025-01117-4}
+}
+
+@article{merchant2023gnome,
+  author  = {Merchant, Amil and Batzner, Simon and Schoenholz, Samuel S. and Aykol, Muratahan and Cheon, Gowoon and Cubuk, Ekin Dogus},
+  title   = {Scaling deep learning for materials discovery},
+  journal = {Nature},
+  volume  = {624},
+  number  = {7990},
+  pages   = {80--85},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06735-9}
+}
+
+% NOTE: "Perspective on the Article:" is part of the title as published, not a section label.
+% CITE FOR NOVELTY ONLY. This is a novelty critique of GNoME (10 of 10 sampled entries matched known structure
+% types). It makes NO synthesis-bottleneck claim; do not cite it for one.
+@article{cheetham2024,
+  author  = {Cheetham, Anthony K. and Seshadri, Ram},
+  title   = {Artificial Intelligence Driving Materials Discovery? Perspective on the Article: Scaling Deep Learning for Materials Discovery},
+  journal = {Chemistry of Materials},
+  volume  = {36},
+  number  = {8},
+  pages   = {3490--3495},
+  year    = {2024},
+  doi     = {10.1021/acs.chemmater.4c00643}
+}
+
+% NOTE: "MatterGen" does not appear in the title.
+@article{zeni2025mattergen,
+  author  = {Zeni, Claudio and Pinsler, Robert and Z\"ugner, Daniel and Fowler, Andrew and Horton, Matthew and Fu, Xiang and others},
+  title   = {A generative model for inorganic materials design},
+  journal = {Nature},
+  volume  = {639},
+  number  = {8055},
+  pages   = {624--632},
+  year    = {2025},
+  doi     = {10.1038/s41586-025-08628-5}
+}
+
+% NOTE: cite the PMLR proceedings version, not arXiv:2406.04713.
+@inproceedings{miller2024flowmm,
+  author    = {Miller, Benjamin Kurt and Chen, Ricky T. Q. and Sriram, Anuroop and Wood, Brandon M.},
+  title     = {FlowMM: Generating Materials with Riemannian Flow Matching},
+  booktitle = {Proceedings of the 41st International Conference on Machine Learning},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {235},
+  pages     = {35664--35686},
+  year      = {2024}
+}
+
+% NOTE: THE FOUNDATIONAL CITATION FOR THE ION-EXCHANGE PIPELINE. Previously missing.
+@article{hautier2011substitution,
+  author  = {Hautier, Geoffroy and Fischer, Chris and Ehrlacher, Virginie and Jain, Anubhav and Ceder, Gerbrand},
+  title   = {Data Mined Ionic Substitutions for the Discovery of New Compounds},
+  journal = {Inorganic Chemistry},
+  volume  = {50},
+  number  = {2},
+  pages   = {656--663},
+  year    = {2011},
+  doi     = {10.1021/ic102031h}
+}
+% Year: Crossref's "issued" date is 2010-12-13 (online first); the issue (vol. 50, no. 2) is dated
+% 17 January 2011. Cite 2011, vol. 50, no. 2. The "2010, number 17, no volume" form in circulation is wrong.
+
+% arXiv preprint. A peer-reviewed version now exists: barrosoluque2026omat24 below. Cite that.
+@misc{barrosoluque2024omat24,
+  author       = {Barroso-Luque, Luis and Shuaibi, Muhammed and Fu, Xiang and Wood, Brandon M. and Dzamba, Misko and Gao, Meng and Rizvi, Ammar and Zitnick, C. Lawrence and Ulissi, Zachary W.},
+  title        = {Open Materials 2024 (OMat24) Inorganic Materials Dataset and Models},
+  year         = {2024},
+  eprint       = {2410.12771},
+  archivePrefix= {arXiv}
+}
+
+% NOTE: published version of OMat24 (found 2026-10-10 via Crossref and the Nature page). The publisher's metadata
+% spells the first author "Barros-Luque"; the arXiv version and his other papers use "Barroso-Luque". The
+% publisher form is recorded here; it is probably a publisher typo -- decide which to print. The author list
+% also adds M. Uyttendaele, who is not on the arXiv version.
+@article{barrosoluque2026omat24,
+  author  = {Barros-Luque, Luis and Shuaibi, Muhammed and Fu, Xiang and Wood, Brandon M. and Dzamba, Misko and Gao, Meng and Rizvi, Ammar and Uyttendaele, Matt and Zitnick, C. Lawrence and Ulissi, Zachary W.},
+  title   = {The Open Materials 2024 (OMat24) inorganic materials dataset and models},
+  journal = {Nature Computational Science},
+  volume  = {6},
+  number  = {6},
+  pages   = {642--652},
+  year    = {2026},
+  doi     = {10.1038/s43588-026-00996-w}
+}
+
+@misc{an2026,
+  author       = {An, Y. and Zhu, S. and Montoya, J. and Guo, X. and Wang, Z.},
+  title        = {Predicting Novel Stable Materials for Experimental Synthesis},
+  year         = {2026},
+  eprint       = {2607.01713},
+  archivePrefix= {arXiv}
+}
+
+% NOTE: added 2026-10-10 (cited in the draft's related work but missing from the bib). Verified via Crossref.
+% First author is MATTHEW Walker. Issue number is 4.
+@article{walker2026carbon,
+  author  = {Walker, Matthew and Butler, Keith T.},
+  title   = {The carbon cost of materials discovery: Can machine learning really accelerate the discovery of new photovoltaics?},
+  journal = {Materials Horizons},
+  volume  = {13},
+  number  = {4},
+  pages   = {1993--2004},
+  year    = {2026},
+  doi     = {10.1039/d5mh01404b}
+}
+
+% ============================================================
+% MACHINE-LEARNED INTERATOMIC POTENTIALS
+% ============================================================
+
+@article{deng2023chgnet,
+  author  = {Deng, Bowen and Zhong, Peichen and Jun, KyuJung and Riebesell, Janosh and Han, Kevin and Bartel, Christopher J. and Ceder, Gerbrand},
+  title   = {CHGNet as a pretrained universal neural network potential for charge-informed atomistic modelling},
+  journal = {Nature Machine Intelligence},
+  volume  = {5},
+  number  = {9},
+  pages   = {1031--1041},
+  year    = {2023},
+  doi     = {10.1038/s42256-023-00716-3}
+}
+
+@inproceedings{batatia2022mace,
+  author    = {Batatia, Ilyes and Kov\'acs, D\'avid P\'eter and Simm, Gregor N. C. and Ortner, Christoph and Cs\'anyi, G\'abor},
+  title     = {MACE: Higher Order Equivariant Message Passing Neural Networks for Fast and Accurate Force Fields},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {35},
+  pages     = {11423--11436},
+  year      = {2022}
+}
+
+% NOTE: THIS IS NOW PUBLISHED (Nov 2025). The arXiv record (2401.00096) still shows no
+% journal reference, which is why it is easy to miss. 88 authors. This is MACE-MP-0.
+@article{batatia2025macemp,
+  author  = {Batatia, Ilyes and others},
+  title   = {A foundation model for atomistic materials chemistry},
+  journal = {The Journal of Chemical Physics},
+  volume  = {163},
+  number  = {18},
+  pages   = {184110},
+  year    = {2025},
+  doi     = {10.1063/5.0297006}
+}
+
+% NOTE: "M3GNet" does not appear in the title.
+@article{chen2022m3gnet,
+  author  = {Chen, Chi and Ong, Shyue Ping},
+  title   = {A universal graph deep learning interatomic potential for the periodic table},
+  journal = {Nature Computational Science},
+  volume  = {2},
+  number  = {11},
+  pages   = {718--728},
+  year    = {2022},
+  doi     = {10.1038/s43588-022-00349-3}
+}
+
+% ============================================================
+% DFT ACCURACY, STABILITY AND THE REFERENCE DATABASES
+% ============================================================
+
+@article{bartel2020,
+  author  = {Bartel, Christopher J. and Trewartha, Amalie and Wang, Qi and Dunn, Alexander and Jain, Anubhav and Ceder, Gerbrand},
+  title   = {A critical examination of compound stability predictions from machine-learned formation energies},
+  journal = {npj Computational Materials},
+  volume  = {6},
+  pages   = {97},
+  year    = {2020},
+  doi     = {10.1038/s41524-020-00362-y}
+}
+
+@article{sun2016metastability,
+  author  = {Sun, Wenhao and Dacek, Stephen T. and Ong, Shyue Ping and Hautier, Geoffroy and Jain, Anubhav and Richards, William D. and Gamst, Anthony C. and Persson, Kristin A. and Ceder, Gerbrand},
+  title   = {The thermodynamic scale of inorganic crystalline metastability},
+  journal = {Science Advances},
+  volume  = {2},
+  number  = {11},
+  pages   = {e1600225},
+  year    = {2016},
+  doi     = {10.1126/sciadv.1600225}
+}
+
+@article{kirklin2015oqmd,
+  author  = {Kirklin, Scott and Saal, James E. and Meredig, Bryce and Thompson, Alex and Doak, Jeff W. and Aykol, Muratahan and R\"uhl, Stephan and Wolverton, Chris},
+  title   = {The Open Quantum Materials Database (OQMD): assessing the accuracy of DFT formation energies},
+  journal = {npj Computational Materials},
+  volume  = {1},
+  pages   = {15010},
+  year    = {2015},
+  doi     = {10.1038/npjcompumats.2015.10}
+}
+
+% NOTE: the title does not mention anion or GGA+U corrections even though that is the content.
+@article{wang2021corrections,
+  author  = {Wang, Amanda and Kingsbury, Ryan and McDermott, Matthew and Horton, Matthew and Jain, Anubhav and Ong, Shyue Ping and Dwaraknath, Shyam and Persson, Kristin A.},
+  title   = {A framework for quantifying uncertainty in DFT energy corrections},
+  journal = {Scientific Reports},
+  volume  = {11},
+  pages   = {15496},
+  year    = {2021},
+  doi     = {10.1038/s41598-021-94550-5}
+}
+
+@article{kingsbury2022r2scan,
+  author  = {Kingsbury, Ryan and Gupta, Ayush S. and Bartel, Christopher J. and Munro, Jason M. and Dwaraknath, Shyam and Horton, Matthew and Persson, Kristin A.},
+  title   = {Performance comparison of r$^2$SCAN and SCAN metaGGA density functionals for solid materials via an automated, high-throughput computational workflow},
+  journal = {Physical Review Materials},
+  volume  = {6},
+  number  = {1},
+  pages   = {013801},
+  year    = {2022},
+  doi     = {10.1103/PhysRevMaterials.6.013801}
+}
+
+% NOTE: "Commentary:" is part of the title as published.
+@article{jain2013mp,
+  author  = {Jain, Anubhav and Ong, Shyue Ping and Hautier, Geoffroy and Chen, Wei and Richards, William Davidson and Dacek, Stephen and Cholia, Shreyas and Gunter, Dan and Skinner, David and Ceder, Gerbrand and Persson, Kristin A.},
+  title   = {Commentary: The Materials Project: A materials genome approach to accelerating materials innovation},
+  journal = {APL Materials},
+  volume  = {1},
+  number  = {1},
+  pages   = {011002},
+  year    = {2013},
+  doi     = {10.1063/1.4812323}
+}
+
+% ============================================================
+% SYNTHESIS, SYNTHESIZABILITY AND AUTONOMOUS LABS
+% ============================================================
+
+% NOTE: article number 2018 -- easy to mistake for a year.
+@article{aykol2019network,
+  author  = {Aykol, Muratahan and Hegde, Vinay I. and Hung, Linda and Suram, Santosh and Herring, Patrick and Wolverton, Chris and Hummelsh{\o}j, Jens S.},
+  title   = {Network analysis of synthesizable materials discovery},
+  journal = {Nature Communications},
+  volume  = {10},
+  pages   = {2018},
+  year    = {2019},
+  doi     = {10.1038/s41467-019-10030-5}
+}
+
+@article{fei2024alabos,
+  author  = {Fei, Yuxing and Rendy, Bernardus and Kumar, Rishi E. and Dartsi, Olympia and Sahasrabuddhe, Hrushikesh P. and McDermott, Matthew J. and Wang, Zheren and Szymanski, Nathan J. and Walters, Lauren N. and Milsted, David and Zeng, Yan and Jain, Anubhav and Ceder, Gerbrand},
+  title   = {AlabOS: a Python-based reconfigurable workflow management framework for autonomous laboratories},
+  journal = {Digital Discovery},
+  volume  = {3},
+  number  = {11},
+  pages   = {2275--2288},
+  year    = {2024},
+  doi     = {10.1039/d4dd00129j}
+}
+
+@article{lo2024frugal,
+  author  = {Lo, Stanley and Baird, Sterling G. and Schrier, Joshua and Blaiszik, Ben and Carson, Nessa and Foster, Ian and Aguilar-Granda, Andr\'es and Kalinin, Sergei V. and Maruyama, Benji and Politi, Maria and Tran, Helen and Sparks, Taylor D. and Aspuru-Guzik, Al\'an},
+  title   = {Review of low-cost self-driving laboratories in chemistry and materials science: the ``frugal twin'' concept},
+  journal = {Digital Discovery},
+  volume  = {3},
+  number  = {5},
+  pages   = {842--868},
+  year    = {2024},
+  doi     = {10.1039/d3dd00223c}
+}
+
+% NOTE: year is 2026, not 2025.
+@article{adesiji2026benchmarking,
+  author  = {Adesiji, Adedire D. and Wang, Jiashuo and Kuo, Cheng-Shu and Brown, Keith A.},
+  title   = {Benchmarking self-driving labs},
+  journal = {Digital Discovery},
+  volume  = {5},
+  number  = {1},
+  pages   = {14--27},
+  year    = {2026},
+  doi     = {10.1039/d5dd00337g}
+}
+
+@article{tom2024chemrev,
+  author  = {Tom, Gary and Schmid, Stefan P. and Baird, Sterling G. and others},
+  title   = {Self-Driving Laboratories for Chemistry and Materials Science},
+  journal = {Chemical Reviews},
+  volume  = {124},
+  number  = {16},
+  pages   = {9633--9732},
+  year    = {2024},
+  doi     = {10.1021/acs.chemrev.4c00055}
+}
+
+% VERIFIED 2026-10-10 (Crossref; open-access full text on nature.com). Both cost figures ARE in the paper itself,
+% in the Introduction (not the abstract): "The first 'RoboChem' platform developed by our group cost approximately
+% US$50,000 for essential components alone, not including the most expensive component, a benchtop nuclear magnetic
+% resonance (NMR) spectrometer" and, for RoboChem-Flex in its human-in-the-loop configuration, "reducing the overall
+% system cost to approximately US$5,000". The $50,000 is the EARLIER RoboChem platform, not RoboChem-Flex. The paper
+% also says "High-end systems ... often exceed US$100,000, excluding analytical components." Note: this is a
+% flow-chemistry reaction-optimisation platform, not a solid-state synthesis lab.
+@article{pilon2026,
+  author  = {Pilon, Simone and Savino, Elia and Bayley, Oliver M. and Vanzella, Michael and Claros, Miguel and Siasiaridis, Petros and Liu, Junsong and Lukas, Florian and Damian, Matteo and Tseliou, Vasilis and Intini, Niccol\`o and Slattery, Aidan and SanJos\'e-Orduna, Jesus and den Hartog, Tim and Peters, Ron A. H. and Gargano, Andrea F. G. and Mutti, Francesco G. and No\"el, Timothy},
+  title   = {A flexible and affordable self-driving laboratory for automated reaction optimization},
+  journal = {Nature Synthesis},
+  volume  = {5},
+  number  = {10},
+  pages   = {1552--1564},
+  year    = {2026},
+  doi     = {10.1038/s44160-026-01053-0}
+}
+
+@article{tobias2025,
+  author  = {Tobias, Alexander V. and Wahab, Adam},
+  title   = {Autonomous `self-driving' laboratories: a review of technology and policy implications},
+  journal = {Royal Society Open Science},
+  volume  = {12},
+  number  = {7},
+  pages   = {250646},
+  year    = {2025},
+  doi     = {10.1098/rsos.250646}
+}
+
+% --- "synthesis is the bottleneck" -- primary citation ---
+@article{montoya2024,
+  author  = {Montoya, Joseph H. and Grimley, Carolyn and Aykol, Muratahan and Ophus, Colin and Sternlicht, Hadas and Savitzky, Benjamin H. and Minor, Andrew M. and Torrisi, Steven B. and Goedjen, Jackson and Chung, Ching-Chang and Comstock, Andrew H. and Sun, Shijing},
+  title   = {How the AI-assisted discovery and synthesis of a ternary oxide highlights capability gaps in materials science},
+  journal = {Chemical Science},
+  volume  = {15},
+  number  = {15},
+  pages   = {5660--5673},
+  year    = {2024},
+  doi     = {10.1039/D3SC04823C}
+}
+
+@article{aziz2021,
+  author  = {Aziz, Alex and Carrasco, Javier},
+  title   = {Towards Predictive Synthesis of Inorganic Materials Using Network Science},
+  journal = {Frontiers in Chemistry},
+  volume  = {9},
+  pages   = {798838},
+  year    = {2021},
+  doi     = {10.3389/fchem.2021.798838}
+}
+
+@article{chung2025synthesizability,
+  author  = {Chung, Vincent and Walsh, Aron and Payne, David J.},
+  title   = {Solid-state synthesizability predictions using positive-unlabeled learning from human-curated literature data},
+  journal = {Digital Discovery},
+  volume  = {4},
+  number  = {9},
+  pages   = {2439--2453},
+  year    = {2025},
+  doi     = {10.1039/d5dd00065c}
+}
+
+% VERIFIED 2026-10-10 via Crossref: vol. 41, no. 20, pp. 3746-3766, issued 18 October 2002.
+@article{jansen2002,
+  author  = {Jansen, Martin},
+  title   = {A Concept for Synthesis Planning in Solid-State Chemistry},
+  journal = {Angewandte Chemie International Edition},
+  volume  = {41},
+  number  = {20},
+  pages   = {3746--3766},
+  year    = {2002},
+  doi     = {10.1002/1521-3773(20021018)41:20<3746::AID-ANIE3746>3.0.CO;2-2}
+}
+
+% VERIFIED 2026-10-10 via Crossref, with its Author Correction below.
+@article{kononova2019,
+  author  = {Kononova, Olga and Huo, Haoyan and He, Tanjin and Rong, Ziqin and Botari, Tiago and Sun, Wenhao and Tshitoyan, Vahe and Ceder, Gerbrand},
+  title   = {Text-mined dataset of inorganic materials synthesis recipes},
+  journal = {Scientific Data},
+  volume  = {6},
+  pages   = {203},
+  year    = {2019},
+  doi     = {10.1038/s41597-019-0224-1}
+}
+
+@article{kononova2019correction,
+  author  = {Kononova, Olga and Huo, Haoyan and He, Tanjin and Rong, Ziqin and Botari, Tiago and Sun, Wenhao and Tshitoyan, Vahe and Ceder, Gerbrand},
+  title   = {Author Correction: Text-mined dataset of inorganic materials synthesis recipes},
+  journal = {Scientific Data},
+  volume  = {6},
+  pages   = {273},
+  year    = {2019},
+  doi     = {10.1038/s41597-019-0297-x}
+}
+
+% ============================================================
+% HIGH-THROUGHPUT COMPUTATIONAL SCREENING
+% ============================================================
+
+@article{greeley2006,
+  author  = {Greeley, Jeff and Jaramillo, Thomas F. and Bonde, Jacob and Chorkendorff, Ib and N{\o}rskov, Jens K.},
+  title   = {Computational high-throughput screening of electrocatalytic materials for hydrogen evolution},
+  journal = {Nature Materials},
+  volume  = {5},
+  number  = {11},
+  pages   = {909--913},
+  year    = {2006},
+  doi     = {10.1038/nmat1752}
+}
+
+@article{curtarolo2013htdft,
+  author  = {Curtarolo, Stefano and Hart, Gus L. W. and Nardelli, Marco Buongiorno and Mingo, Natalio and Sanvito, Stefano and Levy, Ohad},
+  title   = {The high-throughput highway to computational materials design},
+  journal = {Nature Materials},
+  volume  = {12},
+  number  = {3},
+  pages   = {191--201},
+  year    = {2013},
+  doi     = {10.1038/nmat3568}
+}
+
+@article{curtarolo2012aflow,
+  author  = {Curtarolo, Stefano and Setyawan, Wahyu and Hart, Gus L. W. and others},
+  title   = {AFLOW: An automatic framework for high-throughput materials discovery},
+  journal = {Computational Materials Science},
+  volume  = {58},
+  pages   = {218--226},
+  year    = {2012},
+  doi     = {10.1016/j.commatsci.2012.02.005}
+}
+
+% RESOLVED 2026-10-10: the published title says "Machine Learning" (Crossref record deposited by ACS; the
+% pubs.acs.org page itself was not fetched). The arXiv "artificial intelligence" variant is the preprint title.
+% End page 20018 from the same record.
+@article{chen2024jacs,
+  author  = {Chen, Chi and Nguyen, Dan Thien and Lee, Shannon J. and Baker, Nathan A. and Karakoti, Ajay S. and Lauw, Linda and Owen, Craig and Mueller, Karl T. and Bilodeau, Brian A. and Murugesan, Vijayakumar and Troyer, Matthias},
+  title   = {Accelerating Computational Materials Discovery with Machine Learning and Cloud High-Performance Computing: from Large-Scale Screening to Experimental Validation},
+  journal = {Journal of the American Chemical Society},
+  volume  = {146},
+  number  = {29},
+  pages   = {20009--20018},
+  year    = {2024},
+  doi     = {10.1021/jacs.4c03849}
+}
+
+% ============================================================
+% ECONOMICS OF RESEARCH PRODUCTIVITY AND AI IN SCIENCE
+% ============================================================
+
+@article{bloom2020ideas,
+  author  = {Bloom, Nicholas and Jones, Charles I. and Van Reenen, John and Webb, Michael},
+  title   = {Are Ideas Getting Harder to Find?},
+  journal = {American Economic Review},
+  volume  = {110},
+  number  = {4},
+  pages   = {1104--1144},
+  year    = {2020},
+  doi     = {10.1257/aer.20180338}
+}
+
+@article{jones2009burden,
+  author  = {Jones, Benjamin F.},
+  title   = {The Burden of Knowledge and the ``Death of the Renaissance Man'': Is Innovation Getting Harder?},
+  journal = {The Review of Economic Studies},
+  volume  = {76},
+  number  = {1},
+  pages   = {283--317},
+  year    = {2009},
+  doi     = {10.1111/j.1467-937X.2008.00531.x}
+}
+
+@article{scannell2012eroom,
+  author  = {Scannell, Jack W. and Blanckley, Alex and Boldon, Helen and Warrington, Brian},
+  title   = {Diagnosing the decline in pharmaceutical R\&D efficiency},
+  journal = {Nature Reviews Drug Discovery},
+  volume  = {11},
+  number  = {3},
+  pages   = {191--200},
+  year    = {2012},
+  doi     = {10.1038/nrd3681}
+}
+
+@article{dimasi2016,
+  author  = {DiMasi, Joseph A. and Grabowski, Henry G. and Hansen, Ronald W.},
+  title   = {Innovation in the pharmaceutical industry: New estimates of R\&D costs},
+  journal = {Journal of Health Economics},
+  volume  = {47},
+  pages   = {20--33},
+  year    = {2016},
+  doi     = {10.1016/j.jhealeco.2016.01.012}
+}
+
+@article{agrawal2024,
+  author  = {Agrawal, Ajay and McHale, John and Oettl, Alexander},
+  title   = {Artificial intelligence and scientific discovery: a model of prioritized search},
+  journal = {Research Policy},
+  volume  = {53},
+  number  = {5},
+  pages   = {104989},
+  year    = {2024},
+  doi     = {10.1016/j.respol.2024.104989}
+}
+
+@techreport{agrawal2023nber,
+  author      = {Agrawal, Ajay K. and McHale, John and Oettl, Alexander},
+  title       = {Artificial Intelligence and Scientific Discovery: A Model of Prioritized Search},
+  institution = {National Bureau of Economic Research},
+  type        = {NBER Working Paper},
+  number      = {31558},
+  year        = {2023},
+  doi         = {10.3386/w31558}
+}
+
+% NOTE: the key point for us -- returns to AI vary BY WORKFLOW STAGE.
+@techreport{agrawal2026aiinscience,
+  author      = {Agrawal, Ajay K. and McHale, John and Oettl, Alexander},
+  title       = {AI in Science},
+  institution = {National Bureau of Economic Research},
+  type        = {NBER Working Paper},
+  number      = {34953},
+  year        = {2026},
+  doi         = {10.3386/w34953}
+}
+
+@techreport{cockburn2018,
+  author      = {Cockburn, Iain M. and Henderson, Rebecca and Stern, Scott},
+  title       = {The Impact of Artificial Intelligence on Innovation},
+  institution = {National Bureau of Economic Research},
+  type        = {NBER Working Paper},
+  number      = {24449},
+  year        = {2018},
+  doi         = {10.3386/w24449}
+}
+
+% VERIFIED 2026-10-10 via Crossref. YEAR IS 2025 (issue of 18 December 2025), not 2026: key renamed from
+% kusumegi2026.
+@article{kusumegi2025,
+  author  = {Kusumegi, Keigo and Yang, Xinyu and Ginsparg, Paul and de Vaan, Mathijs and Stuart, Toby and Yin, Yian},
+  title   = {Scientific production in the era of large language models},
+  journal = {Science},
+  volume  = {390},
+  number  = {6779},
+  pages   = {1240--1243},
+  year    = {2025},
+  doi     = {10.1126/science.adw3000}
+}
+
+% ============================================================
+% COST METHODOLOGY AND FACILITY ECONOMICS
+% ============================================================
+
+% NOTE: CRITICAL. Reports that NEGOTIATED indirect rates average 58% but EFFECTIVE rates
+% (what is actually paid) average 42%. See the memo.
+@techreport{azoulay2025icr,
+  author      = {Azoulay, Pierre and Gross, Daniel P. and Sampat, Bhaven N.},
+  title       = {Indirect Cost Recovery in U.S. Innovation Policy: History, Evidence, and Avenues for Reform},
+  institution = {National Bureau of Economic Research},
+  type        = {NBER Working Paper},
+  number      = {33627},
+  year        = {2025},
+  doi         = {10.3386/w33627}
+}
+
+% NOTE: THE methods reference that licenses a static order-of-magnitude cost model at low TRL.
+@article{buchner2018tea,
+  author  = {Buchner, Georg A. and Zimmermann, Arno W. and Hohgr\"ave, Arian E. and Schom\"acker, Reinhard},
+  title   = {Techno-economic Assessment Framework for the Chemical Industry---Based on Technology Readiness Levels},
+  journal = {Industrial \& Engineering Chemistry Research},
+  volume  = {57},
+  number  = {25},
+  pages   = {8502--8517},
+  year    = {2018},
+  doi     = {10.1021/acs.iecr.8b01248}
+}
+
+@techreport{kobos2020tea,
+  author      = {Kobos, Peter H. and Drennen, Thomas E. and Outkin, Alexander and Webb, Erik K. and Paap, Scott M. and Wiryadinata, Steven},
+  title       = {Techno-Economic Analysis: Best Practices and Assessment Tools},
+  institution = {Sandia National Laboratories},
+  number      = {SAND2020-13473},
+  year        = {2020},
+  doi         = {10.2172/1738878}
+}
+
+% NOTE: our recharge rates are LOWER BOUNDS on true resource cost -- see memo. Metadata verified via Crossref
+% 2026-10-10. The claim we cite it for (user-fee income alone does not fully support most shared instrumentation
+% facilities) could NOT be checked against the article text: Springer blocked every fetch. Confirm before submission.
+@article{strom2020,
+  author  = {Strom, T. Amanda and Haugstad, Greg and Shu, Jonathan and Seshadri, Ram},
+  title   = {Shared instrumentation facilities: Benefiting researchers and universities, and sustaining research excellence},
+  journal = {MRS Bulletin},
+  volume  = {45},
+  number  = {5},
+  pages   = {331--335},
+  year    = {2020},
+  doi     = {10.1557/mrs.2020.130}
+}
+
+@article{sorzano2026,
+  author  = {Sorzano, Carlos Oscar S. and Carazo, Jos\'e Mar\'ia},
+  title   = {Rational acquisition of laboratory equipment: an accurate mathematical model to estimate the trade-offs in shared and nonshared equipment},
+  journal = {Acta Crystallographica Section D},
+  volume  = {82},
+  number  = {6},
+  pages   = {638--645},
+  year    = {2026},
+  doi     = {10.1107/S2059798326003608}
+}
+
+% US federal regulation. Bluebook short form: 2 C.F.R. 200.468
+% Full: Specialized Service Facilities, 2 C.F.R. 200.468 (2026).
+@misc{cfr200468,
+  title = {Specialized Service Facilities, 2 C.F.R. \S 200.468},
+  year  = {2026},
+  note  = {Office of Management and Budget, Uniform Administrative Requirements, Cost Principles, and Audit Requirements for Federal Awards, Subpart E}
+}
+
+% ============================================================
+% SOFTWARE
+% ============================================================
+
+% VERIFIED 2026-10-10: the title uses an EM DASH (U+2014) with no spaces, on both the IOP page (citation_title)
+% and Crossref. BibTeX `---` renders as an em dash.
+@article{larsen2017ase,
+  author  = {Larsen, Ask Hjorth and others},
+  title   = {The atomic simulation environment---a Python library for working with atoms},
+  journal = {Journal of Physics: Condensed Matter},
+  volume  = {29},
+  number  = {27},
+  pages   = {273002},
+  year    = {2017},
+  doi     = {10.1088/1361-648X/aa680e}
+}
+
+@article{giannozzi2009qe,
+  author  = {Giannozzi, Paolo and others},
+  title   = {QUANTUM ESPRESSO: a modular and open-source software project for quantum simulations of materials},
+  journal = {Journal of Physics: Condensed Matter},
+  volume  = {21},
+  number  = {39},
+  pages   = {395502},
+  year    = {2009},
+  doi     = {10.1088/0953-8984/21/39/395502}
+}
+
+@article{giannozzi2017qe,
+  author  = {Giannozzi, Paolo and others},
+  title   = {Advanced capabilities for materials modelling with Quantum ESPRESSO},
+  journal = {Journal of Physics: Condensed Matter},
+  volume  = {29},
+  number  = {46},
+  pages   = {465901},
+  year    = {2017},
+  doi     = {10.1088/1361-648X/aa8f79}
+}
+
+% NOTE: "GBRV" does not appear in the title. No issue number: Crossref's record has none (checked 2026-10-10);
+% the ScienceDirect page itself was not fetched.
+@article{garrity2014gbrv,
+  author  = {Garrity, Kevin F. and Bennett, Joseph W. and Rabe, Karin M. and Vanderbilt, David},
+  title   = {Pseudopotentials for high-throughput DFT calculations},
+  journal = {Computational Materials Science},
+  volume  = {81},
+  pages   = {446--452},
+  year    = {2014},
+  doi     = {10.1016/j.commatsci.2013.08.053}
+}
+
+% No issue number: Crossref's record has none (checked 2026-10-10); ScienceDirect page not fetched.
+@article{ong2013pymatgen,
+  author  = {Ong, Shyue Ping and Richards, William Davidson and Jain, Anubhav and Hautier, Geoffroy and Kocher, Michael and Cholia, Shreyas and Gunter, Dan and Chevrier, Vincent L. and Persson, Kristin A. and Ceder, Gerbrand},
+  title   = {Python Materials Genomics (pymatgen): A robust, open-source python library for materials analysis},
+  journal = {Computational Materials Science},
+  volume  = {68},
+  pages   = {314--319},
+  year    = {2013},
+  doi     = {10.1016/j.commatsci.2012.10.028}
+}
+
+% ============================================================
+% DO NOT CITE
+% ============================================================
+% A 2024 arXiv working paper estimating AI's effect on productivity in a materials R&D lab was withdrawn: on
+% 16 May 2025 MIT stated it had no confidence in the data and requested withdrawal from the journal and from arXiv.
+% The arXiv page was still not flagged as withdrawn, so it is easy to cite by accident. Its identifiers are not
+% written in this repository; tests/test_citations.py fails if the arXiv ID or the author's name appears anywhere.
+% It was the only empirical estimate of AI's productivity effect in a materials lab. Its absence is a defensible
+% reason to state that the empirical base is thin.
