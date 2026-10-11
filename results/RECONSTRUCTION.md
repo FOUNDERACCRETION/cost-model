@@ -40,13 +40,13 @@ $$C \;=\; \frac{c_0 + r\,a}{S}$$
 | Symbol | Meaning | Value | Where it comes from |
 |:--|:--|--:|:--|
 | $a$ | cost per attempt | $270.64 | section 1 above |
-| $r$ | recipes per target | 6.193 | `synth.recipes_per_target`: 353 experiments / 57 targets in the reference campaign |
-| $S$ | unconditional synthesis success | 0.4375 | `synth.success_unconditional`: 36 of 57 targets, campaign-observed, NOT conditioned on a correct stability label |
+| $r$ | recipes per target | 1 | `synth.recipes_per_target`: 353 experiments / 57 targets in the reference campaign |
+| $S$ | unconditional synthesis success | 0.291667 | `synth.success_unconditional`: 36 of 57 targets, campaign-observed, NOT conditioned on a correct stability label |
 | $c_0$ (A) | upstream compute per candidate reaching synthesis | $26.44 | affine in DFT cost; section 3 below |
 
-At base: (26.44 + 6.193 x 270.64) / 0.4375 = (26.44 + 1,676.05) / 0.4375 = **$3,891.40** for pipeline A.
+At base: (26.44 + 1 x 270.64) / 0.291667 = (26.44 + 270.64) / 0.291667 = **$1,018.55** for pipeline A.
 
-$c_0$ for B and C is $16.00 and $64.35, giving $3,867.55 and $3,978.05. The
+$c_0$ for B and C is $16.00 and $64.35, giving $982.77 and $1,148.53. The
 three differ only through $c_0$, because $r$, $a$ and $S$ are assumed shared.
 
 **$S$ is unconditional, which matters.** It is the share of *attempted targets* that were
@@ -75,14 +75,14 @@ Setting $(C_C - C_B)/C_B = \tau$ and solving for $d$:
 
 $$d^{*} \;=\; \frac{\tau b + (1+\tau)\beta_B - \beta_C}{\alpha_C - (1+\tau)\alpha_B}\;,\qquad b = ra$$
 
-With $b$ = 6.193 x 270.64 = $1,676.05 and $\tau$ = 0.10:
+With $b$ = 1 x 270.64 = $270.64 and $\tau$ = 0.10:
 
-- numerator: 0.10 x 1676.0479 + 1.10 x 0.0015627 - 0.3381360 = 167.268373
+- numerator: 0.10 x 270.6359 + 1.10 x 0.0015627 - 0.3381360 = 26.727169
 - denominator: 1.1736842105 - 1.10 x 0.2934210526 = 0.850921
-- $d^{*}$ = 167.268373 / 0.850921 = **196.5733 core-hours**, which the model's bisection also returns as 196.5733.
+- $d^{*}$ = 26.727169 / 0.850921 = **31.4097 core-hours**, which the model's bisection also returns as 31.4097.
 
 A positive denominator is necessary but not sufficient: $d^{*}$ must also be nonnegative to
-lie in the domain. The filter crossing, with $\alpha_A$ in place of $\alpha_C$, is 1,034.5 core-hours.
+lie in the domain. The filter crossing, with $\alpha_A$ in place of $\alpha_C$, is 167.0 core-hours.
 
 ## 4. The synthesis decision boundaries
 
@@ -90,8 +90,8 @@ Relaxing the shared-synthesis assumption, parity between two pipelines needs
 
 $$\frac{S_i}{S_j} \;=\; \frac{c_{0i} + ra}{c_{0j} + ra}\;,\qquad \Delta r \;=\; \frac{c_{0i} - c_{0j}}{a}$$
 
-- generative vs filtered: (64.35 + 1,676.05) / (16.00 + 1,676.05) = **1.0286**, so 2.9% better success.
-- filter vs none: (26.44 - 16.00) / 270.64 = **0.0385** extra recipes, 0.62% of 6.193.
+- generative vs filtered: (64.35 + 270.64) / (16.00 + 270.64) = **1.1685**, so 16.9% better success.
+- filter vs none: (26.44 - 16.00) / 270.64 = **0.0385** extra recipes, 3.85% of 1.
 
 Both are break-even solves. No source measures a pipeline-specific synthesis difference.
 

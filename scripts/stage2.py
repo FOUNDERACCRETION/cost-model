@@ -239,8 +239,9 @@ def mc_section(mc, summ, scen, mc_weights, sensitivity):
             "enforces the recall–purity constraint from the correlations block; it trims draws where a high recall "
             "meets a low MatterGen purity, so the accepted draws lean slightly towards lower recall for C.\n\n"
             + md_table(["Level", "Pipeline", "MC 5th pct", "MC median", "MC 95th pct", *WORLDVIEW.values()], rows)
-            + f"\n\nScenario columns: each named reading with every other parameter at base, recipes from the budget "
-              f"model ({recipes} recipes per target). Base case (stage 1) uses A-Lab's observed 6.19.\n\n"
+            + f"\n\nScenario columns: each named reading with every other parameter at base, each carrying its own "
+              f"recipe count ({recipes} recipes per target) --- campaign-reported where a campaign reports one, from "
+              "the budget model otherwise. The stage-1 base case is the middle reading, so it matches that column.\n\n"
             + "Level 3, shown only for completeness and never as a headline. Its Monte Carlo spread is dominated by "
               "the prior on a 0-of-36 count:\n\n"
             + md_table(["Level", "Pipeline", "MC 5th pct", "MC median", "MC 95th pct", *WORLDVIEW.values()], lvl3)
@@ -395,7 +396,12 @@ def headline_section(doc, p, mc, scen, mc_ret, tor):
         rows.append([WORLDVIEW[name], rd["source"], rd["standing"],
                      f"{rd['success']['k']} of {rd['success']['n']}", *cells])
     lo_name, mid_name, hi_name = "optimistic_alab", "middle_prein", "pessimistic_leeman"
-    factor = {k: med[hi_name][k] / med[lo_name][k] for k in an.PIPELINES}
+    # The names rank how optimistic each reading is about what was MADE, not about cost. Since the
+    # middle reading reports one recipe per target it is the cheapest of the three, so the spread is
+    # max over min across all three readings, not pessimistic over optimistic.
+    cheap_name = min(readings, key=lambda n: med[n][b_]) if (b_ := "B") else lo_name
+    dear_name = max(readings, key=lambda n: med[n]["B"])
+    factor = {k: max(med[n][k] for n in readings) / min(med[n][k] for n in readings) for k in an.PIPELINES}
     within = {name: max(med[name].values()) / min(med[name].values()) for name in readings}
     r_lo, r_hi = compute_ratio_range(p, mc_ret)
     spot = an.spot_switch(doc, p)["change"]
@@ -409,35 +415,41 @@ def headline_section(doc, p, mc, scen, mc_ret, tor):
         "is right, not on the pipeline.** Each row below is the Monte Carlo conditional on one reading: median, and "
         f"90% interval in brackets ({len(mc['draws']):,} draws in total, about a third per reading).\n\n"
         + md_table(["Reading", "Source", "Standing", "Targets made (success)", "Level 2, A", "Level 2, B", "Level 2, C"], rows)
-        + f"\n\nCost per experimentally validated material ranges from about {money(med[lo_name][b])} under A-Lab's own "
-          f"reading to about {money(med[hi_name][b])} under Leeman et al.'s (pipeline B), with Prein et al.'s middle "
-          f"reading at {money(med[mid_name][b])}. Between the extreme readings that is a factor of "
+        + f"\n\nCost per experimentally validated material ranges from about {money(med[cheap_name][b])} under the "
+          f"{WORLDVIEW[cheap_name]} reading to about {money(med[dear_name][b])} under the {WORLDVIEW[dear_name]} one "
+          f"(pipeline B), with {WORLDVIEW[lo_name]} at {money(med[lo_name][b])}. NOTE the ordering: the reading named "
+          "for the most optimistic view of what was synthesised is not the cheapest, because it reached its success "
+          "rate with 6.19 recipes per target against the middle reading's one. Across the three readings that is a "
+          "factor of "
           + ", ".join(f"{factor[k]:.0f}× ({k})" for k in an.PIPELINES)
           + ". Within any one reading, pipeline choice moves the median by at most "
           + ", ".join(f"{within[n]:.2f}× ({READING_SHORT[n]})" for n in readings)
-          + ". The spread is driven by synthesis success, which arrives with each reading together with its "
-            "wrong-verdict share and, through the recipe budget, its recipes per target. In the one-at-a-time "
+          + ". The spread is driven jointly by synthesis success and recipes per target, which arrive together with "
+            "each reading along with its wrong-verdict share. Recipes are the campaign-reported count wherever a "
+            "campaign reports one, and fall back to the budget model only where none does. In the one-at-a-time "
             f"tornado, `{', '.join(sorted(top2_name))}` carries at least {pct(top2_share, 1)} of level-2 variance in "
             "every pipeline.\n\n"
-          + f"**The factor of about {statistics.median(factor.values()):.0f} between the extreme readings is not "
+          + f"**The factor of about {statistics.median(factor.values()):.0f} across the readings is not "
             "measurement uncertainty.** A-Lab and Leeman et al. read the same experiment, the A-Lab campaign, "
-            "and disagree about what was made. Prein et al. is a separate, smaller campaign that lands between them. "
+            "and disagree about what was made. Prein et al. is a separate, smaller campaign. "
             "No reanalysis of existing data closes this gap; resolving it requires new synthesis data: independent "
             "campaigns with phase identification that both sides accept.\n\n"
-          + f"**No compute-side improvement moves this.** The best compute lever is {r_lo:.0f} to {r_hi:.0f} times "
-            "weaker per percentage point than the synthesis levers (marginal returns below). The only free compute "
+          + f"**No compute-side improvement closes a gap of this size.** The best compute lever is {r_lo:.0f} to "
+            f"{r_hi:.0f} times weaker per proportional point than the synthesis levers (marginal returns below) --- a "
+            "single-digit-to-low-double-digit margin at base verification cost, which inverts at the top of the DFT "
+            "span, and in neither case approaches the factor above. The only free compute "
             f"lever, moving from on-demand to spot prices, changes the result by {s_lo:.1%} to {s_hi:.1%}.\n\n"
           + f"**Where a single number is unavoidable** (an abstract, a title slide), quote the Prein-reading median "
-            f"with the spread beside it, never alone: \"about {money(med[mid_name][b])} per validated material "
-            f"(range {money(med[lo_name][b])}–{money(med[hi_name][b])} across three readings of the "
-            "synthesis evidence)\". The Prein reading is the middle one, not the best-established: it rests on an "
-            "arXiv preprint with 16 targets, while the other two readings are peer-reviewed (Nature; PRX Energy).\n\n"
-          + "For comparison, the deterministic base case (A-Lab's observed 6.19 recipes per target paired with "
-            f"Prein's success) gives {money(an.costs(p)[lvl][b])} for B. It understates, because 6.19 was observed at "
-            f"A-Lab's higher success; with consistent recipes ({scen[mid_name]['recipes']:.2f}) the Prein point "
-            f"scenario gives {money(scen[mid_name]['costs'][lvl][b])}. An equal-weight mixture of the three readings "
-            "is reported under Monte Carlo below. Its median and tail depend on weights nobody has measured, so it is "
-            "not a headline."
+            f"with the spread beside it, never alone: \"about {money(med[mid_name][b])} per validated material, "
+            f"rising to {money(med[lo_name][b])} and {money(med[dear_name][b])} under the other two readings of the "
+            "synthesis evidence\". The Prein reading is the middle one on success, not the best-established and not "
+            "a conservative choice on cost: it rests on an arXiv preprint with 24 targets and is the cheapest of the "
+            "three, while the other two readings are peer-reviewed (Nature; PRX Energy).\n\n"
+          + f"The deterministic base case follows the Prein reading throughout --- its success rate and its one "
+            f"recipe per target --- and gives {money(an.costs(p)[lvl][b])} for B, against the point scenario's "
+            f"{money(scen[mid_name]['costs'][lvl][b])}; the two differ only in the parameters the scenario also "
+            "moves. An equal-weight mixture of the three readings is reported under Monte Carlo below. Its median "
+            "and tail depend on weights nobody has measured, so it is not a headline."
     )
 
 
@@ -1015,6 +1027,11 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         for i, x in enumerate(P):
             k[f"l2_{x}_at_{tag}"] = money(ll[i])
     k["basis_move_pct"] = f"{s1['bases'][2]['l2'][0] / s1['bases'][0]['l2'][0] - 1:.0%}"
+    # Extreme-to-extreme across every overhead variant the paper tabulates: direct-only is the
+    # cheapest and the negotiated rate the dearest, so the span is the full range of the 4.5 table.
+    _all_l2_A = [s1["bases"][0]["l2"][0], _l2(mtdc)[0]["usd_per"], s1["bases"][2]["l2"][0],
+                 _l2(hi)[0]["usd_per"], _l2(neg)[0]["usd_per"]]
+    k["basis_extreme_pct"] = f"{max(_all_l2_A) / min(_all_l2_A) - 1:.0%}"
 
     sw = dft_threshold_sweep(p)
     # The crossings depend on synthesis expenditure per target, not on DFT cost alone, so we
@@ -1132,8 +1149,17 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     # The 10% materiality band, which parity does not give.
     k["bound_mat_lo"] = f"{at_base['success_CB_mat_lo']:.3f}"
     k["bound_mat_hi"] = f"{at_base['success_CB_mat_hi']:.3f}"
-    k["bound_mat_worse_pct"] = f"{1 - at_base['success_CB_mat_lo']:.1%}"
-    k["bound_mat_better_pct"] = f"{at_base['success_CB_mat_hi'] - 1:.1%}"
+    # Both endpoints are stated relative to equal success (ratio 1), signed, because the band no
+    # longer straddles 1: at a base synthesis bill of one recipe per target the compute gap alone
+    # exceeds 10%, so even equal synthesis performance leaves C materially dearer. An earlier
+    # formulation reported the lower endpoint as "C worse by", which silently changes meaning when
+    # the endpoint rises above 1.
+    for end in ("lo", "hi"):
+        v = at_base[f"success_CB_mat_{end}"]
+        k[f"bound_mat_{end}_pct"] = f"{abs(v - 1):.1%}"
+        k[f"bound_mat_{end}_dir"] = "above" if v >= 1.0 else "below"
+    k["bound_mat_band_contains_equal_success"] = (
+        "yes" if at_base["success_CB_mat_lo"] <= 1.0 <= at_base["success_CB_mat_hi"] else "no")
     k["bound_recipes_AB_mat"] = f"{at_base['recipes_AB_mat']:.3f}"
     k["bound_recipes_AB_mat_share"] = f"{at_base['recipes_share_AB_mat']:.2%}"
     k["bound_recipes_AB_mat_top_share"] = f"{at_top['recipes_share_AB_mat']:.2%}"
@@ -1174,6 +1200,11 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["thr_numerical_10"] = f"{r10['numerical_root']:.1f}"
     k["thr_root_relgap_10"] = f"{r10['relative_gap']:.0e}"
     k["thr_denominator_10"] = f"{r10['denominator']:.3f}"
+    # How much of the 10% crossing the d-independent terms account for. Near zero means the
+    # crossing is near-proportional to the synthesis bill; it is a property of these parameters,
+    # not an identity, so it is generated rather than asserted.
+    _num10 = 0.10 * tc["synthesis_bill_usd"] + 1.10 * tc["beta_usd"]["B"] - tc["beta_usd"]["C"]
+    k["thr_intercept_share_10"] = f"{abs(1.10 * tc['beta_usd']['B'] - tc['beta_usd']['C']) / _num10:.1%}"
     k["thr_printed_coeff_root_10"] = f"{tc['roots_from_printed_coefficients'][0.10]:.1f}"
     k["thr_printed_coeff_shift_10"] = f"{abs(tc['roots_from_printed_coefficients'][0.10] - r10['closed_form']):.2f}"
     # Monte Carlo and readings
@@ -1184,10 +1215,18 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         med[name] = {x: an.percentile(xs[x], 50) for x in P}
         k[f"reading_{name}_B"] = money(med[name]["B"])
         k[f"reading_{name}_B_interval"] = f"{money(an.percentile(xs['B'], 5))}–{money(an.percentile(xs['B'], 95))}"
-    factor = {x: med["pessimistic_leeman"][x] / med["optimistic_alab"][x] for x in P}
+    # Max over min across readings, NOT pessimistic/optimistic: the readings are named for how
+    # optimistic their success reading is, and since the middle reading reports one recipe per
+    # target it is now the cheapest, so "optimistic" is no longer the lower bound on cost.
+    factor = {x: max(med[w][x] for w in WORLDVIEW) / min(med[w][x] for w in WORLDVIEW) for x in P}
     k["reading_factor_B"] = f"{factor['B']:.0f}"
     k["reading_factor_median"] = f"{statistics.median(factor.values()):.0f}"
     k["within_reading_max"] = f"{max(max(m.values()) / min(m.values()) for m in med.values()):.2f}"
+    # Per-reading pipeline spread. These are reported individually because they are not alike: the
+    # compute term is a fixed number of dollars while the synthesis bill is not, so pipeline choice
+    # matters most under the reading whose synthesis bill is smallest.
+    for name in WORLDVIEW:
+        k[f"within_{name}_spread"] = f"{max(med[name].values()) / min(med[name].values()):.2f}"
     for lv, tag in (("dft_confirmed_stable", "l1"), ("experimentally_validated", "l2"), ("validated_new", "l3")):
         kk = kill[lv]
         k[f"kill_{tag}_p_B_lt_A"] = pct(kk["p_lt"][("B", "A")], 1)
@@ -1220,7 +1259,11 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     # material below the deterministic crossing and immaterial above it. Stating this is the point.
     dfts = [d["dft_cost"] for d in mc["draws"]]
     k["mc_dft_prior_max"] = f"{max(dfts):,.0f}"
-    for pair, label, crossing in ((("A", "B"), "filter", 1034.0), (("C", "B"), "gen", 197.0)):
+    # The crossings come from the sweep rather than being written in: hardcoding them lets the
+    # prior-mass comparison below drift silently when a parameter change moves the crossing.
+    _cross = {"filter": sw["crossings"]["AB"][MATERIAL], "gen": sw["crossings"]["CB"][MATERIAL]}
+    for pair, label in ((("A", "B"), "filter"), (("C", "B"), "gen")):
+        crossing = _cross[label] if _cross[label] is not None else float("inf")
         mat = [d for d in mc["draws"]
                if an._ratio_gap(d["costs"][lvl][pair[0]], d["costs"][lvl][pair[1]]) > MATERIAL]
         non = [d["dft_cost"] for d in mc["draws"]
@@ -1247,6 +1290,9 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         k[f"el_success_{x}"] = f"{base_el['synthesis success rate'][x]['return']:.3f}"
         comp = max(base_el[n][x]["return"] for n, lv_ in an.levers().items() if lv_["group"] == "compute")
         k[f"el_compute_{x}"] = f"{comp:.3f}"
+        # How many times more a synthesis lever moves level-2 cost than the best compute lever.
+        # This is a ratio of cost shares, so it is generated rather than divided by hand in prose.
+        k[f"el_ratio_{x}"] = f"{base_el['recipes per target'][x]['return'] / comp:.0f}"
     sp = an.spot_switch(doc, p)
     k["spot_lo"] = f"{min(abs(v) for v in sp['change'].values()):.1%}"
     k["spot_hi"] = f"{max(abs(v) for v in sp['change'].values()):.1%}"

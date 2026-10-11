@@ -159,10 +159,14 @@ def test_dft_threshold_sweep_is_monotonic_and_ordered():
     assert cb == sorted(cb), "generative-pool gap must grow with DFT cost"
     assert ab == sorted(ab), "filter gap must grow with DFT cost"
     assert all(c >= a for c, a in zip(cb, ab)), "generative gap must exceed filter gap"
-    # The threshold claim: the filter decision stays under 10% across the modelled span.
-    assert max(ab) < 0.10, "filter decision exceeds 10% inside the span"
-    # And the generative decision crosses 10% inside it.
-    assert sw["crossings"]["CB"][0.10] < 1000, "generative decision should cross 10% within the span"
+    # Both decisions now cross 10% inside the modelled span. That is a CHANGE: while the base
+    # case carried A-Lab's recipe budget the filter decision stayed under 10% throughout, and the
+    # paper said so. With the middle reading's own single recipe per target the synthesis bill is
+    # about a sixth as large, compute is a correspondingly larger share, and both crossings move
+    # down by roughly the same factor. The ordering claim survives; the immateriality claim does
+    # not, and the manuscript no longer makes it.
+    assert sw["crossings"]["CB"][0.10] < sw["crossings"]["AB"][0.10] < 1000, (
+        "both decisions cross 10% inside the span, generative first")
 
 
 def test_threshold_scales_with_synthesis_cost():
@@ -320,7 +324,7 @@ def test_the_crossing_does_not_depend_on_synthesis_success():
     base = dft_threshold_sweep(p, points=(54.5,))["crossings"]
 
     # the full documented range of the three readings, low to high
-    for S in (0.051724, 0.20, 0.4375, 0.631579):
+    for S in (0.051724, 0.20, 0.2916666667, 0.631579):
         c = dft_threshold_sweep({**p, "synth_success": S}, points=(54.5,))["crossings"]
         for key in ("CB", "AB"):
             for tau in (0.05, 0.10, 0.20):
@@ -331,8 +335,10 @@ def test_the_crossing_does_not_depend_on_synthesis_success():
                         f"crossing for {key} at tau={tau} moved with S={S}; S must cancel")
 
     # by contrast it does move with recipes per target, which does not cancel
-    r_lo = dft_threshold_sweep({**p, "synth_recipes_per_target": 3.0}, points=(54.5,))["crossings"]
-    r_hi = dft_threshold_sweep({**p, "synth_recipes_per_target": 12.0}, points=(54.5,))["crossings"]
+    # Bracketing values must straddle the BASE recipe count, which is the middle reading's own
+    # multiplicity of 1.0 per target, not A-Lab's 6.19.
+    r_lo = dft_threshold_sweep({**p, "synth_recipes_per_target": 0.5}, points=(54.5,))["crossings"]
+    r_hi = dft_threshold_sweep({**p, "synth_recipes_per_target": 3.0}, points=(54.5,))["crossings"]
     assert r_lo["CB"][0.10] < base["CB"][0.10] < r_hi["CB"][0.10]
 
 
@@ -524,8 +530,12 @@ def test_parity_and_materiality_boundaries_are_distinct_and_both_correct():
         assert row["recipes_AB_mat"] > row["recipes_AB"]
 
     base = next(x for x in synthesis_decision_boundaries(p)["rows"] if abs(x["dft"] - 54.5) < 0.6)
-    assert base["recipes_AB_mat"] / base["recipes_AB"] > 10, (
-        "the materiality boundary must be far from parity, which is the whole point")
+    # The two boundaries must be clearly separated, which is the point of reporting both. How far
+    # apart depends on the synthesis bill: the ratio was above ten while the base case carried
+    # A-Lab's recipe budget, and is smaller now that the base case uses the middle reading's own
+    # single recipe per target, because compute is then a larger share of the total.
+    assert base["recipes_AB_mat"] > 3 * base["recipes_AB"], (
+        "parity and materiality must remain clearly distinct boundaries")
 
 
 def test_overlap_reference_is_a_spread_not_a_single_value():
@@ -578,10 +588,14 @@ def test_success_ratio_boundaries_are_checked_against_the_probability_ceiling():
 
     # and exactly one sensitivity variant is not, which is the one the paper labels
     by = {v["variant"]: v for v in boundary_sensitivity(p)}
-    infeasible = [n for n, v in by.items() if not v["feasible"]]
-    assert infeasible == ["compute price 100x"], infeasible
-    assert by["compute price 100x"]["implied_S_C"] > 1.0
-    assert by["compute price 100x"]["implied_S_C"] == pytest.approx(1.078, abs=5e-4)
+    # Which variants are infeasible depends on the baseline success rate, because the ceiling on
+    # the ratio is 1/S. Assert the RELATIONSHIP rather than a fixed list, so the test survives a
+    # change of reading: a variant is infeasible exactly when its implied rate exceeds one.
+    for n, v in by.items():
+        assert v["feasible"] == (v["implied_S_C"] <= 1.0), n
+        assert v["implied_S_C"] == pytest.approx(S * v["success_CB"], rel=1e-9)
+    # the hundredfold-price variant is always the most demanding of those carried
+    assert max(by.values(), key=lambda v: v["success_CB"])["variant"] == "compute price 100x"
 
 
 def test_feasibility_ceiling_moves_with_the_reading():

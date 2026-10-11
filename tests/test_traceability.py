@@ -132,13 +132,18 @@ def test_derived_synthesis_numbers(recs):
     # original 2023 article prints 355 and 58. The previous version of this test asserted
     # high == 355/57, which paired the original numerator with the corrected denominator -- a
     # cross-version splice that this test was pinning rather than catching.
-    assert recs["synth.recipes_per_target"]["base"] == pytest.approx(353 / 57, rel=REL)
-    assert recs["synth.recipes_per_target"]["low"] == pytest.approx(355 / 58, rel=REL)
+    # BASE is the middle reading's own multiplicity: Prein et al. attempted each target once.
+    # HIGH is A-Lab's corrected 353/57. Both are campaign-reported, not derived.
+    assert recs["synth.recipes_per_target"]["base"] == pytest.approx(1.0)
+    assert recs["synth.recipes_per_target"]["low"] == pytest.approx(1.0)
     assert recs["synth.recipes_per_target"]["high"] == pytest.approx(353 / 57, rel=REL)
-    # and the original pairing is BELOW the corrected one, so it cannot be a high endpoint
+    # A-Lab's two published versions must not be spliced: 355 goes with 58, 353 with 57.
     assert 355 / 58 < 353 / 57
     assert recs["synth.furnace_hours_per_attempt"]["base"] == pytest.approx(17 * 24 * 8 / 353, rel=REL)
-    assert recs["synth.success_unconditional"]["base"] == pytest.approx(7 / 16)
+    # VERIFIED arXiv:2511.01790: 24 targets attempted, 8 uncharacterisable, 7 of 16 made the
+    # target phase. 7/24 is the unconditional rate; 7/16 conditions on characterisability and
+    # is not comparable with the other two readings, which count against targets attempted.
+    assert recs["synth.success_unconditional"]["base"] == pytest.approx(7 / 24)
     assert recs["synth.success_unconditional"]["high"] == pytest.approx(36 / 57, rel=REL)   # unconditional; was 38/54
     assert recs["synth.furnace_hourly"]["base"] == pytest.approx((3.15 + 3.75) / 2)
     assert recs["synth.labour_attempts_per_week"]["base"] == pytest.approx((10 + 20) / 2)

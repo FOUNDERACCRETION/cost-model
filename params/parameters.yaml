@@ -735,13 +735,19 @@ parameters:
     evidence_grade: derived
 
   - name: synth.recipes_per_target
-    low: 6.1207
-    base: 6.193
+    low: 1.0
+    base: 1.0
     high: 6.193
     unit: recipes attempted per target
     source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133
     citations: [szymanski2023alab]
-    source_note: "A-Lab. VERIFIED 2026-10-11 against both versions. The CORRECTED article prints 353 recipes
+    source_note: "CAMPAIGN-REPORTED multiplicity, not a derived quantity. BASE 1.0: Prein et al.
+      (arXiv:2511.01790) attempted each of 24 targets once -- the middle reading, which the
+      deterministic base case follows, so the base case is now one campaign throughout rather than
+      Prein's success rate paired with A-Lab's recipe budget. HIGH 6.193: A-Lab.
+      CHANGED 2026-10-11 (second change today): base was 6.193, which charged the middle reading
+      about eight recipes per target for a campaign that reports one.
+      A-Lab detail, VERIFIED against both versions. The CORRECTED article prints 353 recipes
       and 57 targets: 353/57 = 6.193, the base. The ORIGINAL 2023 article prints 355 recipes and 58 targets
       (eScholarship qt4w49b5cb): 355/58 = 6.1207, the low. The 355 -> 353 change is silent -- the Author
       Correction notice never mentions the recipe count -- so both pairings are defensible and the range
@@ -752,12 +758,12 @@ parameters:
 
   - name: synth.success_unconditional
     low: 0.051724
-    base: 0.4375
+    base: 0.2916666667
     high: 0.631579
     unit: fraction of targets made as the target phase (unconditional, as the campaign reports it)
     source_url: https://arxiv.org/html/2511.01790v1
     citations: [prein2025, szymanski2023alab, szymanski2026correction, leeman2024, chen2024jacs]
-    source_note: "UNCONDITIONAL rates throughout, as each campaign reports them. Base: Prein et al. 2025, 7/16 = 0.4375 characterised. High: A-Lab corrected, 36/57 = 0.6316 (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133). Low: Leeman et al. 2024, 3/58 = 0.05172 (https://par.nsf.gov/servlets/purl/10532478). Other: Prein 7/24 = 29% counting uncharacterisable; Chen et al. 2024, 1/4. CHANGED 2026-10-11: was 'given the DFT verdict is right', with high = 38/54 = 0.7037 (computational failures removed from the denominator AND the two manual-intervention successes added) and the model then dividing all three readings by (1 - w). Only the optimistic reading had been conditioned, so the middle and pessimistic branches were charged computational failure twice. All three are now unconditional and (1 - w) no longer enters the synthesis pass rate. The A-Lab target-level crosswalk is still PENDING, so 36/57 is a proposed baseline, not a settled count."
+    source_note: "UNCONDITIONAL rates throughout, as each campaign reports them. Base: Prein et al. 2025, 7/24 = 0.29167 unconditional (24 targets attempted; 8 fused to their crucibles and could not be characterised; 7 of the remaining 16 formed the target phase). CHANGED 2026-10-11: was 7/16 = 0.4375, which conditions on a characterisable product and so was not comparable with the other two readings, both of which count against targets attempted. High: A-Lab corrected, 36/57 = 0.6316 (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133). Low: Leeman et al. 2024, 3/58 = 0.05172 (https://par.nsf.gov/servlets/purl/10532478). Other: Prein 7/24 = 29% counting uncharacterisable; Chen et al. 2024, 1/4. CHANGED 2026-10-11: was 'given the DFT verdict is right', with high = 38/54 = 0.7037 (computational failures removed from the denominator AND the two manual-intervention successes added) and the model then dividing all three readings by (1 - w). Only the optimistic reading had been conditioned, so the middle and pessimistic branches were charged computational failure twice. All three are now unconditional and (1 - w) no longer enters the synthesis pass rate. The A-Lab target-level crosswalk is still PENDING, so 36/57 is a proposed baseline, not a settled count."
     evidence_grade: published
     change_note: "CHANGED 2026-10-11: high was 0.58, the NEGOTIATED average. That is a different quantity from the effective rate and lies outside the 25-45% effective range the same source gives, so it is not an upper bound on an effective rate. High is now 0.45, the top of the effective range; 58% is retained as the negotiated_rate_scenario, clearly labelled."
 
@@ -1014,14 +1020,16 @@ scenarios:
     description: "A-Lab's own reading (Szymanski et al. 2023, as corrected 2026)."
     values:
       synth.success_unconditional: 0.631579  # 36/57, unconditional (corrected count)
+      synth.recipes_per_target: 6.193         # 353/57, REPORTED by the corrected article, not derived
       dft.wrong_verdict_frac: 0.132               # lowest flip rate in sources; A-Lab: 3 of 57 targets failed computationally
       novelty.science_frac: 0.25                  # most generous figure in sources (9/36 not attributed to known phases)
-    note: "A-Lab's correction makes no new-to-science claim ('new to the platform, not necessarily new to science'), so no A-Lab number exists for novelty; 0.25 is the most generous figure our sources allow."
+    note: "A-Lab's correction makes no new-to-science claim ('new to the platform, not necessarily new to science'), so no A-Lab number exists for novelty; 0.25 is the most generous figure our sources allow. Recipes are stated explicitly rather than left to the budget-model fallback: the fallback is calibrated to reproduce 6.19 here, so the two agree, but relying on that agreement would hide the fallback if the calibration ever changed."
 
   middle_prein:
-    description: "Prein et al. 2025, an independent automated campaign (7 of 16 characterised targets made)."
+    description: "Prein et al. 2025, an independent automated campaign: 7 of 24 attempted targets made, one recipe per target."
     values:
-      synth.success_unconditional: 0.4375
+      synth.success_unconditional: 0.2916666667
+      synth.recipes_per_target: 1.0
       dft.wrong_verdict_frac: 0.16
       novelty.science_frac: 0.0964                # Wilson upper bound on 0/36; Prein et al. report no novelty figure
     note: "Matches the stage-1 base values."
@@ -1030,9 +1038,16 @@ scenarios:
     description: "Leeman et al. 2024's re-analysis of A-Lab."
     values:
       synth.success_unconditional: 0.051724  # 3/58, unconditional
+      synth.recipes_per_target: 6.1207        # 355/58, REPORTED by the 2023 article Leeman re-analyse
       dft.wrong_verdict_frac: 0.3434              # highest flip rate in sources; Leeman: most targets are known disordered phases
       novelty.science_frac: 0.0                   # 0 of 36 new
-    note: "Novelty 0 makes level 3 unbounded (no new material at any spend). That is this worldview's result, not a numerical failure."
+    note: "Novelty 0 makes level 3 unbounded (no new material at any spend). That is this worldview's result, not a numerical failure.
+      CHANGED 2026-10-11 (third change today): recipes were left to the budget-model fallback, which returned 9.06 at this
+      success rate. That was wrong in kind, not just in value. Leeman et al. re-count the outcomes of the SAME campaign, so
+      the experiment count is observed, not hypothetical: the budget model exists to tie recipes to success across worlds
+      where the count is unknown, and applying it to a campaign that published its own count invents 3 extra attempts per
+      target. 355/58 is the 2023 article's own pair, which is the version Leeman analyse; the corrected article's 353/57
+      pair belongs to the optimistic reading. Mixing 353 with 58 would splice the two versions."
 
 # ==================================================================== Monte Carlo (stage 2)
 # Every sampled parameter has a distribution and a reason. Parameters not listed are held at base.
@@ -1141,18 +1156,30 @@ monte_carlo:
           source: "Szymanski et al., Nature (2023), corrected January 2026"
           standing: "peer-reviewed (Nature), 57 targets; the experiment Leeman et al. re-analyse"
           success: {type: beta_counts, k: 36, n: 57}   # unconditional (changed 2026-10-11 from 38/54)
+          recipes: 6.193                                # 353/57, reported by the corrected article. Stated rather than
+                                                        # left to the budget-model fallback: the fallback is calibrated on
+                                                        # this very pair, so it agrees here by construction, and relying on
+                                                        # that agreement would hide the fallback if the calibration moved.
           novelty: {type: beta_counts, k: 9, n: 36}
           wrong_verdict: {type: uniform, low: 0.132, high: 0.16}
         middle_prein:
           source: "Prein et al., arXiv 2511.01790 (2025)"
-          standing: "arXiv preprint, no journal reference or venue listed as of 2026-10-10, 16 targets; a separate campaign"
-          success: {type: beta_counts, k: 7, n: 16}
+          standing: "arXiv preprint, no journal reference or venue listed as of 2026-10-10, 24 targets attempted; a separate campaign, one recipe per target"
+          success: {type: beta_counts, k: 7, n: 24}   # unconditional: 24 attempted, 8 fused to crucibles and uncharacterisable, 7 of the 16 characterised made the target phase. 7/16 = 43.8% conditions on a characterisable product and is NOT comparable with the other two readings.
+          recipes: 1.0                                  # the campaign attempted each target once ("only one experiment per target"); its own multiplicity, not A-Lab's budget model, which would imply ~8.0 here
           novelty: {type: beta_counts, k: 0, n: 36}
           wrong_verdict: {type: uniform, low: 0.132, high: 0.16}
         pessimistic_leeman:
           source: "Leeman et al., PRX Energy (2024)"
           standing: "peer-reviewed (PRX Energy), re-analysis of the same A-Lab experiment (58 targets)"
           success: {type: beta_counts, k: 3, n: 58}
+          recipes: 6.1207                               # 355/58, reported by the 2023 article Leeman re-analyse.
+                                                        # CHANGED 2026-10-11: this reading used the budget-model fallback,
+                                                        # which returned 9.06 at a 3/58 success rate. Wrong in kind: Leeman
+                                                        # re-count the SAME campaign, so its experiment count is observed,
+                                                        # and the fallback exists for readings where it is not. 355 and 58
+                                                        # are the 2023 article's own pair; 353/57 is the corrected one and
+                                                        # belongs to the optimistic reading. Mixing them splices versions.
           novelty: {type: beta_counts, k: 0, n: 36}
           wrong_verdict: {type: beta_counts, k: 57, n: 166}
       notes: "A-Lab's novelty uses Leeman's 9 of 36 not attributed to known phases (A-Lab's correction makes no new-to-science claim). Prein reports no novelty figure and inherits the only count, 0 of 36. Wrong-verdict share: GNoME's 13.2-16% flip range (no counts) for A-Lab and Prein; An et al.'s 57 of 166 flips for Leeman."

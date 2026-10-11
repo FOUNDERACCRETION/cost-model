@@ -117,12 +117,30 @@ def test_recipes_budget_model(doc):
     assert recipes_for_success(1.0, budget) == 1.0
     xs = [recipes_for_success(s / 20, budget) for s in range(1, 20)]
     assert all(a > b for a, b in zip(xs, xs[1:]))
+    # No reading uses this fallback any more: all three report an experiment count. It stays for a
+    # reading that reports a success rate without one. Pinning the size of the error it would have
+    # introduced in the pessimistic reading keeps that decision visible: deriving at 3/58 charges
+    # more than two extra recipes per target against the 6.12 the campaign actually ran.
+    assert recipes_for_success(3 / 58, budget) - 355 / 58 > 2.5
 
 
-def test_recipes_negatively_correlated_with_success(draws):
-    p_target = [(1 - p["dft_wrong_verdict_frac"]) * p["synth_success_unconditional"] for p, _ in draws]
-    recipes = [p["synth_recipes_per_target"] for p, _ in draws]
-    assert corr(p_target, recipes) < -0.9
+def test_every_reading_pins_its_own_reported_recipe_count(draws):
+    """All three readings now report a recipe multiplicity, so none of them derives one. Each draw
+    from a reading must carry that reading's published count exactly, whatever success rate the
+    draw took: the recipe count is a campaign fact, and tying it to the drawn success rate would
+    reintroduce the splice this test exists to catch. The two readings of the A-Lab campaign carry
+    its experiment count as each version printed it (353/57 and 355/58); Prein et al. attempted
+    each of 24 targets once.
+    """
+    expected = {"optimistic_alab": 6.193, "middle_prein": 1.0, "pessimistic_leeman": 6.1207}
+    by_reading = {}
+    for p, info in draws:
+        by_reading.setdefault(info["worldview"], []).append(p["synth_recipes_per_target"])
+
+    assert set(by_reading) == set(expected), sorted(by_reading)
+    for name, recipes in by_reading.items():
+        assert min(recipes) == pytest.approx(expected[name]), name
+        assert max(recipes) == pytest.approx(expected[name]), name
 
 
 def test_purity_drawn_with_prevalence(draws):
@@ -290,9 +308,23 @@ def test_monte_carlo_small(doc):
 def test_scenarios(doc):
     sc = an.scenarios(doc)
     b = {k: v["costs"]["experimentally_validated"]["B"] for k, v in sc.items()}
-    assert b["optimistic_alab"] < b["middle_prein"] < b["pessimistic_leeman"]
+    # COST IS NOT ORDERED BY READING. Prein et al. report a lower success rate than A-Lab but
+    # attempted each target once, so their single recipe per target outweighs the lower success
+    # and makes that reading the cheapest. An earlier version of this test asserted
+    # optimistic < middle < pessimistic, which held only while the middle reading was charged
+    # A-Lab's recipe budget it never used.
+    assert b["middle_prein"] < b["optimistic_alab"] < b["pessimistic_leeman"]
+    assert sc["middle_prein"]["recipes"] == pytest.approx(1.0)
     assert sc["pessimistic_leeman"]["costs"]["validated_new"]["B"] == math.inf
-    assert sc["optimistic_alab"]["recipes"] < sc["pessimistic_leeman"]["recipes"]
+    # The two readings of the A-Lab campaign carry its experiment count as each version printed it,
+    # so they sit within 2% of each other rather than being ordered by optimism. 353/57 against
+    # 355/58: the correction removed one target and two experiments, which raises the mean slightly.
+    r_opt, r_pes = sc["optimistic_alab"]["recipes"], sc["pessimistic_leeman"]["recipes"]
+    assert r_opt > r_pes
+    assert abs(r_opt / r_pes - 1) < 0.02
+    # The spread across readings is wider than the success ratio alone, because the cheapest reading
+    # is cheap on both counts at once.
+    assert max(b.values()) / min(b.values()) > 25
 
 
 def test_fixed_cost_payback(doc):
@@ -524,3 +556,38 @@ def test_overlap_null_floor_calibrates_the_coefficient():
     assert floor_60 > before, "a real difference must read below the no-difference floor"
     assert floor_600 < floor_60, "the floor must itself fall as bins refine"
     assert floor_60 < 1.0, "a finite histogram of two samples does not score 1"
+
+
+def test_monte_carlo_and_scenarios_agree_on_reported_recipe_counts():
+    """A campaign's own recipe multiplicity must reach the simulation, not just the scenarios.
+
+    draw_worldview originally copied only success, novelty and the disagreement rate out of a
+    reading, so a reading that pins its own recipe count was honoured in the deterministic
+    scenarios and silently ignored in the Monte Carlo, which fell back to A-Lab's budget model.
+    The two then disagreed by about eightfold for the middle reading.
+    """
+    import random as _r
+    from src.sampling import draw_worldview
+    from src.params import load as _load
+
+    doc = _load()
+    wv = doc["monte_carlo"]["joint"]["worldview"]
+    seen = {}
+    rng = _r.Random(0)
+    for _ in range(400):
+        name, reading = draw_worldview(rng, wv)
+        seen.setdefault(name, reading)
+    assert set(seen) == set(wv["readings"]), "all three readings should be drawn"
+    for name, reading in seen.items():
+        declared = wv["readings"][name].get("recipes")
+        if declared is None:
+            assert "recipes" not in reading, name
+        else:
+            assert reading["recipes"] == pytest.approx(float(declared)), name
+
+    # and the simulated median for a reading with a pinned count must track its scenario cost
+    mc = an.monte_carlo(doc, n=600)
+    lvl = "experimentally_validated"
+    med = an.percentile([d["costs"][lvl]["B"] for d in mc["draws"] if d["worldview"] == "middle_prein"], 50)
+    sc = an.scenarios(doc)["middle_prein"]["costs"][lvl]["B"]
+    assert 0.3 < med / sc < 3.0, f"simulated median {med:,.0f} is far from the scenario cost {sc:,.0f}"

@@ -8,20 +8,7 @@
 # reason is neither of those, fix the manuscript instead.
 
 # --- Format variants: the paper quotes the same value, written differently -----------------
-threshold_lo: quoted in 5.10 rounded, "from $271 to between $23 and $94"
-threshold_hi: quoted in 5.10 rounded, "between $23 and $94"
-mc_l2_B_p95_thousands: the paper quotes the exact $94,204 instead of the rounded form
-overlap_l1_BA_range: quoted in 5.7 descending, "from 91% to 87% at level 1"
-overlap_l2_BA_range: quoted in 5.7 descending, "from 99% to 97% at level 2"
-span_base_share: quoted in the 5.5 span table as "96--99%" (percent sign placed once)
-span_base_share_lo: component of span_base_share, quoted as part of that range
-span_high_share: quoted in the 5.5 span table as "59--85%"
-span_high_share_lo: component of span_high_share, quoted as part of that range
-synthesis_share_base: same quantity as span_base_share, quoted once
 bound_recipes_AB_top_share: the 5.6 table carries the unrounded 11.42%; prose rounds to 11%
-kill_l1_material_BA_1dp: the paper quotes the 0-dp 98% in the 5.7 table
-thr_closed_10: quoted in 5.5 to two decimals as 196.57, not one
-thr_numerical_10: same figure as thr_closed_10, quoted once since the two are equal
 thr_worst_residual: quoted in 5.5 as $7.6 \times 10^{-16}$ in LaTeX rather than as 7.6e-16
 thr_root_relgap_10: quoted in 5.5 as $2 \times 10^{-15}$ in LaTeX
 
@@ -29,9 +16,6 @@ thr_root_relgap_10: quoted in 5.5 as $2 \times 10^{-15}$ in LaTeX
 l3_A: no level-3 dollar figure appears in the paper (Limitation 5: the published count is zero)
 l3_B: no level-3 dollar figure appears in the paper (Limitation 5)
 l3_C: no level-3 dollar figure appears in the paper (Limitation 5)
-cross_gen_20pct: the paper reports the 5% and 10% thresholds only
-cross_filter_20pct: the paper reports the 5% and 10% thresholds only
-mtdc_l2_rise_pct: 4.5 reports the variants in dollars and the 57% extreme-to-extreme spread
 kill_l1_material_BA_directional: superseded convention, kept for inspection in DIAGNOSTICS.md
 xp_gen_immaterial_dft_max: cut from 5.7 when the section was compressed; in the repository
 xp_gen_material_dft_median: cut from 5.7 when the section was compressed; in the repository
@@ -44,19 +28,8 @@ thr_alpha_C_full: unrounded coefficient, archived in results/threshold_coefficie
 thr_beta_A_full: unrounded coefficient, archived in results/threshold_coefficients.json
 thr_beta_B_full: unrounded coefficient, archived in results/threshold_coefficients.json
 thr_beta_C_full: unrounded coefficient, archived in results/threshold_coefficients.json
-thr_printed_coeff_shift_10: the rounding cost is stated in 5.5 as "gives 196.4 instead"
 
 # --- Revision 14: absolute recipe counts; the table reports shares of the 6.193 baseline -----
-bound_recipes_AB: the 5.6 table and prose give the share, 0.62% of 6.193
-bdrow_3_recipes: the 5.6 table gives the share, not the absolute count
-bdrow_10_recipes: the 5.6 table gives the share, not the absolute count
-bdrow_30_recipes: the 5.6 table gives the share, not the absolute count
-bdrow_54p5_recipes: the 5.6 table gives the share, not the absolute count
-bdrow_100_recipes: the 5.6 table gives the share, not the absolute count
-bdrow_200_recipes: the 5.6 table gives the share, not the absolute count
-bdrow_500_recipes: the 5.6 table gives the share, not the absolute count
-bdrow_1000_recipes: the 5.6 table gives the share, not the absolute count
-bound_success_CB_at_pool_purity_excess: 5.6 quotes this rounded as "0.02% of the ratio"
 
 # --- Final draft: software-validation figures moved to paper/DIAGNOSTICS.md ------------------
 thr_printed_coeff_root_10: the paper does not make this claim; the rounded-coefficient root and its 0.18 core-hour shift are recorded in paper/DIAGNOSTICS.md
@@ -68,12 +41,6 @@ bound_mat5_recipes_share: as above
 bound_mat20_lo: as above
 bound_mat20_hi: as above
 bound_mat20_recipes_share: as above
-cross_filter_5pct: 5.5 prints the rounded cross_filter_5pct_2sf instead
-cross_gen_5pct: 5.5 prints the rounded cross_gen_5pct_2sf instead
-cross_gen_10pct: 5.5 prints the rounded cross_gen_10pct_2sf instead
-cross_filter_10pct: 5.5 prints the rounded cross_filter_10pct_2sf instead
-cross_gen_20pct: 5.5 prints the rounded cross_gen_20pct_2sf instead
-cross_filter_20pct: 5.5 prints the rounded cross_filter_20pct_2sf instead
 basis_funder_l2: the paper prints the two-significant-figure form; dollar precision is false here
 basis_funder_l2_B: as above
 basis_funder_l2_C: as above
@@ -86,9 +53,6 @@ span_base_l2: the paper prints span_base_l2_2sf
 span_base_l2_B: as above
 span_base_l2_C: as above
 span_base_l1: the paper prints span_base_l1_2sf
-xacct_mtdc_filter10: the 5.5 accounting table rounds to two significant figures
-xacct_negotiated_filter10: as above
-xacct_negotiated_gen10: as above
 span_high_l2: the 5.5 span table prints span_high_l2_2sf
 span_high_l2_A: as above
 span_high_l2_B: as above
@@ -101,4 +65,50 @@ span_low_l2: the 5.5 span table prints span_low_l2_2sf
 span_low_l2_A: as above
 span_low_l2_B: as above
 span_low_l2_C: as above
-xacct_direct_filter10: the 5.5 accounting table rounds to two significant figures (730)
+
+# --- Prein base case (11 October 2026): new or re-scoped waivers ------------------------------
+bound_success_CB_price100: the 5.5 sensitivity table prints the unrounded 3.566x
+bound_recipes_AB_price100_share: the 5.5 sensitivity table prints the unrounded 385.33%
+thrdist20_p25: the paper gives the 20% distribution's 5th, 50th and 95th percentiles only
+thrdist5_p25: as above, for the 5% distribution
+thrdist10_p25: as above; the baseline's position relative to this quartile is stated in words
+mtdc_l2_rise_pct: 4.5 quotes this as the 20% the narrowed base sits below the default
+threshold_lo: 5.9 quotes the three per-pipeline values, of which this is the lowest
+threshold_hi: 5.9 quotes the three per-pipeline values, of which this is the highest
+l3_A: no level-3 dollar figure appears in the paper (Limitation 5: the published count is zero)
+l3_B: no level-3 dollar figure appears in the paper (Limitation 5)
+l3_C: no level-3 dollar figure appears in the paper (Limitation 5)
+bound_mat_lo_dir: a direction word, rendered in 5.5 as "6.2% above"
+bound_mat_hi_dir: a direction word, rendered in 5.5 as "28.5% above"
+bound_mat_band_contains_equal_success: a yes/no flag, stated in 5.5 in words
+basis_extreme_pct: quoted in 4.5 as the 51% between the extreme variants
+thr_intercept_share_10: quoted in 5.4 as the 1.3% the intercepts contribute
+el_ratio_A: quoted in 5.8 as "10 times for A"
+el_ratio_B: quoted in 5.8 as "17 times for B"
+el_ratio_C: quoted in 5.8 as "4 times as much ... for pipeline C"
+within_optimistic_alab_spread: quoted in 5.7 as 1.06
+within_middle_prein_spread: quoted in 5.7 as 1.21
+within_pessimistic_leeman_spread: quoted in 5.7 as 1.07
+within_reading_max: the same quantity as within_middle_prein_spread, quoted once
+reading_factor_median: 5.7 quotes the pipeline-B factor of 30; 2.3 and 6.2 round it to 30
+
+# --- Restored: format variants and absolute counts the paper gives as shares -------------------
+bdrow_3_recipes: the 5.5 table gives the share of the baseline recipe count, not the absolute count
+bdrow_10_recipes: as above
+bdrow_30_recipes: as above
+bdrow_54p5_recipes: as above
+bdrow_100_recipes: as above
+bdrow_200_recipes: as above
+bdrow_500_recipes: as above
+bdrow_1000_recipes: as above
+bound_recipes_AB: 5.5 gives the share, 3.85% of the baseline count
+cross_filter_20pct: 5.4 prints the two-significant-figure 410
+kill_l1_material_BA_1dp: the 5.6 table carries the 0-dp 98%
+mc_l2_B_p95_thousands: Limitation 10 quotes the exact $64,269 instead of the rounded form
+overlap_l1_BA_range: quoted in S2 descending, "from 90% to 87% at level 1"
+overlap_l2_BA_range: quoted in S2 descending, "from 97% to 96% at level 2"
+span_base_share: quoted in the 5.4 span table as "81--94%" (percent sign placed once)
+span_base_share_lo: component of span_base_share, quoted as part of that range
+span_high_share: quoted in the 5.4 span table as "19--48%"
+span_high_share_lo: component of span_high_share, quoted as part of that range
+synthesis_share_base: the same quantity as span_base_share, quoted once

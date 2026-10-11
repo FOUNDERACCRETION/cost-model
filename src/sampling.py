@@ -73,6 +73,12 @@ def draw_worldview(rng: random.Random, wv: dict) -> tuple[str, dict]:
             out[key] = rng.uniform(spec["low"], spec["high"])
         else:
             raise ValueError(f"unsupported worldview distribution {spec['type']}")
+    # A campaign-reported recipe multiplicity is a fixed property of that reading, not a drawn
+    # quantity, so it is carried through rather than sampled. Without this the Monte Carlo and the
+    # deterministic scenarios disagree: the scenarios would use Prein's one recipe per target and
+    # the simulation would silently fall back to A-Lab's budget model for the same reading.
+    if reading.get("recipes") is not None:
+        out["recipes"] = float(reading["recipes"])
     return name, out
 
 
@@ -98,7 +104,14 @@ def apply_worldview(p: dict, reading: dict, budget: float) -> dict:
     # unconditional rate, and the method note says it reproduces A-Lab's 6.19 recipes at p = 36/57,
     # which IS that unconditional rate -- so keying on it makes the calibration self-consistent and
     # stops the recipe budget being charged for computational failure a second time.
-    out["synth_recipes_per_target"] = recipes_for_success(reading["success"], budget)
+    # A campaign that REPORTS its own recipe multiplicity overrides the budget model. Prein et al.
+    # attempted each target once, so deriving ~8 recipes per target for that reading from A-Lab's
+    # budget inflated its synthesis bill roughly eightfold. The budget model remains the fallback
+    # for readings that report no multiplicity of their own.
+    if reading.get("recipes") is not None:
+        out["synth_recipes_per_target"] = float(reading["recipes"])
+    else:
+        out["synth_recipes_per_target"] = recipes_for_success(reading["success"], budget)
     return out
 
 

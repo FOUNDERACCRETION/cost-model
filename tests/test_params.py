@@ -136,11 +136,30 @@ def test_scenarios_within_ranges(doc):
         assert recs[name]["base"] == value, name
 
 
-def test_scenarios_are_ordered(doc):
+def test_scenarios_are_ordered_in_success_not_in_cost(doc):
+    """The three readings are named for how optimistic their SUCCESS reading is, and that ordering
+    holds. Their resulting COSTS are not ordered the same way, and the names must not be read as
+    if they were: Prein et al. report a lower success rate than A-Lab but attempted each target
+    once, and the lower recipe multiplicity outweighs the lower success rate.
+    """
     sc = doc["scenarios"]
-    for name in sc["middle_prein"]["values"]:
+    shared = set(sc["pessimistic_leeman"]["values"]) & set(sc["optimistic_alab"]["values"])
+    # Recipes per target are deliberately NOT monotone across the readings: they are a fact each
+    # campaign reports, not a view that can be more or less optimistic. Asserting monotonicity on
+    # them is what an earlier version of this test did, and it enforced exactly the splice the
+    # model now avoids.
+    graded = (shared & set(sc["middle_prein"]["values"])) - {"synth.recipes_per_target"}
+    assert graded, "the readings must still share at least one graded quantity"
+    for name in graded:
         lo, mid, hi = (sc[k]["values"][name] for k in ("pessimistic_leeman", "middle_prein", "optimistic_alab"))
         if name == "dft.wrong_verdict_frac":
-            assert hi <= mid <= lo
+            assert hi <= mid <= lo, name
         else:
-            assert lo <= mid <= hi
+            assert lo <= mid <= hi, name
+    # Every reading pins its own recipe multiplicity, and the two readings of the SAME campaign sit
+    # within 2% of each other while the separate campaign is several times lower. That pattern is
+    # the point: recipes travel with the campaign, not with the reading's optimism.
+    r = {k: sc[k]["values"]["synth.recipes_per_target"] for k in sc}
+    assert r["middle_prein"] == 1.0
+    assert abs(r["optimistic_alab"] / r["pessimistic_leeman"] - 1) < 0.02
+    assert r["pessimistic_leeman"] / r["middle_prein"] > 5

@@ -479,8 +479,10 @@ def scenarios(doc: dict) -> dict:
     recs = records(doc)
     base = resolve(doc)
     budget = recs["synth.recipe_budget"]["base"]
+    # A scenario may also pin its campaign's own recipe multiplicity, which then overrides the
+    # budget model in apply_worldview. Prein et al. attempted each target once.
     key = {"synth.success_unconditional": "success", "novelty.science_frac": "novelty",
-           "dft.wrong_verdict_frac": "wrong_verdict"}
+           "dft.wrong_verdict_frac": "wrong_verdict", "synth.recipes_per_target": "recipes"}
     out = {}
     for name, sc in doc["scenarios"].items():
         reading = {key[k]: v for k, v in sc["values"].items()}

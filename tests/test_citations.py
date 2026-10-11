@@ -9,7 +9,7 @@ from src.bib import BIB, draft_citations, entries, keys, parameter_citations
 from src.params import load
 
 ROOT = Path(__file__).resolve().parent.parent
-DRAFT = ROOT / "paper" / "p1-full-draft.md"
+DRAFT = ROOT / "paper" / "p1-final.md"
 
 
 def test_bib_keys_unique():
