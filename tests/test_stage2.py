@@ -305,6 +305,39 @@ def test_monte_carlo_small(doc):
     assert [d["costs"] for d in again["draws"]] == [d["costs"] for d in mc["draws"]]  # reproducible
 
 
+def test_chemistry_sweep_of_w_moves_level_1_only(doc):
+    """Section 3.4's chemistry sweep must move level 1 and leave level 2 exactly where it was.
+
+    The sweep exists to report that the cross-functional flip rate is chemistry-dependent -- a
+    companion audit finds disjoint composition cells from 4.0% to 30.7% at fixed element count --
+    and it doubles as the clearest demonstration of the cancellation the paper argues for: a
+    parameter that moves cost per robust prediction by tens of percent must move cost per
+    validated material by nothing at all.
+
+    test_level2_is_independent_of_w covers the cancellation on hand-built parameters. This covers
+    it on the REAL parameter file at the REAL cell endpoints, which is what the paper prints, and
+    additionally pins that the endpoints come from the parameter record rather than the prose.
+    """
+    from scripts.stage2 import chemistry_sweep_of_w
+
+    rec = records(doc)["dft.wrong_verdict_chemistry_cells"]
+    assert rec["role"] == "cross_check", "the cell range is reported, never fed to the model"
+    assert rec["low"] == pytest.approx(0.040) and rec["high"] == pytest.approx(0.307)
+
+    p = resolve(doc)
+    sw = chemistry_sweep_of_w(p, [("lo", rec["low"]), ("base", rec["base"]), ("hi", rec["high"])])
+
+    l2 = [r["l2"]["B"] for r in sw["rows"]]
+    assert max(l2) == pytest.approx(min(l2), rel=1e-12), "w must cancel from level 2 at every cell"
+    assert sw["l2_ratio"] == pytest.approx(1.0, abs=1e-9)
+
+    l1 = [r["l1"]["B"] for r in sw["rows"]]
+    assert all(a < b for a, b in zip(l1, l1[1:])), "level 1 must rise with the flip rate"
+    # 1/(1-w) is the whole of the dependence, so the ratio across the cells is exactly that.
+    assert sw["l1_ratio"] == pytest.approx((1 - rec["low"]) / (1 - rec["high"]), rel=1e-9)
+    assert sw["l1_ratio"] > 1.3, "the reported spread is tens of percent, not a rounding effect"
+
+
 def test_scenarios(doc):
     sc = an.scenarios(doc)
     b = {k: v["costs"]["experimentally_validated"]["B"] for k, v in sc.items()}

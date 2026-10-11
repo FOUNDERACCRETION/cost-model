@@ -58,6 +58,36 @@ def load_waivers() -> dict:
     return out
 
 
+_WORD_NUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+             "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13,
+             "fourteen": 14, "fifteen": 15, "sixteen": 16}
+
+
+def _census_states(body: str, keys: dict) -> bool:
+    """True when the manuscript's evidence-grade sentence agrees with the generated census.
+
+    The sentence writes some counts as numerals and some as words ("eight `proxy`, five
+    `assumption`"), so both spellings are accepted. Every grade with a nonzero count must appear
+    beside its own grade name, and the total beside the word "parameters".
+    """
+    ok = True
+    for name, value in keys.items():
+        if not name.startswith("grade_"):
+            continue
+        grade = name[len("grade_"):]
+        n = int(str(value).replace(",", ""))
+        word = next((w for w, v in _WORD_NUM.items() if v == n), None)
+        forms = [str(n)] + ([word] if word else [])
+        if grade == "total":
+            hit = any(re.search(rf"\b{f}\s+parameters\b", body) for f in forms)
+        else:
+            # The sentence reads "46 are `published`, 15 `first_hand`, ...", so a connector verb
+            # may sit between the count and the grade name on the first item only.
+            hit = any(re.search(rf"\b{f}\s+(?:are\s+|is\s+)?`?{grade}`?", body) for f in forms)
+        ok = ok and hit
+    return ok
+
+
 def audit(papers: list[Path], keys_path: Path) -> int:
     # Several files, because the manuscript is split into a main document and a companion holding
     # the appendices and supplements. A figure counts as present if it appears in ANY of them: the
@@ -75,6 +105,16 @@ def audit(papers: list[Path], keys_path: Path) -> int:
         value = normalise(str(keys[name]))
         # Skip values too short or too generic to match meaningfully: a bare "0" or a yes/no flag
         # would match somewhere in any document and tell us nothing.
+        #
+        # The grade census is the exception. Its values are one- and two-digit counts, so the
+        # length rule skipped them -- which is how the manuscript came to claim 88 parameters and
+        # 14 first-hand ones after the count had moved to 89 and 15. Those are checked against the
+        # sentence that states them rather than against the whole document, since a bare "46"
+        # matches almost anything.
+        if name.startswith("grade_"):
+            if not _census_states(body, keys):
+                missing.append((name, keys[name]))
+            continue
         if len(value) < 3 or value in ("yes", "no"):
             continue
         if value in body:

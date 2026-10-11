@@ -936,6 +936,30 @@ def joint_boundary_region(p, ratios=(0.90, 0.95, 1.00, 1.05, 1.10, 1.20), materi
     return {"ratios": list(ratios), "grid": grid, "material": material}
 
 
+def chemistry_sweep_of_w(p, cells):
+    """Level-1 cost across the chemistry-resolved range of the cross-functional flip rate.
+
+    The flip rate w is not one number: it varies by chemical family. A companion audit of the
+    same GNoME release, holding element count fixed, finds disjoint composition cells running from
+    4.0% to 30.7%. Level 1 is defined per cross-functionally robust prediction, so it carries a
+    1/(1 - w) factor and inherits that spread directly; level 2 does not, because w cancels there.
+
+    `cells` is a list of (label, rate) read from the parameter file, so the range is sourced in one
+    place rather than typed into this function.
+    """
+    rows = []
+    for label, w in cells:
+        r = funnel({**p, "dft_wrong_verdict_frac": w})
+        l1 = {x: r["pipelines"][x]["outputs"]["dft_confirmed_stable"]["usd_per"] for x in an.PIPELINES}
+        l2 = {x: r["pipelines"][x]["outputs"]["experimentally_validated"]["usd_per"] for x in an.PIPELINES}
+        rows.append({"label": label, "w": w, "l1": l1, "l2": l2})
+    lo, hi = min(rows, key=lambda r: r["w"]), max(rows, key=lambda r: r["w"])
+    return {"rows": rows,
+            "l1_ratio": hi["l1"]["B"] / lo["l1"]["B"],
+            "l2_ratio": max(r["l2"]["B"] for r in rows) / min(r["l2"]["B"] for r in rows),
+            "lo": lo, "hi": hi}
+
+
 def identification_tier_spread(doc):
     """How the reading spread moves when phase identification is priced at each reading's own tier.
 
@@ -1088,6 +1112,22 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         for i, x in enumerate(P):
             k[f"l2_{x}_at_{tag}"] = money(ll[i])
     k["basis_move_pct"] = f"{s1['bases'][2]['l2'][0] / s1['bases'][0]['l2'][0] - 1:.0%}"
+    # Chemistry-resolved flip rate: a range on level 1 only, since w cancels from level 2.
+    _wrec = records(doc)["dft.wrong_verdict_chemistry_cells"]
+    _wsweep = chemistry_sweep_of_w(p, [("lowest cell", _wrec["low"]),
+                                       ("companion global rate", _wrec["base"]),
+                                       ("stage-1 base", p["dft_wrong_verdict_frac"]),
+                                       ("highest cell", _wrec["high"])])
+    for row in _wsweep["rows"]:
+        tag = row["label"].replace(" ", "_").replace("-", "_")
+        k[f"wchem_{tag}_rate"] = f"{row['w']:.1%}"
+        k[f"wchem_{tag}_l1_B"] = money(row["l1"]["B"])
+    k["wchem_lo_rate"] = f"{_wsweep['lo']['w']:.1%}"
+    k["wchem_hi_rate"] = f"{_wsweep['hi']['w']:.1%}"
+    k["wchem_l1_ratio"] = f"{_wsweep['l1_ratio']:.2f}"
+    k["wchem_l1_spread_pct"] = f"{_wsweep['l1_ratio'] - 1:.0%}"
+    k["wchem_l2_ratio"] = f"{_wsweep['l2_ratio']:.2f}"
+    k["wchem_spread_pp"] = f"{(_wsweep['hi']['w'] - _wsweep['lo']['w']) * 100:.1f}"
     idt = identification_tier_spread(doc)
     k["idtier_self_use"] = money(idt["tiers"]["self_use"])
     k["idtier_internal"] = money(idt["tiers"]["internal"])

@@ -718,6 +718,30 @@ parameters:
       A-Lab's own attribution, for context only: 3 of 16 analysed failures were computational."
     evidence_grade: proxy
 
+  - name: dft.wrong_verdict_chemistry_cells
+    low: 0.040
+    base: 0.1304
+    high: 0.307
+    unit: cross-functional flip rate within a composition cell at fixed element count
+    role: cross_check
+    source_url: https://github.com/FOUNDERACCRETION/gnome-audit
+    citations: [merchant2023gnome]
+    source_note: "COMPANION ANALYSIS BY THIS AUTHOR, not yet public. A chemistry-resolved audit of
+      the same GNoME r2SCAN recompute (139,541 rows of DeepMind's stable_materials_r2scan.csv)
+      finds a global flip rate of 13.04% against the MP hull, reproducing the published 86.8%
+      quaternary survival. Holding element count fixed, disjoint composition cells run from 4.0%
+      [3.48, 4.54] for intermetallics with no lanthanide or 3d element (n = 5,025) to 30.7%
+      [28.97, 32.57] for oxides with a 3d element and no lanthanide (n = 2,478), a 26.7 pp spread
+      across 23 cells at n_elements = 4. ADDED 2026-10-11.
+      Used ONLY as a reported range on level-1 cost, never as a base value: the base of this
+      record is the companion's global rate and the stage-1 base remains dft.wrong_verdict_frac.
+      STANDING: the companion is unposted at the time of writing, so the range is attributed in
+      the text as work in preparation rather than cited as published. It widens the paper's
+      reported uncertainty rather than narrowing it, so using an unrefereed own result here is
+      conservative; it should be replaced by a citation once the companion is public, and the
+      direction of the change checked if its numbers move in review."
+    evidence_grade: first_hand
+
   # ------------------------------------------------------------------ fixed cost per new chemistry
 
   - name: fixed.reference_phases_per_chemistry

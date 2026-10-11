@@ -29,22 +29,36 @@ a figure the source does not publish.
 
 ---
 
-## 2. P1-1: the "4.0–30.7% chemistry sweep" — the range is in neither source
+## 2. P1-1: the chemistry sweep — I was wrong, now applied
 
 **Asked:** state $w$ with the 4.0–30.7% chemistry sweep.
 
-**Found:** that range appears in neither cited source. An et al. (arXiv:2607.01713) give only two
-single-compound examples (NiCl₃, BaI₂ polymorphs) and no class-level rates; Merchant et al. break
-down by *number of elements*, not chemistry. I could not find a published transition rate by
-chemical system anywhere.
+**What I said first, and why it was wrong.** I searched An et al. and Merchant et al., found no
+such range, and wrote that no source reports the flip rate by chemistry. The source is your own
+P2 audit, and I did not think to look there. The claim I put in the paper — "no source reports
+the transition rate by chemistry" — was false, and it was false in a way that would have read as
+carelessness to anyone who knew both papers were yours.
 
-**Did instead:** §3.4 and Appendix A.4 now state the provenance of all three values of $w$ and say
-explicitly that no source reports the rate by chemistry, so the model does not vary $w$ by chemical
-system and §5.10 claims no such test. The underlying review point — that $w$ was never sourced — is
-addressed. Checking it also turned up a real defect: the high value of 34.3% is **our** subtraction
-from a figure An et al. never present as a flip rate, computed over a population pre-screened on
-dynamical stability, with the higher functional never run on the candidates eliminated earlier. That
-is now stated in both the paper and the parameter file.
+**Now applied.** §3.4 states $w = 16$% at base with 13.2% and 34.3% as the endpoints (it never
+printed the base value before, which you also caught), and adds the chemistry range: a global
+13.04% against the MP hull, with disjoint cells at fixed element count running 4.0% for
+intermetallics with neither a lanthanide nor a 3d element to 30.7% for oxides with a 3d element
+and no lanthanide, a 26.7 pp spread. The sweep is run through the model, not asserted: level-1
+cost for pipeline B moves \$16.67 to \$23.09, a 39% spread, and level 2 does not move at all.
+
+**That second column is worth more than the first.** A parameter that moves level-1 cost by 39%
+and level-2 cost by nothing is the cleanest demonstration in the paper that $w$ cancels from cost
+per validated material. The sweep now carries that argument, and a test pins it on the real
+parameter file at the real cell endpoints.
+
+**Attribution.** Reported as a companion analysis in preparation, not cited, since the repository
+is private and nothing is posted. I also recorded three cautions in the text: it is an unrefereed
+result of your own, though it widens the paper's uncertainty rather than narrowing it, which is
+the conservative direction; the cells are disjoint classes at fixed element count, so the
+endpoints are extremes of 23 cells rather than bounds on a material; and the companion's own
+attribution of the gradient to Hubbard-$U$ list membership is contested within its analysis, so
+nothing in P1 depends on the mechanism, only on the spread. Swap "in preparation" for a citation
+once P2 posts, and re-check the direction if its numbers move in review.
 
 ---
 
@@ -65,38 +79,41 @@ drift fails the build rather than sitting unnoticed.
 
 ---
 
-## 4. The 16-page target — not reached, and I think it conflicts with your other instructions
+## 4. Length — settled at working-paper length, and two free cuts taken
 
-**Asked:** cut from 35 to 16 pages.
+**Asked:** cut from 35 to 16 pages. **Settled:** you confirmed 16 was a journal target and that a
+30-page working paper plus companion is fine, and that none of the four sections I named should go.
 
-**Where it stands:** 30 pages for the main paper plus a 9-page companion holding the appendices and
-supplements, against 40 before this round. Every table, equation, quotation and citation survived,
-and the numeric audit spans both files.
+**You were right that my "floor" was overstated.** I said nearly every sentence carries a figure, a
+citation or a caveat. Two classes of text carried none, and both are now cut:
 
-**Why not 16.** Moving material to a companion redistributes pages, it does not remove them. The
-remaining body is about 14,000 words in which nearly every sentence carries a figure, a citation or
-a caveat, and your standing instruction is that substantive methodological warnings survive
-compression. Three independent compression passes each hit the same floor and each reported it.
-Reaching 16 pages means **deleting** roughly half the body, not tightening it. If that is what you
-want, the honest candidates, in the order I would cut them:
+- **Repeats.** The ordering finding (most successes ≠ cheapest) ran in the abstract, the
+  contributions, §5.7 twice, §6.2 and the conclusion. The abstract, contributions and conclusion
+  are the places that are *supposed* to repeat a headline; the two in-body restatements were not,
+  and are gone. §6.2 also stated it twice inside one sentence, once by cross-reference and once in
+  full.
+- **Revision history.** "No longer", "the previous calibration", "has changed sign relative to", and
+  "though no longer three" are all gone. They encode a diff against a draft no reader has seen, and
+  your earlier instruction was to state warnings prospectively.
 
-1. **§5.5's tolerance apparatus** (~1,100 words) reduced to two sentences giving the 16.9% and 3.85%
-   boundaries. Cost: the paper loses its answer to "how far does the shared-synthesis assumption
-   have to fail", which is currently its best response to Limitation 1.
-2. **Supplements S1 and S2** (~1,000 words) dropped to the repository. Cost: S1 is a genuinely novel
-   observation and the only part of the paper addressed to the benchmark literature.
-3. **§5.6's Monte Carlo** (~660 words) reduced to its table and two sentences. Cost: the
-   crossing-versus-prior-mass distinction goes, and that is a real methodological contribution.
-4. **§4.2's benchmark detail** and **§6.3's platform-cost discussion** (~700 words combined).
+I also disambiguated three unrelated quantities the paper was calling "four": the filter benefit
+under imported benchmark rates (4.0), the level-1 ratio between the generative and filtered
+pipelines (4.02), and the recipe-mismatch factor (now written as 3.8, which is what it is). And the
+identification-tier figures (33 → 71 or 15) are now labelled as computed on the deterministic
+scenarios, where the uniform-tier spread is 33, against the Monte Carlo median factor of 30 quoted
+elsewhere — two estimands the paper was calling "the factor" without distinction.
 
-My recommendation is not to. A 30-page working paper is unremarkable on SSRN, and the apparatus is
-what makes the central claim — that the evidence cannot support a general cost figure — defensible
-rather than assertive. But it is your paper and the call is yours; say which of the four and I will
-cut them.
+These do not get to 16 pages and were never going to. They remove about a page of text that was
+doing no work.
 
 ---
 
 ## 5. Things the model still cannot do
+
+**Not on this list: publishing the repository.** I had it here, and you are right that it does not
+belong — it needs no data and no equipment, only a decision. §8 states that the repository is not
+public and no DOI is minted, and that stays accurate only until you act on it. The same is true of
+the P2 repository, which has to be public before that paper's printed URL resolves.
 
 Unchanged from earlier rounds, restated so the list is in one place. None is a refusal; each needs
 data or equipment this project does not have.
@@ -113,8 +130,6 @@ data or equipment this project does not have.
 - **Target-level data.** The crosswalk that would confirm the four inconclusive A-Lab targets are not
   subtracted twice needs the annotated supplement.
 - **Expert elicitation** on the readings' relative credibility, which is why they carry equal weight.
-- **Publishing the repository.** §8 states plainly that it is not public, no DOI is minted, and
-  nothing has been independently reproduced.
 
 ---
 
