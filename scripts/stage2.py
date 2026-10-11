@@ -619,12 +619,20 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         k[f"attempt_{name}_r"] = f"${parts[name]:,.0f}"
     k["attempt_indirect_r"] = f"${parts['indirect (F&A)']:,.0f}"
     rr = s1["rate_rec"]
-    neg = funnel({**p, "synth_indirect_rate": rr["high"]})
-    neg_l2 = [o["usd_per"] for o in _l2(neg)]
     k["indirect_rate_high"], k["indirect_rate_low"] = f"{rr['high']:.0%}", f"{rr['low']:.0%}"
-    k["attempt_at_negotiated"] = money(neg["unit_costs"]["synthesis_attempt"]["usd"])
-    k["l2_B_at_negotiated"] = money(neg_l2[1])
-    k["negotiated_l2_rise_pct"] = f"{neg_l2[1] / l2[1] - 1:.0%}"
+    # Three distinct variants. These were conflated before 2026-10-11: "at_negotiated" used the
+    # record's high value, which the same repair had changed from 0.58 to 0.45, so a row labelled
+    # 58% was reporting 45%. They are now computed and named separately.
+    hi = funnel({**p, "synth_indirect_rate": rr["high"]})           # 45%, top of the EFFECTIVE range
+    neg = funnel({**p, "synth_indirect_rate": 0.58})                # 58%, the NEGOTIATED average
+    mtdc = funnel({**p, "indirect_base": "mtdc"})                   # 42% on the narrowed base
+    for tag, run in (("high_effective", hi), ("negotiated", neg), ("mtdc", mtdc)):
+        ll = [o["usd_per"] for o in _l2(run)]
+        k[f"attempt_at_{tag}"] = money(run["unit_costs"]["synthesis_attempt"]["usd"])
+        k[f"l2_B_at_{tag}"] = money(ll[1])
+        k[f"{tag}_l2_rise_pct"] = f"{ll[1] / l2[1] - 1:.0%}"
+        for i, x in enumerate(P):
+            k[f"l2_{x}_at_{tag}"] = money(ll[i])
     k["basis_move_pct"] = f"{s1['bases'][2]['l2'][0] / s1['bases'][0]['l2'][0] - 1:.0%}"
     # Monte Carlo and readings
     lvl = "experimentally_validated"
