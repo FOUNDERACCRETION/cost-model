@@ -58,8 +58,14 @@ def load_waivers() -> dict:
     return out
 
 
-def audit(paper: Path, keys_path: Path) -> int:
-    text = paper.read_text()
+def audit(papers: list[Path], keys_path: Path) -> int:
+    # Several files, because the manuscript is split into a main document and a companion holding
+    # the appendices and supplements. A figure counts as present if it appears in ANY of them: the
+    # check is that no generated figure is stranded, not that it sits in a particular file.
+    if isinstance(papers, Path):
+        papers = [papers]
+    text = "\n".join(p.read_text() for p in papers)
+    paper = papers[0]
     keys = json.loads(keys_path.read_text())
     waived = load_waivers()
     body = normalise(text)
@@ -75,7 +81,7 @@ def audit(paper: Path, keys_path: Path) -> int:
             continue
         (waived_hits if name in waived else missing).append((name, keys[name]))
 
-    print(f"{paper.name}: {len(keys)} generated keys")
+    print(f"{', '.join(p.name for p in papers)}: {len(keys)} generated keys")
     print(f"  {len(missing)} MISSING (in the model, not in the paper, not waived)")
     for name, value in missing:
         print(f"     {name} = {value}")
@@ -106,10 +112,11 @@ def main() -> int:
     if len(sys.argv) < 2:
         print(__doc__)
         return 2
-    paper = Path(sys.argv[1])
-    if not paper.is_absolute():
-        paper = ROOT / paper
-    return audit(paper, ROOT / "results" / "key_numbers.json")
+    papers = []
+    for arg in sys.argv[1:]:
+        q = Path(arg)
+        papers.append(q if q.is_absolute() else ROOT / q)
+    return audit(papers, ROOT / "results" / "key_numbers.json")
 
 
 if __name__ == "__main__":

@@ -434,16 +434,22 @@ def test_the_current_manuscript_passes_the_numeric_audit():
     from audit_numbers import audit
 
     # p1-final.md is the submission manuscript when it exists; otherwise the highest revision.
+    # The appendices and supplements live in a companion document, so both are audited together:
+    # a figure is stranded only if it appears in NEITHER, and splitting the manuscript must not
+    # silently turn every appendix figure into a waiver.
     final = root / "paper" / "p1-final.md"
     if final.exists():
-        current = final
+        current = [final]
     else:
         papers = sorted(root.glob("paper/p1-revision*.md"),
                         key=lambda q: int(re.search(r"revision(\d+)", q.name).group(1)))
         assert papers, "no manuscript found"
-        current = papers[-1]
+        current = [papers[-1]]
+    companion = root / "paper" / "p1-appendices.md"
+    if companion.exists():
+        current.append(companion)
     assert audit(current, root / "results" / "key_numbers.json") == 0, (
-        f"{current.name} disagrees with results/key_numbers.json; regenerate or waive")
+        f"{[q.name for q in current]} disagrees with results/key_numbers.json; regenerate or waive")
 
 
 def test_the_manuscript_revision_label_matches_its_filename():
