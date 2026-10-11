@@ -33,11 +33,11 @@ def test_fill_is_idempotent():
     assert fill(text, keys) == text
 
 
-CURRENT = DRAFT.parent / "p1-revision9.md"
+CURRENT = DRAFT.parent / "p1-revision10.md"
 
 
 def test_current_manuscript_exists():
-    assert CURRENT.exists(), "paper/p1-revision9.md is the current manuscript"
+    assert CURRENT.exists(), "paper/p1-revision10.md is the current manuscript"
 
 
 def test_no_stale_overhead_figures():

@@ -189,3 +189,51 @@ def test_threshold_scales_with_synthesis_cost():
     # accounting it falls inside it, which is why Section 5.5 states that claim conditionally.
     direct = dft_threshold_sweep(variants[0], points=(54.5,))["crossings"]["AB"][0.10]
     assert direct < 1000, "expected the filter crossing to fall inside the span under direct costs"
+
+
+def test_threshold_equation_coefficients():
+    """Section 5.5 prints alpha and beta for the affine compute relation and solves d*.
+    This pins both: c0_i(d) = alpha_i d + beta_i must be affine to machine precision, the
+    printed coefficients must match, and the closed form must reproduce the numerically
+    solved crossing."""
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import dft_threshold_sweep
+    from src.funnel import funnel, synthesis_cost_per_attempt
+    from src.params import load, resolve
+
+    p = resolve(load())
+
+    def c0(d):
+        r = funnel({**p, "dft_cost_per_candidate": d})["pipelines"]
+        out = {}
+        for k in ("A", "B", "C"):
+            pl = r[k]
+            o = pl["outputs"]["experimentally_validated"]
+            verdicts = next(s["surviving"] for s in pl["stages"] if s["stage"] == "DFT check")
+            out[k] = o["compute_usd_per"] * o["count"] / verdicts
+        return out
+
+    lo, hi = 10.0, 1000.0
+    a, b = c0(lo), c0(hi)
+    alpha = {k: (b[k] - a[k]) / (hi - lo) for k in "ABC"}
+    beta = {k: a[k] - alpha[k] * lo for k in "ABC"}
+
+    # affine to machine precision
+    for d in (3.0, 54.5, 200.0, 500.0):
+        act = c0(d)
+        for k in "ABC":
+            assert abs(alpha[k] * d + beta[k] - act[k]) / act[k] < 1e-12
+
+    # printed coefficients (Section 5.5)
+    assert alpha["A"] == pytest.approx(0.485, abs=5e-4)
+    assert alpha["B"] == pytest.approx(0.293, abs=5e-4)
+    assert alpha["C"] == pytest.approx(1.174, abs=5e-4)
+    assert beta["C"] == pytest.approx(0.338, abs=5e-4)
+
+    # closed form reproduces the solved crossing
+    tau = 0.10
+    bill = p["synth_recipes_per_target"] * synthesis_cost_per_attempt(p)["usd"]
+    d_star = (tau * bill + (1 + tau) * beta["B"] - beta["C"]) / (alpha["C"] - (1 + tau) * alpha["B"])
+    solved = dft_threshold_sweep(p, points=(54.5,))["crossings"]["CB"][0.10]
+    assert d_star == pytest.approx(solved, rel=5e-3)
