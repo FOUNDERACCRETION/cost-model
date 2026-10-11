@@ -444,19 +444,45 @@ def test_sweep_and_simulation_agree_on_a_constructed_gap():
         assert (an._ratio_gap(ratio, 1.0) > 0.10) == bool(expected)
 
 
-def test_overlap_sensitivity_is_weakly_decreasing_in_bin_count():
+def test_overlap_decreases_under_nested_refinement_only():
     """Section 5.6 reports one bin count, so the dependence has to be shown, not asserted.
-    Refining nested bins can only split mass that coarser bins merged, so the coefficient is
-    weakly decreasing. The paper's claim is that it is *insensitive* over a wide range, which is
-    a quantitative claim this pins."""
+
+    The monotonicity has a CONDITION: refining bins can only split mass that coarser bins merged
+    when the refinement is nested, i.e. each coarse bin divides exactly into fine ones. 20 -> 60
+    -> 240 is nested (x3 then x4); 40 -> 60 is not (x1.5), and nothing guarantees its direction.
+    Revision 11 stated the monotonicity without the condition and an external reviewer corrected
+    it, so the condition is pinned here: the nested chain is asserted, the non-nested step is only
+    required to stay in range.
+    """
     rng = random.Random(11)
     rows = []
     for _ in range(3000):
         base = math.exp(rng.gauss(0, 1))
         c = {lvl: {"A": base * 1.02, "B": base, "C": base * 3.0} for lvl in an.LEVELS}
         rows.append({"costs": c})
-    s = an.overlap_sensitivity({"draws": rows}, counts=(20, 60, 240))
     lvl = "dft_confirmed_stable"
-    vals = [s[n][lvl][("B", "A")] for n in (20, 60, 240)]
-    assert vals[0] >= vals[1] >= vals[2] - 1e-12
-    assert all(0.0 <= v <= 1.0 for v in vals)
+    s = an.overlap_sensitivity({"draws": rows}, counts=(20, 60, 240, 40))
+    nested = [s[n][lvl][("B", "A")] for n in (20, 60, 240)]
+    assert nested[0] >= nested[1] >= nested[2] - 1e-12
+    assert all(0.0 <= s[n][lvl][("B", "A")] <= 1.0 for n in (20, 40, 60, 240))
+
+
+def test_overlap_does_not_approach_zero_for_identical_samples():
+    """The reviewer's counterexample to the claim that overlap falls towards zero as the bin
+    count approaches the sample size. Two pipelines with identical costs in every draw have
+    identical histograms at EVERY bin count, so their overlap is exactly 1 however fine the bins.
+
+    The decline the paper observes is therefore a property of these draws -- in which A and B
+    differ in essentially every draw, so fine enough bins separate them -- and not a general
+    property of the statistic. Revision 11 asserted the general version; revision 12 does not.
+    """
+    rng = random.Random(3)
+    rows = [{"costs": {lv: {"A": v, "B": v, "C": v * 2} for lv in an.LEVELS}}
+            for v in (math.exp(rng.gauss(0, 1)) for _ in range(2000))]
+    s = an.overlap_sensitivity({"draws": rows}, counts=(20, 240, 2000, 20000))
+    lvl = "dft_confirmed_stable"
+    for n in (20, 240, 2000, 20000):
+        assert s[n][lvl][("B", "A")] == pytest.approx(1.0), (
+            f"identical samples must retain overlap 1 at {n} bins")
+    # and the pipelines that DO differ separate as bins refine, which is the observed behaviour
+    assert s[20000][lvl][("C", "A")] < s[20][lvl][("C", "A")]

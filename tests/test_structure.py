@@ -295,3 +295,42 @@ def test_positive_denominator_is_not_sufficient_for_a_usable_crossing():
     bill_zero = (beta["C"] - (1 + tau) * beta["B"]) / tau
     assert d_star(bill_zero) == pytest.approx(0.0, abs=1e-9)
     assert d_star(bill_zero * 0.5) < 0
+
+
+def test_the_crossing_does_not_depend_on_synthesis_success():
+    """S cancels from the paired cost ratio, so the threshold cannot depend on it.
+
+    Level-2 cost is C_i = (c0_i + r a)/S with S shared across pipelines, so the ratio
+    C_C/C_B = (c0_C + r a)/(c0_B + r a) has no S in it, and neither does the closed form for d*.
+    The threshold depends on the synthesis EXPENDITURE r*a and on the compute coefficients --
+    not on success.
+
+    This is pinned because the paper has made this class of error twice. Revision 7 withdrew a
+    verification-accuracy result after the unconditional-success repair made w cancel the same
+    way; revision 11 then reintroduced an S-dependence claim in the prose of the very section
+    that proves S cancels, and an external reviewer caught it. A cancelled parameter is easy to
+    reintroduce in words, so the invariance is asserted here rather than left to prose review.
+    """
+    import sys, pathlib as _p
+    sys.path.insert(0, str(_p.Path(__file__).resolve().parents[1] / "scripts"))
+    from stage2 import dft_threshold_sweep
+    from src.params import load, resolve
+
+    p = resolve(load())
+    base = dft_threshold_sweep(p, points=(54.5,))["crossings"]
+
+    # the full documented range of the three readings, low to high
+    for S in (0.051724, 0.20, 0.4375, 0.631579):
+        c = dft_threshold_sweep({**p, "synth_success": S}, points=(54.5,))["crossings"]
+        for key in ("CB", "AB"):
+            for tau in (0.05, 0.10, 0.20):
+                if base[key][tau] is None:
+                    assert c[key][tau] is None
+                else:
+                    assert c[key][tau] == pytest.approx(base[key][tau], rel=1e-12), (
+                        f"crossing for {key} at tau={tau} moved with S={S}; S must cancel")
+
+    # by contrast it does move with recipes per target, which does not cancel
+    r_lo = dft_threshold_sweep({**p, "synth_recipes_per_target": 3.0}, points=(54.5,))["crossings"]
+    r_hi = dft_threshold_sweep({**p, "synth_recipes_per_target": 12.0}, points=(54.5,))["crossings"]
+    assert r_lo["CB"][0.10] < base["CB"][0.10] < r_hi["CB"][0.10]

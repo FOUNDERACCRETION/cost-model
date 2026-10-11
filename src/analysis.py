@@ -340,10 +340,21 @@ def kill_condition(mc: dict, bins: int = 60, material: float = 0.10) -> dict:
 def overlap_sensitivity(mc: dict, counts=(20, 40, 60, 120, 240)) -> dict:
     """Overlap coefficient at several bin counts, for each level and pair.
 
-    The overlap coefficient of two histograms is not bin-count invariant: coarser bins can only
-    merge mass that finer bins separate, so the coefficient is weakly decreasing in `bins` for
-    nested refinements, and falls towards zero as bins approach the sample size. Reporting one
-    bin count without this is reporting a number whose magnitude is partly a binning artefact.
+    The overlap coefficient of two histograms is not bin-count invariant, so reporting one bin
+    count on its own reports a number whose magnitude is partly a binning artefact.
+
+    Two things it is tempting to say about the dependence, and what is actually true:
+
+      - "weakly decreasing in `bins`". True only for NESTED refinements, where each coarse bin
+        divides exactly into fine ones (20 -> 60 -> 240). It is not implied for a step like
+        40 -> 60, and `counts` here is not a nested chain throughout.
+      - "falls towards zero as bins approach the sample size". Not a property of the statistic.
+        Two identical samples have identical histograms at every bin count and retain overlap
+        exactly 1. The decline holds where the two samples share essentially no values, which is
+        the case for these pipelines -- they differ in nearly every draw -- but that is a fact
+        about the draws, not about binning.
+
+    So this function reports the dependence rather than asserting its shape.
     """
     out = {}
     for n in counts:

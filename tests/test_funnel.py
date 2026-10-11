@@ -364,3 +364,29 @@ def test_mp_novelty_screen():
 def test_all_db_novelty_cannot_exceed_mp_novelty():
     with pytest.raises(ValueError):
         funnel(hand_params(pool_frac_novel_mp=0.5, pool_frac_novel_all_db=0.6))
+
+
+def test_level2_is_independent_of_w():
+    """Level-2 cost does not depend on the stable-to-unstable transition rate w, at any value.
+
+    Level-1 cost c is defined per cross-functionally robust prediction, so upstream expenditure
+    per candidate reaching synthesis is c0 = (1-w)c, and C = (c0 + ra)/S has the two factors
+    cancel. Revision 7 withdrew a verification-accuracy result for this reason -- it had been
+    reported as a compute lever worth about 18% before the unconditional-success repair made w
+    cancel.
+
+    test_label_reliability_zero_and_one covers only w = 0 and w = 1. This covers the interior,
+    where a reintroduced dependence would actually show, and asserts that level 1 moves while
+    level 2 does not: the point is not that w is inert, but that it acts on exactly one level.
+    """
+    base = None
+    l1 = []
+    for w in (0.0, 0.1, 0.25, 0.5, 0.9):
+        out = funnel(hand_params(dft_wrong_verdict_frac=w))["pipelines"]["A"]["outputs"]
+        l2 = out["experimentally_validated"]["usd_per"]
+        if base is None:
+            base = l2
+        assert l2 == pytest.approx(base, rel=1e-12), f"level 2 moved with w={w}; w must cancel"
+        l1.append(out["dft_confirmed_stable"]["usd_per"])
+    # level 1 is strictly increasing in w, so the parameter is live where it should be
+    assert all(a < b for a, b in zip(l1, l1[1:])), "level 1 must still respond to w"
