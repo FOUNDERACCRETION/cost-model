@@ -35,7 +35,8 @@ READING_SHORT = {"optimistic_alab": "A-Lab", "middle_prein": "Prein", "pessimist
 COMPUTE_SHARE = 0.10
 SPREAD = 1.10
 MATERIAL = 0.10
-OVERLAP_REPS = 60  # resampling replicates behind the overlap reference range in Section 5.7
+OVERLAP_REPS = 60
+THRESHOLD_DRAWS = 1500  # draws behind the threshold distribution in Section 5.5  # resampling replicates behind the overlap reference range in Section 5.7
 ORDER_SURVIVES = 0.95
 MATERIAL_MAJORITY = 0.50
 TOP_SHARE = 0.80
@@ -832,6 +833,96 @@ def boundary_sensitivity(p, dft=54.5):
     return out
 
 
+def threshold_distribution(doc, n=2000, seed=None, targets=(0.05, 0.10, 0.20)):
+    """The DFT-cost crossing solved separately inside each Monte Carlo draw.
+
+    Section 5.5 reports a crossing computed with every other parameter at base. That is one number
+    from one parameter set, and it is NOT the same object as the share of draws whose verification
+    cost exceeds it: the crossing itself moves draw to draw, because it depends on the synthesis
+    expenditure r*a and on the compute coefficients, all of which are drawn. A reviewer asked for
+    the moving threshold rather than the single value, so this solves
+
+        d*(tau) = (tau*b + (1+tau)*beta_B - beta_C) / (alpha_C - (1+tau)*alpha_B)
+
+    inside each draw, using that draw's own b, alpha and beta. The relation is affine in d, so the
+    coefficients are recovered exactly from two evaluations per draw rather than by bisection.
+
+    Returns the distribution of d* per target, and the share of draws for which no crossing exists
+    in the domain -- either the denominator is nonpositive, or the solution is negative, meaning
+    the gap already exceeds tau at zero verification cost.
+    """
+    from src.sampling import sampler
+    import random as _r
+
+    rng = _r.Random(doc["monte_carlo"]["seed"] if seed is None else seed)
+    draw = sampler(doc)
+    out = {t: [] for t in targets}
+    unusable = {t: 0 for t in targets}
+    drawn = 0
+    while drawn < n:
+        q, _info = draw(rng)
+        try:
+            c_lo = upstream_per_target(q, 10.0)
+            c_hi = upstream_per_target(q, 1000.0)
+            bill = q["synth_recipes_per_target"] * synthesis_cost_per_attempt(q)["usd"]
+        except ValueError:
+            continue
+        drawn += 1
+        alpha = {k: (c_hi[k] - c_lo[k]) / 990.0 for k in ("A", "B", "C")}
+        beta = {k: c_lo[k] - alpha[k] * 10.0 for k in ("A", "B", "C")}
+        for tau in targets:
+            den = alpha["C"] - (1 + tau) * alpha["B"]
+            if den <= 0:
+                unusable[tau] += 1
+                continue
+            d = (tau * bill + (1 + tau) * beta["B"] - beta["C"]) / den
+            if d < 0:
+                unusable[tau] += 1
+            else:
+                out[tau].append(d)
+    res = {"n": drawn, "targets": list(targets), "unusable": unusable, "quantiles": {}}
+    for tau in targets:
+        v = sorted(out[tau])
+        if not v:
+            res["quantiles"][tau] = None
+            continue
+        def q_(f):
+            return v[min(len(v) - 1, max(0, int(round(f * (len(v) - 1)))))]
+        res["quantiles"][tau] = {"p5": q_(0.05), "p25": q_(0.25), "p50": q_(0.50),
+                                 "p75": q_(0.75), "p95": q_(0.95), "n": len(v)}
+    return res
+
+
+def joint_boundary_region(p, ratios=(0.90, 0.95, 1.00, 1.05, 1.10, 1.20), material=MATERIAL):
+    """The joint condition on a success-ratio by recipe-ratio grid, for C against B.
+
+    The one-at-a-time boundaries of Section 5.6 are interpretable but are not a joint robustness
+    region: combinations of smaller differences can cross the materiality threshold before either
+    individual boundary is reached. This evaluates the full ratio
+
+        C_C/C_B = [(c0_C + r_C a)/(c0_B + r a)] * (S_B/S_C)
+
+    over a grid of (S_C/S_B, r_C/r_B), and reports the gap at each node together with whether the
+    implied success rate stays a probability at the baseline rate.
+    """
+    a = synthesis_cost_per_attempt(p)["usd"]
+    r = p["synth_recipes_per_target"]
+    s_base = p["synth_success_unconditional"]
+    c0 = upstream_per_target(p)
+    grid = []
+    for s_ratio in ratios:
+        row = []
+        for r_ratio in ratios:
+            q_c = c0["C"] + r * r_ratio * a
+            q_b = c0["B"] + r * a
+            gap = an._ratio_gap(q_c / s_ratio, q_b)
+            row.append({"s_ratio": s_ratio, "r_ratio": r_ratio, "gap": gap,
+                        "material": gap > material,
+                        "feasible": s_base * s_ratio <= 1.0})
+        grid.append(row)
+    return {"ratios": list(ratios), "grid": grid, "material": material}
+
+
 def boundaries_section(p):
     """Section 5.8: how far the shared-synthesis assumption has to fail before it matters."""
     b = synthesis_decision_boundaries(p)
@@ -975,6 +1066,58 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["bound_success_S_base_pct"] = f"{S:.2%}"
     k["bound_success_S_parity_pct"] = f"{S * at_base['success_CB']:.2%}"
     k["bound_max_feasible_ratio"] = f"{bd['max_feasible_ratio']:.3f}"
+    # Materiality at 5%, 10% and 20%: the 10% line is a convention, not a decision criterion.
+    for m in (0.05, 0.20):
+        rb = synthesis_decision_boundaries(p, points=(54.5,), material=m)["rows"][0]
+        tag = f"{int(m * 100)}"
+        k[f"bound_mat{tag}_lo"] = f"{rb['success_CB_mat_lo']:.3f}"
+        k[f"bound_mat{tag}_hi"] = f"{rb['success_CB_mat_hi']:.3f}"
+        k[f"bound_mat{tag}_recipes_share"] = f"{rb['recipes_share_AB_mat']:.1%}"
+    # The crossing solved inside each draw, so the threshold carries uncertainty rather than being
+    # a single number from a single parameter set.
+    td = threshold_distribution(doc, n=THRESHOLD_DRAWS)
+    k["thrdist_draws"] = f"{td['n']:,}"
+    for m in (0.05, 0.10, 0.20):
+        q = td["quantiles"][m]
+        tag = f"{int(m * 100)}"
+        k[f"thrdist{tag}_median"] = f"{q['p50']:,.0f}"
+        k[f"thrdist{tag}_p5"] = f"{q['p5']:,.0f}"
+        k[f"thrdist{tag}_p95"] = f"{q['p95']:,.0f}"
+        k[f"thrdist{tag}_p25"] = f"{q['p25']:,.0f}"
+    k["thrdist_no_crossing_10"] = f"{td['unusable'][0.10]}"
+
+    def sig2(x):
+        """Two significant figures, which is the precision the inputs support."""
+        from math import floor, log10
+        if not x:
+            return "0"
+        e = floor(log10(abs(x)))
+        return f"{round(x, -(e - 1)):,.0f}"
+
+    # The paper prints level-2 costs and the DFT span rounded to two significant figures, because
+    # the inputs are uncertain by orders of magnitude and dollar-level precision is false. Generate
+    # the rounded renderings so the audit still guards what is printed.
+    def money2sf(x):
+        from math import floor, log10
+        if not x:
+            return "$0"
+        e = floor(log10(abs(x)))
+        return f"${round(x, -(e - 1)):,.0f}"
+
+    for i, x in enumerate(P):
+        k[f"l2_{x}_2sf"] = money2sf(l2[i])
+        k[f"l1_{x}_2sf"] = f"${l1[x]:,.0f}"
+    k["l2_all_2sf"] = " / ".join(money2sf(v) for v in l2)
+    k["l1_all_2sf"] = " / ".join(f"${l1[x]:,.0f}" for x in P)
+    for r_ in s1["span"]:
+        n_ = r_["level"]
+        k[f"span_{n_}_l2_2sf"] = " / ".join(money2sf(v) for v in r_["l2"])
+        k[f"span_{n_}_l1_2sf"] = " / ".join(f"${v:,.0f}" for v in r_["l1"])
+    # The paper prints crossings rounded; generate the rounded form so the audit still guards it.
+    for key, label in (("CB", "gen"), ("AB", "filter")):
+        for tgt in (0.05, 0.10, 0.20):
+            v = sw["crossings"][key][tgt]
+            k[f"cross_{label}_{int(tgt * 100)}pct_2sf"] = "beyond the tested range" if v is None else sig2(v)
     k["bound_implied_S_price100"] = f"{bs['compute price 100x']['implied_S_C']:.1%}"
     k["bound_price100_feasible"] = "yes" if bs["compute price 100x"]["feasible"] else "no"
     k["bound_all_table_rows_feasible"] = ("yes" if all(r["feasible_CB"] and r["feasible_CB_mat_hi"]

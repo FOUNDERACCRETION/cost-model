@@ -60,3 +60,45 @@ bound_success_CB_at_pool_purity_excess: 5.6 quotes this rounded as "0.02% of the
 
 # --- Final draft: software-validation figures moved to paper/DIAGNOSTICS.md ------------------
 thr_printed_coeff_root_10: the paper does not make this claim; the rounded-coefficient root and its 0.18 core-hour shift are recorded in paper/DIAGNOSTICS.md
+
+# --- Deep review: the paper rounds to two significant figures, which is what the inputs support -
+bound_mat5_lo: 5.6 reports the 10% band numerically and the 5% and 20% bands in rounded prose
+bound_mat5_hi: as above
+bound_mat5_recipes_share: as above
+bound_mat20_lo: as above
+bound_mat20_hi: as above
+bound_mat20_recipes_share: as above
+cross_filter_5pct: 5.5 prints the rounded cross_filter_5pct_2sf instead
+cross_gen_5pct: 5.5 prints the rounded cross_gen_5pct_2sf instead
+cross_gen_10pct: 5.5 prints the rounded cross_gen_10pct_2sf instead
+cross_filter_10pct: 5.5 prints the rounded cross_filter_10pct_2sf instead
+cross_gen_20pct: 5.5 prints the rounded cross_gen_20pct_2sf instead
+cross_filter_20pct: 5.5 prints the rounded cross_filter_20pct_2sf instead
+basis_funder_l2: the paper prints the two-significant-figure form; dollar precision is false here
+basis_funder_l2_B: as above
+basis_funder_l2_C: as above
+basis_funder_fees_in_l2: as above
+basis_funder_fees_in_l2_B: as above
+basis_funder_fees_in_l2_C: as above
+l2_B: the paper prints l2_B_2sf
+l2_C: the paper prints l2_C_2sf
+span_base_l2: the paper prints span_base_l2_2sf
+span_base_l2_B: as above
+span_base_l2_C: as above
+span_base_l1: the paper prints span_base_l1_2sf
+xacct_mtdc_filter10: the 5.5 accounting table rounds to two significant figures
+xacct_negotiated_filter10: as above
+xacct_negotiated_gen10: as above
+span_high_l2: the 5.5 span table prints span_high_l2_2sf
+span_high_l2_A: as above
+span_high_l2_B: as above
+span_high_l2_C: as above
+span_low_l1: the 5.5 span table prints span_low_l1_2sf
+span_low_l1_A: as above
+span_low_l1_B: as above
+span_low_l1_C: as above
+span_low_l2: the 5.5 span table prints span_low_l2_2sf
+span_low_l2_A: as above
+span_low_l2_B: as above
+span_low_l2_C: as above
+xacct_direct_filter10: the 5.5 accounting table rounds to two significant figures (730)
