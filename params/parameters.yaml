@@ -469,7 +469,7 @@ parameters:
     unit: true-positive rate (fraction of DFT-stable flagged stable)
     source_url: https://github.com/janosh/matbench-discovery/blob/main/models/chgnet/chgnet-0.3.0.yml
     citations: [riebesell2025, riebesell2025correction]
-    source_note: "Base: Unique-prototype WBM set, TP / (TP + FN) = 25313 / 33374 (file reports Recall 0.758). Copy in data/matbench_discovery/. The table's 0.66 is the 2023 version. WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
+    source_note: "Base: Unique-prototype WBM set, TP / (TP + FN) = 25313 / 33374 (file reports Recall 0.758). Copy in data/matbench_discovery/. The table's 0.66 is the 2023 version. WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source we found measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
     evidence_grade: proxy
 
   - name: mlip.chgnet.false_positive_rate
@@ -500,7 +500,7 @@ parameters:
     unit: true-positive rate
     source_url: https://github.com/janosh/matbench-discovery/blob/main/models/mace/mace-mp-0.yml
     citations: [riebesell2025, riebesell2025correction]
-    source_note: "Base: TP / (TP + FN), unique-prototype set (file reports 0.796). WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
+    source_note: "Base: TP / (TP + FN), unique-prototype set (file reports 0.796). WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source we found measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
     evidence_grade: proxy
 
   - name: mlip.mace-mp-0.false_positive_rate
@@ -531,7 +531,7 @@ parameters:
     unit: true-positive rate
     source_url: https://github.com/janosh/matbench-discovery/blob/main/models/m3gnet/m3gnet.yml
     citations: [riebesell2025, riebesell2025correction]
-    source_note: "Base: TP / (TP + FN), unique-prototype set (file reports 0.803). WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
+    source_note: "Base: TP / (TP + FN), unique-prototype set (file reports 0.803). WIDENED RANGE (proxy): Matbench measures recall on the WBM set, not on these pools, and no source we found measures recall on them; Szymanski & Bartel v2 do not report the filter pass fraction. Low 0.40 / high 0.95 are plausibility bounds (assumption): purity and recall now come from different sources and cannot both be exactly right. Under measured purity, recall sets how many true stables are lost, not the DFT cost per hit."
     evidence_grade: proxy
 
   - name: mlip.m3gnet.false_positive_rate
@@ -699,8 +699,14 @@ parameters:
     source_url: https://www.nature.com/articles/s41586-023-06735-9
     citations: [merchant2023gnome, an2026, szymanski2023alab]
     source_note: "PROXY: a disagreement rate between two levels of theory, NOT experimental failure.
-      No source reports a direct error rate against experiment, and no source we found breaks the
-      flip rate down by chemistry -- only by number of elements.
+      No source we found reports a direct error rate against experiment. No PUBLISHED source we found breaks
+      the flip rate down by chemistry -- only by number of elements -- but one does exist: the
+      companion analysis recorded in dft.wrong_verdict_chemistry_cells, by this author and unposted
+      at the time of writing, resolves the same recompute by chemistry and finds 4.0% to 30.7%
+      across cells at fixed element count. CHANGED 2026-10-18: this note previously denied that any
+      chemistry breakdown existed, which the companion contradicts. The paper's
+      Section 3.4 had already been corrected; the note had not, so results/parameter_manifest.csv
+      was shipping a claim the manuscript disowns.
       Base 0.16 and low 0.132, both PUBLISHED and both verified 2026-10-11: GNoME reports that
       '84% of the discovered binaries and ternary materials also present negative phase-separation
       energies' and '86.8% of tested quaternaries also remain stable on the r2SCAN convex hull',
@@ -890,7 +896,7 @@ parameters:
     high: 29364
     unit: USD per year (stipend), graduate trainee
     source_url: https://grants.nih.gov/grants/guide/notice-files/not-od-26-044.html
-    source_note: "PAIRING: a graduate trainee's cost with trainee throughput (synth.labour_attempts_per_week, Liverpool undergraduate researchers), the closest wage-paid role with a sourced rate. NIH NRSA predoctoral stipend FY2026, 29,364. Not used: postdoc 63,480-77,076 (same notice), because no source gives postdoc throughput for manual solid-state synthesis; a postdoc at trainee throughput would mix roles."
+    source_note: "PAIRING: a graduate trainee's cost with trainee throughput (synth.labour_attempts_per_week, Liverpool undergraduate researchers), the closest wage-paid role with a sourced rate. NIH NRSA predoctoral stipend FY2026, 29,364. Not used: postdoc 63,480-77,076 (same notice), because no source we found gives postdoc throughput for manual solid-state synthesis; a postdoc at trainee throughput would mix roles."
     evidence_grade: published
 
   - name: synth.labour_fringe_rate
@@ -955,7 +961,7 @@ parameters:
     unit: firings per crucible
     source_url: https://www.mdpi.com/1996-1944/16/2/653
     citations: [szymanski2023alab]
-    source_note: "ASSUMPTION; no published firing life for small lab alumina crucibles. Base 20: midpoint of the 10-30 cycle life of cordierite-mullite saggars in LiCoO2 calcination (proxy, read from a search snippet). Lithium carbonate melts corrode alumina with no passivation (https://patents.justia.com/patent/11180377), and half our compositions contain Li, so the low end is 10. High 100: reuse with non-reactive chemistries. A-Lab lost ~0.5% of samples to broken crucibles (SI Note 10), which bounds breakage, not wear."
+    source_note: "ASSUMPTION; no published firing life for small lab alumina crucibles was found in our search. Base 20: midpoint of the 10-30 cycle life of cordierite-mullite saggars in LiCoO2 calcination (proxy, read from a search snippet). Lithium carbonate melts corrode alumina with no passivation (https://patents.justia.com/patent/11180377), and half our compositions contain Li, so the low end is 10. High 100: reuse with non-reactive chemistries. A-Lab lost ~0.5% of samples to broken crucibles (SI Note 10), which bounds breakage, not wear."
     evidence_grade: assumption
 
   - name: synth.precursor_mass_g_per_attempt
@@ -965,7 +971,7 @@ parameters:
     unit: g of precursor mix per attempt
     source_url: https://arxiv.org/abs/2501.03165
     citations: [szymanski2023alab]
-    source_note: "No source gives a per-attempt mass; A-Lab says only 'multigram sample quantities' (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133). Base (proxy): ~1.5 g manual samples (Na-superionic paper, SI). Low (proxy): 'nominal 0.5 g sample' in the Precursor Genome air-sensitivity test (https://arxiv.org/pdf/2607.09903); XRD needs > 100 mg (https://arxiv.org/pdf/2609.29344). High (assumption): 5 g as an upper reading of 'multigram'. Unverified, not used: DASH thesis 'up to 1.8 g'."
+    source_note: "No source we found gives a per-attempt mass; A-Lab says only 'multigram sample quantities' (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133). Base (proxy): ~1.5 g manual samples (Na-superionic paper, SI). Low (proxy): 'nominal 0.5 g sample' in the Precursor Genome air-sensitivity test (https://arxiv.org/pdf/2607.09903); XRD needs > 100 mg (https://arxiv.org/pdf/2609.29344). High (assumption): 5 g as an upper reading of 'multigram'. Unverified, not used: DASH thesis 'up to 1.8 g'."
     evidence_grade: proxy
 
   - name: synth.precursor_usd_per_g
@@ -996,7 +1002,7 @@ parameters:
     unit: fraction of synthesised, database-novel targets that are new to science
     source_url: https://par.nsf.gov/servlets/purl/10532478
     citations: [leeman2024, szymanski2026correction]
-    source_note: "NO PUBLISHED NONZERO COUNT EXISTS for this campaign. Leeman et al. state that
+    source_note: "NO PUBLISHED NONZERO COUNT WAS FOUND for this campaign, within the search scope the paper states. Leeman et al. state that
       'none of the materials produced by A-lab were new', and that the three they regard as
       correctly synthesised -- MnAgO2, Y3In2Ga3O12, CaFe2(PO4)2O -- 'have been reported'. The
       A-Lab correction makes no new-to-science claim: 'new to the platform, not necessarily new

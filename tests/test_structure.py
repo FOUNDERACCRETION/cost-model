@@ -554,6 +554,47 @@ def test_fee_schedule_lists_every_input_to_the_attempt_cost():
         f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
 
 
+def test_parameter_notes_do_not_claim_absolute_nonexistence():
+    """The paper's negative claims are all scoped to what we searched; the parameter file's were
+    not, and the parameter file ships.
+
+    `results/parameter_manifest.csv` carries every source_note verbatim, so a reader of the
+    replication package read six flat assertions -- "No source reports a direct error rate against
+    experiment", "no source measures recall on them" -- while Limitation 1 of the manuscript says
+    the searches were not exhaustive. Worse, `dft.wrong_verdict_frac` said no source breaks the flip
+    rate down by chemistry while the very next record IS a chemistry breakdown of the same
+    recompute; the paper had been corrected on that point and the note had not.
+
+    A note is prose that no figure check can see, which is why this is a test and not a review step.
+    """
+    import pathlib as _p, sys, re
+    root = _p.Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root))
+    from src.params import load, records
+
+    # an unscoped opener: a claim that nothing exists, stated about the world rather than about
+    # what we looked at
+    openers = re.compile(
+        r"\b(no (?:source|published \w+|national average|study|data|figure)[^.;]{0,100}"
+        r"|no \w+ (?:gives|reports|measures|breaks)[^.;]{0,100}"
+        r"|NO PUBLISHED [A-Z ]+(?:EXISTS|EXIST)[^.;]{0,60})", re.I)
+    # any of these in the same clause makes it a statement about our search instead
+    scoped = re.compile(r"we found|was found|were found|our search|in sources/|we could|we looked"
+                        r"|not yet|at the time of writing|check\)|within the search scope", re.I)
+
+    offenders = []
+    for name, rec in sorted(records(load()).items()):
+        note = (rec.get("source_note") or "").replace("\n", " ")
+        for m in openers.finditer(note):
+            clause = m.group(0)
+            if not scoped.search(clause):
+                offenders.append((name, clause.strip()[:110]))
+    assert not offenders, (
+        "parameter notes assert that something does not exist, rather than that we did not find "
+        "it. Scope each to the search, as the manuscript does:\n"
+        + "\n".join(f"  {n}: ...{c}..." for n, c in offenders))
+
+
 def test_instrument_fee_facility_count_matches_the_parameter_file():
     """The paper reported eleven US university fee schedules behind the attempt cost. There are
     three.
