@@ -204,3 +204,41 @@ and `data/mlip_benchmark/timings.csv`. All eight hold exactly.
 - **The target-level crosswalk** for A-Lab's 36 of 57, which would confirm the four inconclusive
   targets are not subtracted twice. Needs the annotated supplement.
 - **Independent reproduction.** Has not happened. The repository is not public and no DOI is minted.
+
+## Part 6: the model code, reviewed as code — 18 October 2026
+
+Everything above checks figures *against* the model. This part checks the model. Each algebraic
+identity below was re-derived independently and compared with the implementation, not run through
+the same code path and compared with itself.
+
+**One defect found and fixed.** `analysis.percentile` returned `nan` where the answer is `inf`:
+when both bracketing order statistics are infinite the interpolation computes `inf - inf`, which is
+`nan`, and `nan` survives the multiply. Every reported median and 5th-to-95th interval flows through
+this function. `nan` is worse than wrong here, because it compares false against every threshold, so
+a materiality or ordering test downstream counts the draw as immaterial rather than skipping it — a
+silent bias toward "no difference" in exactly the comparisons §5.6 reports. Reachable: level 3 is
+unbounded wherever the novelty share is zero, which is what the pessimistic reading asserts. Not
+live at the current parameters (the Jeffreys posterior never draws exactly zero), so the fix moved
+no figure; confirmed by regenerating and comparing checksums.
+
+**Verified correct, with the derivation:**
+
+| What | Check |
+|:--|:-----------|
+| `mlip_filter`, measured basis | `flagged = prevalence x recall / purity` is the right bookkeeping: of the pool, `prevalence x recall` are true positives that pass, and if purity is the true-positive share of passers then passers = true_pos/purity |
+| `mlip_filter`, `recall_if_matbench_fpr` | From `P = pi.r / (pi.r + (1-pi).f)`, solving for `r` gives `P(1-pi)f / (pi(1-P))`, which is what the code computes |
+| `mlip_filter`, `implied_fpr` | From `flagged = pi.r + (1-pi).f`, `f = (flagged - pi.r)/(1-pi)` |
+| Stage cost allocation | `_stage` charges cost on candidates ENTERING a stage, not survivors, so failed DFT runs and failed synthesis attempts are paid for |
+| `novel_beyond_mp` | Conditions correctly as `frac_novel_all_db / frac_novel_mp`, both shares being of all generated |
+| Success bound | `success x filtered multiplier` is guarded and raises above 1. Expected this to be a hole, since the multiplier is only checked for non-negativity. It is not |
+| `attempt_cost_thresholds`, compute share | From `c/(c + k.a) = s`, `a = c(1-s)/(s.k)` |
+| `attempt_cost_thresholds`, spread | From `(max(c) + k.a)/(min(c) + k.a) = S`, `a = (max(c) - S.min(c))/(k(S-1))` |
+| `purity_for_parity` | Bisection bracket is correct — the gap decreases in purity — and the floor is `prevalence x recall`, below which the pass fraction would exceed 1 (0.030 x 0.7585 = 2.28%) |
+| `multiplier_for_level2_spread` | Hits its targets to six decimal places (1.4473 and 1.9297 give spreads of exactly 1.500000 and 2.000000, implying 42% and 56% success), and its `m_max = 1/S` is 3.4286, the same feasibility ceiling Appendix A.3 reports as 3.429 |
+| `kill_condition` | Implementation matches its docstring: histograms hold normalised probabilities rather than densities and are not divided by bin width, the bin index is clamped so the maximum lands in the last bin, the reported materiality statistic is the symmetric `max/min - 1`, and the directional form is computed only so the difference is inspectable |
+| The two percentile conventions | Limitation 10 compares an interpolated percentile with a nearest-rank weighted one. They differ by 0.009% on that figure and agree to the cent at equal weights — four orders of magnitude inside the ±3.8% Monte Carlo error on a 95th percentile |
+| Generator reproducibility | `results/` regenerates byte-identically; no unseeded RNG anywhere in the generating code, now pinned by a test |
+
+**Two latent edge cases, inert at these parameters,** both reachable only through infinite costs and
+both in superseded or diagnostic quantities rather than reported ones: `a/b` with `b` infinite scores
+as material in `p_material_directional`, and `inf < inf` is False in `p_lt`.
