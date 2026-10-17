@@ -393,7 +393,7 @@ parameters:
     high: 0.009057
     unit: core-s per ionic step per atom
     source_url: data/mlip_benchmark/timings.csv
-    source_note: Config primary_1thread, 6 native structures. Base = pooled sum(core-s per step) / sum(atoms); range = per-structure min/max. Per-step cost grows ~linearly with size across ALL SEVEN sizes (log-log slope 1.05, PROTOCOL.md section 7); on the 6 native structures this base value is pooled over, the slope is 0.83, i.e. sub-linear. CHANGED 2026-10-18 -- the note quoted the all-7 slope in the same sentence as '6 native structures', which made a sub-linear subset read as linear.
+    source_note: Config primary_1thread, 6 native structures. Base = pooled sum(core-s per step) / sum(atoms); range = per-structure min/max. Per-step cost grows with size at log-log slope 1.05 over all seven sizes (PROTOCOL.md section 7) and slope 0.83 over the 6 native structures this base value pools -- near-linear on the full set, sub-linear on the subset used. CHANGED 2026-10-18 -- the note quoted the all-7 figure in the same sentence as '6 native structures', so a sub-linear subset read as linear.
     evidence_grade: first_hand
 
   - name: mlip.mace-mp-0.step_cost_per_atom
@@ -402,7 +402,7 @@ parameters:
     high: 0.04325
     unit: core-s per ionic step per atom
     source_url: data/mlip_benchmark/timings.csv
-    source_note: As for CHGNet. Log-log slope 0.99 over all seven sizes, 0.95 over the 6 native structures the base value pools.
+    source_note: As for CHGNet. Log-log slope 0.99 over all seven sizes and slope 0.95 over the 6 native structures this base value pools.
     evidence_grade: first_hand
 
   - name: mlip.m3gnet.step_cost_per_atom
@@ -411,7 +411,7 @@ parameters:
     high: 0.003920
     unit: core-s per ionic step per atom
     source_url: data/mlip_benchmark/timings.csv
-    source_note: As for CHGNet. Log-log slope 0.89 over all seven sizes, 0.83 over the 6 native structures the base value pools. Five of six of these runs hit the step cap; the per-step cost is still valid.
+    source_note: As for CHGNet. Log-log slope 0.89 over all seven sizes and slope 0.83 over the 6 native structures this base value pools. Five of six of these runs hit the step cap; the per-step cost is still valid.
     evidence_grade: first_hand
 
   - name: mlip.steps_per_relaxation

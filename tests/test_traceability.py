@@ -232,3 +232,46 @@ def test_molar_mass():
 
     assert molar_mass("Li2CO3") == pytest.approx(73.89, abs=0.01)
     assert molar_mass("In2O3") == pytest.approx(277.63, abs=0.01)
+
+
+def test_step_cost_notes_quote_the_slopes_they_claim():
+    """The source_notes name log-log slopes, and nothing recomputed them.
+
+    All three `mlip.*.step_cost_per_atom` notes said "6 native structures" and then quoted the
+    ALL-SEVEN slope. For CHGNet that turned the sub-linear 0.83 of the subset the base value
+    actually pools over into "grows ~linearly with size (log-log slope 1.05)". Corrected 2026-10-18
+    to state both.
+
+    This is the gap the rest of this file leaves open: every other check here verifies that the YAML
+    matches `derive.py`, so regenerating from the code makes them pass whatever the prose says. A
+    slope is never computed by `derive.py` at all, so no amount of YAML-to-code checking could have
+    caught it. Here the ground truth is computable, so it is checked.
+    """
+    import math as _math
+    import re as _re
+    import statistics as _stats
+
+    rows = read_csv(MLIP_CSV)
+
+    def slope(model, native_only):
+        pts = [(int(r["n_atoms"]), float(r["core_seconds_per_ionic_step"])) for r in rows
+               if r["config"] == "primary_1thread" and r["run_kind"] == "main"
+               and r["model"] == model and not (native_only and int(r["n_atoms"]) > 32)]
+        xs = [_math.log(n) for n, _ in pts]
+        ys = [_math.log(c) for _, c in pts]
+        mx, my = _stats.fmean(xs), _stats.fmean(ys)
+        return (sum((x - mx) * (y - my) for x, y in zip(xs, ys))
+                / sum((x - mx) ** 2 for x in xs))
+
+    recs = records(load())
+    for model in ("chgnet", "mace-mp-0", "m3gnet"):
+        note = recs[f"mlip.{model}.step_cost_per_atom"]["source_note"]
+        quoted = [float(x) for x in _re.findall(r"slope (\d\.\d\d)", note)]
+        assert len(quoted) == 2, (
+            f"{model}'s note should quote both slopes, the all-7 fit and the native-6 fit the base "
+            f"value pools over; found {quoted}")
+        for got, native in zip(quoted, (False, True)):
+            want = slope(model, native)
+            assert abs(got - want) < 0.005, (
+                f"{model} note says slope {got} for the "
+                f"{'native-6' if native else 'all-7'} fit; the data gives {want:.4f}")
