@@ -180,6 +180,22 @@ Materials Cloud file server returned HTTP 503.
 | `walker2026carbon` | verified | Eight configurations from fully ML to fully DFT, emissions per strategy, and the authors' own accuracy--emissions front. The source calls the learned scissor correction a "viable" intermediate method; an earlier draft called it "strong", which overstated it, and the compression of Section 2.1 removed that sentence before this pass. Still an Advance Article, so the absent pagination is correct. |
 | `renault2026comment` | verified, and the citation reframed | The Comment argues that dating adoption by the first LLM-flagged abstract is mechanically related to output and that placebo flags reproduce the reported dynamics. Citing it in a bare semicolon list beside `kusumegi2025` implied two concordant sources; Section 2.2 now states that it contests the identification. The paper uses none of Kusumegi's effect sizes. |
 
+### First-hand benchmark claims, re-derived from the raw timing data
+
+Every claim the paper makes about its own measurements was recomputed from `data/dft_benchmark/timings.csv`
+and `data/mlip_benchmark/timings.csv`. All eight hold exactly.
+
+| Claim | Checked against the data |
+|:--|:-----------|
+| Seven structures, 10 to 56 atoms | 7 distinct sizes: 10, 14, 16, 20, 28, 32, 56 |
+| Twelve ranks cost 2.6 to 7.3 times four | Per-size medians give 2.63 to 7.30 |
+| 0.480 against 3.842 core-hours, factor 8.0, exponent 3.0 | Medians are 0.480 and 3.842; factor 8.00; log2 = 3.00 |
+| Step count 18 to 81 | 68 converged CHGNet and MACE relaxations span exactly 18 to 81. M3GNet is correctly excluded: all its converged runs report 191 steps, set by the cap rather than by convergence |
+| One of three potentials failed on six of seven structures | M3GNet converged on 1 of 7 in `primary_1thread`. The MLIP protocol's "5 of 6" excludes the non-native supercell; both figures are right for their populations |
+| Twelve threads cost 32 to 90 times one | The sweep's billed-cost multiplier runs 32.27 to 89.98. Note for anyone re-checking: `core_seconds_per_ionic_step` gives a different and much smaller range, because it normalises away the step count; the billed-cost column is the right basis for a core-hour claim |
+| ecutwfc 40 Ry, ecutrho 200 Ry for every run | Both constant across all 45 DFT rows |
+| Spin-polarised for the manganese structures only | Holds for all rows; the three Mn formulas are the three spin-polarised ones |
+
 ### Still open at upload
 
 - **The Kusumegi figures (23.7%, 89.3%).** Read from a third-party-hosted PDF because science.org was
