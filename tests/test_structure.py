@@ -554,6 +554,33 @@ def test_fee_schedule_lists_every_input_to_the_attempt_cost():
         f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
 
 
+def test_the_generator_draws_no_unseeded_randomness():
+    """Everything in results/ must reproduce from the pinned seed, and two new sampling loops were
+    added on 2026-10-18 that could have broken that silently.
+
+    The bootstrap behind 5.7's precision figures and the attempt-cost median loop both construct
+    their own RNG. Seeded off MC_SEED they are reproducible; left bare they would make every
+    regeneration differ in its last digits, so the replication package would stop matching the
+    paper for reasons no reader could diagnose. Running stage2.py twice and comparing is the direct
+    check, but it costs two and a half minutes, so this reads the source instead: every RNG must be
+    constructed with an argument, and the module-level generator -- which is seeded by the clock --
+    must not be used at all.
+    """
+    import pathlib as _p, re
+    root = _p.Path(__file__).resolve().parents[1]
+    for name in ("scripts/stage2.py", "src/sampling.py", "src/analysis.py"):
+        src = (root / name).read_text()
+        body = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
+        bare = re.findall(r"\brandom\.Random\(\s*\)", body)
+        assert not bare, f"{name} constructs an unseeded Random()"
+        # the module-level functions draw from the global clock-seeded generator
+        globals_used = re.findall(r"(?<![\w.])random\.(choice|choices|random|uniform|betavariate"
+                                  r"|triangular|shuffle|sample|gauss|normalvariate)\(", body)
+        assert not globals_used, (
+            f"{name} uses the module-level random generator ({sorted(set(globals_used))}), which is "
+            f"seeded from the clock, so results/ would not reproduce")
+
+
 def test_every_path_the_readme_names_exists():
     """The README is the replication package's front door, and it pointed at three dead files.
 
