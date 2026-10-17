@@ -9,7 +9,11 @@ from src.bib import BIB, draft_citations, entries, keys, parameter_citations
 from src.params import load
 
 ROOT = Path(__file__).resolve().parent.parent
-DRAFT = ROOT / "paper" / "p1-final.md"
+# Both documents. Checking only p1-final.md left four keys unguarded -- bartel2020, cfr200468,
+# riebesell2025correction and wang2021corrections are cited only in the appendices -- and a broken
+# key there renders as a bare marker in the companion PDF, which is the half a referee checks the
+# provenance in. (All four do resolve; they were simply not being checked.)
+DRAFTS = [ROOT / "paper" / "p1-final.md", ROOT / "paper" / "p1-appendices.md"]
 
 
 def test_bib_keys_unique():
@@ -36,9 +40,15 @@ def test_parameters_with_bib_sources_keep_their_urls():
 
 def test_draft_citations_resolve():
     bib = set(keys())
-    cited = draft_citations(DRAFT.read_text())
-    missing = sorted({k for k in cited if k not in bib})
-    assert not missing, f"draft cites keys absent from {BIB.name}: {missing}"
+    missing = {}
+    for draft in DRAFTS:
+        assert draft.exists(), f"{draft.name} is missing, so its citations go unchecked"
+        cited = draft_citations(draft.read_text())
+        assert cited, f"{draft.name} cites nothing, which means the parser has stopped matching"
+        bad = sorted({k for k in cited if k not in bib})
+        if bad:
+            missing[draft.name] = bad
+    assert not missing, f"a document cites keys absent from {BIB.name}: {missing}"
 
 
 def test_bib_entries_have_titles_and_years():
