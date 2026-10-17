@@ -1035,6 +1035,16 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     # Evidence-grade census. Generated because 4.1 and Limitation 9 state these counts, and an
     # earlier version of the manuscript claimed three parameters were graded `missing` when the
     # parameter file had one -- a drift that rereading never caught because nothing checked it.
+    # Span-to-grade examples quoted in 4.1. Generated because the sentence previously asserted a
+    # grade the record does not carry -- it called dft.cost_per_candidate `published` when it is
+    # `derived` -- and nothing checked the claim against the file it describes.
+    _r = records(doc)
+    for _n, _tag in (("synth.success_unconditional", "success"),
+                     ("synth.xrd_cost_per_sample", "xrd"),
+                     ("dft.cost_per_candidate", "dft")):
+        _rec = _r[_n]
+        k[f"span_ratio_{_tag}"] = f"{float(_rec['high']) / float(_rec['low']):.0f}"
+        k[f"span_grade_{_tag}"] = str(_rec.get("evidence_grade"))
     _grades = collections.Counter(r.get("evidence_grade") for r in records(doc).values())
     k["grade_total"] = f"{sum(_grades.values()):,}"
     for _g, _n in _grades.items():

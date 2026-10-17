@@ -1,4 +1,10 @@
 {
+ "span_ratio_success": "12",
+ "span_grade_success": "published",
+ "span_ratio_xrd": "30",
+ "span_grade_xrd": "published",
+ "span_ratio_dft": "336",
+ "span_grade_dft": "derived",
  "grade_total": "89",
  "grade_proxy": "8",
  "grade_first_hand": "15",
