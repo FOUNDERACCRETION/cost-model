@@ -624,3 +624,26 @@ def test_monte_carlo_and_scenarios_agree_on_reported_recipe_counts():
     med = an.percentile([d["costs"][lvl]["B"] for d in mc["draws"] if d["worldview"] == "middle_prein"], 50)
     sc = an.scenarios(doc)["middle_prein"]["costs"][lvl]["B"]
     assert 0.3 < med / sc < 3.0, f"simulated median {med:,.0f} is far from the scenario cost {sc:,.0f}"
+
+
+def test_mlip_relaxation_cost_is_negligible_against_dft(doc):
+    """5.2's argument rests on the MLIP relaxations costing almost nothing, and the figure it
+    quoted for them was wrong by more than an order of magnitude on every denominator.
+
+    The section argues that the level-1 cost ratio between two pipelines approaches their purity
+    ratio *because* DFT dominates the compute term. That inference is only valid while the non-DFT
+    compute is negligible, so the claim and the number need to move together. It previously said
+    "about three cents"; the relaxations are $0.0019 per robust prediction, and no denominator in
+    the model -- per candidate screened, per DFT-stable hit, per robust prediction, per validated
+    material, or per candidate at the worst twelve-thread penalty -- produces three cents.
+    """
+    p = resolve(doc)
+    l1_b = funnel(p)["pipelines"]["B"]["outputs"]["dft_confirmed_stable"]["usd_per"]
+    dft_only = (p["dft_cost_per_candidate"] * p["price_per_core_hour"]
+                / p["pool_filter_purity"] / (1 - p["dft_wrong_verdict_frac"]))
+    non_dft = l1_b - dft_only
+    assert non_dft > 0, "the filter and pool must cost something"
+    # Negligible, and by a wide margin: if this ever exceeds a per cent of level 1, the purity-ratio
+    # approximation in 5.2 stops being safe and the section needs rewriting, not just renumbering.
+    assert non_dft / l1_b < 0.01, f"non-DFT compute is {non_dft / l1_b:.2%} of B's level 1"
+    assert non_dft < 0.01, f"${non_dft:.4f} is no longer a fraction of a cent"

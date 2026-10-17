@@ -1158,6 +1158,15 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
             _g = _c["gap"] * 100
             k[f"jbr_{_tag}"] = f"{_g:.0f}%" if _c["material"] else f"{_g:.1f}%"
     k["jbr_material_cells"] = f"{sum(c['material'] for r in _jbr['grid'] for c in r)}"
+    # What the MLIP relaxations actually cost, as a share of pipeline B's level-1 compute. 5.2's
+    # argument -- that the level-1 ratio between pipelines approaches their purity ratio whenever
+    # DFT dominates the compute term -- rests on this being negligible, and the figure the section
+    # quoted for it was wrong by more than an order of magnitude on every denominator.
+    _l1_B = s1["l1"]["B"]
+    _dft_only_B = (p["dft_cost_per_candidate"] * p["price_per_core_hour"]
+                   / p["pool_filter_purity"] / (1 - p["dft_wrong_verdict_frac"]))
+    k["mlip_usd_per_robust_B"] = f"${_l1_B - _dft_only_B:.4f}"
+    k["mlip_share_of_B_l1"] = f"{(_l1_B - _dft_only_B) / _l1_B:.2%}"
     # Upstream compute per candidate reaching synthesis, which 5.4 quotes for pipeline A when it
     # walks the level-2 equation by hand.
     for x, v in upstream_per_target(p).items():

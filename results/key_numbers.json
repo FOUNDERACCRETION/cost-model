@@ -187,6 +187,8 @@
  "jbr_1p20_1p10": "5.3%",
  "jbr_1p20_1p20": "13%",
  "jbr_material_cells": "26",
+ "mlip_usd_per_robust_B": "$0.0019",
+ "mlip_share_of_B_l1": "0.01%",
  "c0_A": "$26.44",
  "c0_B": "$16.00",
  "c0_C": "$64.35",
