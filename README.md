@@ -101,7 +101,14 @@ sits at about 3.75% and CDVAE at about 8.8%. The labels are unambiguous and the 
 plot-reading error is small (±0.3 points). Sampling error on 300 structures is larger. **The 4× is sensitive to
 this value:**
 
-| C / B at level 1 | MatterGen purity 2.28% (lowest consistent) | 3.8% (base) | 6.98% (high) |
+This grid sweeps the record's own range, where the high endpoint 6.98% is the Wilson 95% upper bound
+on MatterGen's own 3.8%. The paper's Limitation 3 sweeps a different thing — the full 3.8% to 8.8%
+range the source prints for two models without assigning endpoints, i.e. "what if the MatterGen
+point were the other end of the printed range" — and so reports 4.02× to 1.75× rather than the
+4.0× to 2.2× below. Both are legitimate; they answer different questions, and neither is the other's
+correction.
+
+| C / B at level 1 | MatterGen purity 2.28% (lowest consistent) | 3.8% (base) | 6.98% (high, Wilson on MatterGen's own point) |
 |---|---|---|---|
 | ion exchange purity 15.2% | 6.7× | 4.0× | 2.2× |
 | ion exchange purity 11.6% / 19.7% | | 3.1× / 5.2× | 1.7× / 2.9× |
