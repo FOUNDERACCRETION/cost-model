@@ -1233,7 +1233,7 @@ monte_carlo:
           success: {type: beta_counts, k: 3, n: 58}
           recipes: 6.1207                               # 355/58, reported by the 2023 article Leeman re-analyse.
                                                         # CHANGED 2026-10-11: this reading used the budget-model fallback,
-                                                        # which returned 9.06 at a 3/58 success rate. Wrong in kind: Leeman
+                                                        # which returned 9.07 at a 3/58 success rate. Wrong in kind: Leeman
                                                         # re-count the SAME campaign, so its experiment count is observed,
                                                         # and the fallback exists for readings where it is not. 355 and 58
                                                         # are the 2023 article's own pair; 353/57 is the corrected one and

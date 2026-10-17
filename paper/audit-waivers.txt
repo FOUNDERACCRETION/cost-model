@@ -112,3 +112,7 @@ span_base_share_lo: component of span_base_share, quoted as part of that range
 span_high_share: quoted in the 5.4 span table as "19--48%"
 span_high_share_lo: component of span_high_share, quoted as part of that range
 synthesis_share_base: the same quantity as span_base_share, quoted once
+
+# --- Pre-upload pass, 18 October 2026 --------------------------------------------------------
+c0_B: 5.4 walks the level-2 equation for pipeline A only; B's and C's upstream terms are in the package
+c0_C: as above

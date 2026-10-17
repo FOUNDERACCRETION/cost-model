@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src import analysis as an  # noqa: E402
-from src.funnel import funnel, synthesis_cost_per_attempt  # noqa: E402
+from src.funnel import funnel, synthesis_cost_per_attempt
+from src.sampling import recipes_for_success  # noqa: E402
 from src.params import load, records, resolve  # noqa: E402
 
 LEVEL_NAMES = {
@@ -1083,9 +1084,19 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["synthesis_share_base"] = k["span_base_share"]
     parts = s1["att"]["parts"]
     k["attempt"] = money(s1["att"]["usd"])
+    # Every component, not a subset: 3.5 prints the full breakdown, and the two that were missing
+    # here (crucible, other consumables) were the two the audit could not check.
     for name in ("xrd", "furnace", "labour", "tuition", "precursors"):
         k[f"attempt_{name}"] = money(parts[name])
+    k["attempt_crucible"] = money(parts["crucible"])
+    k["attempt_other_consumables"] = money(parts["other consumables"])
     k["attempt_indirect"] = money(parts["indirect (F&A)"])
+    # The base the indirect rate is applied over, and the term it replaced. 4.5 quotes both.
+    _fa_base = s1["att"]["usd"] - parts["indirect (F&A)"]
+    k["attempt_fa_base"] = money(_fa_base)
+    k["attempt_fa_base_2dp"] = f"${_fa_base:,.2f}"   # 4.5 prints the unrounded base
+    _mtdc_parts = synthesis_cost_per_attempt({**p, "indirect_base": "mtdc"})["parts"]
+    k["attempt_indirect_mtdc"] = money(_mtdc_parts["indirect (F&A)"])
     k["indirect_rate"] = f"{s1['rate']:.0%}"
     for b, tag in zip(s1["bases"], ("bench", "funder", "funder_fees_in")):
         k[f"basis_{tag}_attempt"] = money(b["attempt"])
@@ -1128,6 +1139,35 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["wchem_l1_spread_pct"] = f"{_wsweep['l1_ratio'] - 1:.0%}"
     k["wchem_l2_ratio"] = f"{_wsweep['l2_ratio']:.2f}"
     k["wchem_spread_pp"] = f"{(_wsweep['hi']['w'] - _wsweep['lo']['w']) * 100:.1f}"
+    # A.2's joint boundary grid: 36 cells, every one of them transcribed by hand into the appendix
+    # and none of them previously audited. Emitting each cell puts the whole table under the check.
+    _jbr = joint_boundary_region(p)
+    for _row in _jbr["grid"]:
+        for _c in _row:
+            _tag = f"{_c['s_ratio']:.2f}_{_c['r_ratio']:.2f}".replace(".", "p")
+            _g = _c["gap"] * 100
+            k[f"jbr_{_tag}"] = f"{_g:.0f}%" if _c["material"] else f"{_g:.1f}%"
+    k["jbr_material_cells"] = f"{sum(c['material'] for r in _jbr['grid'] for c in r)}"
+    # Upstream compute per candidate reaching synthesis, which 5.4 quotes for pipeline A when it
+    # walks the level-2 equation by hand.
+    for x, v in upstream_per_target(p).items():
+        k[f"c0_{x}"] = f"${v:,.2f}"
+    # Generation's share of the generative pipeline's compute spend. 5.3 asserts it is negligible;
+    # that assertion is the reason generation cost is not a lever anywhere in the paper.
+    _c = funnel(p)["pipelines"]["C"]["outputs"]["experimentally_validated"]
+    k["gen_share_of_C_compute"] = (
+        f"{_c['gpu_h_per'] * p['price_per_gpu_hour'] / _c['compute_usd_per']:.1%}")
+    # What the budget-model fallback WOULD have charged the pessimistic reading, which 5.7 quotes
+    # as the size of the error avoided. Computed, not remembered.
+    _rec_pes = doc["monte_carlo"]["joint"]["worldview"]["readings"]["pessimistic_leeman"]
+    _s_pes = _rec_pes["success"]["k"] / _rec_pes["success"]["n"]
+    _r_reported = float(_rec_pes["recipes"])
+    _r_derived = recipes_for_success(_s_pes, records(doc)["synth.recipe_budget"]["base"])
+    _q = {**p, "synth_success_unconditional": _s_pes}
+    _cost = lambda rr: an.costs({**_q, "synth_recipes_per_target": rr})["experimentally_validated"]["B"]
+    k["leeman_fallback_recipes"] = f"{_r_derived:.2f}"
+    k["leeman_fallback_extra_recipes"] = f"{_r_derived - _r_reported:.2f}"
+    k["leeman_fallback_inflation"] = f"{_cost(_r_derived) / _cost(_r_reported) - 1:.0%}"
     idt = identification_tier_spread(doc)
     k["idtier_self_use"] = money(idt["tiers"]["self_use"])
     k["idtier_internal"] = money(idt["tiers"]["internal"])
@@ -1422,6 +1462,11 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     t = an.attempt_cost_thresholds(p, COMPUTE_SHARE, SPREAD)
     k["threshold_lo"] = money(min(t["attempt_for_compute_share"].values()))
     k["threshold_hi"] = money(max(t["attempt_for_compute_share"].values()))
+    # Per pipeline, because 5.9 names all three and only the extremes were generated.
+    for i, x in enumerate(P):
+        k[f"threshold_{x}"] = money(t["attempt_for_compute_share"][x])
+        # Compute's share of level-2 cost, read off the level-2 decomposition rather than rebuilt.
+        k[f"compute_share_{x}"] = f"{s1['l2'][i]['compute_usd_per'] / s1['l2'][i]['usd_per']:.1%}"
     par = an.purity_for_parity(p, "B")
     k["parity_purity"], k["parity_ratio"] = pct(par["purity"], 1), f"{par['ratio_to_measured']:.1f}"
     k["mult_2x_success_from"] = pct(p["synth_success_unconditional"])
