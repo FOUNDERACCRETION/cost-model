@@ -1187,6 +1187,14 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["leeman_fallback_recipes"] = f"{_r_derived:.2f}"
     k["leeman_fallback_extra_recipes"] = f"{_r_derived - _r_reported:.2f}"
     k["leeman_fallback_inflation"] = f"{_cost(_r_derived) / _cost(_r_reported) - 1:.0%}"
+    # S1's discovery acceleration factors, including the prevalence-adjusted ones. S1 printed 4.05
+    # for the ion-exchange pool where the generator gives 4.01, with 5.05 (the generative pool's
+    # value) sitting in the adjacent cell -- a transposition that nothing checked.
+    _daf = an.enrichment(doc, p)
+    k["daf_wbm_reported"] = f"{_daf['wbm']['daf_reported']:.2f}"
+    for _src, _tag in (("pool", "pool"), ("gen", "gen")):
+        k[f"daf_{_tag}_measured"] = f"{_daf[_src]['daf_measured']:.2f}"
+        k[f"daf_{_tag}_adjusted"] = f"{_daf[_src]['daf_matbench_rates_at_this_prevalence']:.2f}"
     idt = identification_tier_spread(doc)
     k["idtier_self_use"] = money(idt["tiers"]["self_use"])
     k["idtier_internal"] = money(idt["tiers"]["internal"])
