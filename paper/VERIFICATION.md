@@ -171,6 +171,15 @@ could not be assessed. The protocol was recorded in the benchmark package throug
 in the manuscript, including the forced substitution of GBRV for the planned SSSP library after the
 Materials Cloud file server returned HTTP 503.
 
+### Four flagged citations, read at source this pass
+
+| Entry | Verdict | Evidence |
+|:--|:--|:-----------|
+| `agrawal2026aiinscience` | verified | NBER WP 34953, **equation (9)**: productivity is $\alpha\beta\gamma\delta$ over question generation, idea generation, design generation and testing. The attribution holds in full, including testing as a stage, so contribution 3 rests on a first-hand read. Section 2.2 now cites the equation number. |
+| `riebesell2025` | verified | "could **consequently** be interpreted as overestimating the performance" appears verbatim, and the stated reason for declining a combined hull is path-dependence. Read in arXiv v3 §2.1.3 and in a lab-hosted copy of the published *Nature Machine Intelligence* version; **not** checked against nature.com, which blocks the fetch. |
+| `walker2026carbon` | verified | Eight configurations from fully ML to fully DFT, emissions per strategy, and the authors' own accuracy--emissions front. The source calls the learned scissor correction a "viable" intermediate method; an earlier draft called it "strong", which overstated it, and the compression of Section 2.1 removed that sentence before this pass. Still an Advance Article, so the absent pagination is correct. |
+| `renault2026comment` | verified, and the citation reframed | The Comment argues that dating adoption by the first LLM-flagged abstract is mechanically related to output and that placebo flags reproduce the reported dynamics. Citing it in a bare semicolon list beside `kusumegi2025` implied two concordant sources; Section 2.2 now states that it contests the identification. The paper uses none of Kusumegi's effect sizes. |
+
 ### Still open at upload
 
 - **The Kusumegi figures (23.7%, 89.3%).** Read from a third-party-hosted PDF because science.org was
