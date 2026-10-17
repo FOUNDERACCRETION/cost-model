@@ -554,6 +554,39 @@ def test_fee_schedule_lists_every_input_to_the_attempt_cost():
         f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
 
 
+def test_no_new_key_rides_on_another_keys_quotation():
+    """A key the paper never quotes can pass the audit by sharing a value with one it does.
+
+    xp_filter_material_dft_median was 485 and was satisfied only by the digits of thr_alpha_A's
+    0.485. The paper had never quoted it, and nothing noticed until the value moved to 473 and the
+    match vanished. Four more were found the same way on 2026-10-18 -- two directional materiality
+    figures that live in DIAGNOSTICS.md rather than the paper, and the two overlap reference medians,
+    where S2 quotes the range and the measured coefficient but not the median.
+
+    The audit's old self-report ("202 of 477 checkable keys share a value") overstated this by a
+    factor of twenty: a shared value is harmless when it occurs as often as there are keys claiming
+    it. What matters is over-subscription. The eight that remain are all one quantity under two
+    names -- span_high_l1 and its _2sf twin, the base row and the boundary that reads off it, levels
+    2 and 3 where the figure is identical by construction -- so the ceiling is set at today's count
+    and any NEW one has to be looked at and either waived with a reason or quoted.
+    """
+    import sys, pathlib as _p, json
+    root = _p.Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root / "scripts"))
+    from audit_numbers import over_subscribed, normalise, load_waivers
+
+    keys = json.loads((root / "results" / "key_numbers.json").read_text())
+    body = normalise("\n".join((root / "paper" / p).read_text()
+                               for p in ("p1-final.md", "p1-appendices.md")))
+    shared, over, deficit = over_subscribed(keys, load_waivers(), body)
+    assert shared, "no checkable values found, so this check would pass vacuously"
+    assert deficit <= 8, (
+        "a generated figure is being counted as present only because another key put the same "
+        "value in the manuscript. Quote it, or waive it with a reason:\n"
+        + "\n".join(f"  {v!r}: {body.count(v)} occurrence(s) for {sorted(names)}"
+                    for v, names in over.items()))
+
+
 def test_no_document_quotes_a_retired_value_as_current():
     """Supporting documents were checked by nothing, and one of them was a whole superseded run.
 

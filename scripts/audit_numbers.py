@@ -89,6 +89,23 @@ def _census_states(body: str, keys: dict) -> bool:
     return ok
 
 
+def over_subscribed(keys: dict, waived: dict | set, body: str) -> tuple[dict, dict, int]:
+    """Values claimed by more keys than they have occurrences in the manuscript.
+
+    Returns (all checkable values -> their keys, the over-subscribed subset, the total deficit).
+    Factored out so a test can hold the deficit to a ceiling: a new over-subscription means a key
+    has started riding on another key's quotation, which is how an unquoted key passes the audit.
+    """
+    shared = collections.defaultdict(list)
+    for name in keys:
+        v = normalise(str(keys[name]))
+        if len(v) >= 3 and v not in ("yes", "no") and name not in waived \
+                and not name.startswith("grade_"):
+            shared[v].append(name)
+    over = {v: names for v, names in shared.items() if body.count(v) < len(names)}
+    return shared, over, sum(len(names) - body.count(v) for v, names in over.items())
+
+
 def audit(papers: list[Path], keys_path: Path) -> int:
     # Several files, because the manuscript is split into a main document and a companion holding
     # the appendices and supplements. A figure counts as present if it appears in ANY of them: the
@@ -143,17 +160,24 @@ def audit(papers: list[Path], keys_path: Path) -> int:
     # The check's own limitation, printed so nobody over-trusts it. A key is satisfied by its value
     # appearing ANYWHERE in the document, so two keys that happen to share a value can stand in for
     # each other: the DFT span ratio of 336 and the median verification cost of material generative
-    # draws, also 336, are unrelated quantities that the string match cannot tell apart. This counts
-    # how much of the check is exposed to that. It is not a failure condition -- a collision means
-    # the check is weaker for those keys, not that a figure is wrong.
-    shared = collections.Counter()
-    for name in keys:
-        v = normalise(str(keys[name]))
-        if len(v) >= 3 and v not in ("yes", "no"):
-            shared[v] += 1
-    ambiguous = sum(n for n in shared.values() if n > 1)
-    print(f"  {ambiguous} of {sum(shared.values())} checkable keys share a value with another key, "
-          f"so their match is not uniquely attributable")
+    # draws, also 336, are unrelated quantities that the string match cannot tell apart.
+    #
+    # Counting every key that shares a value overstates this badly -- it reported 202 of 477, which
+    # reads as though 42% of the check were unreliable. Most of those are harmless: the value occurs
+    # as many times as there are keys claiming it, or the keys are the same quantity under two names
+    # (span_high_l1 and span_high_l1_2sf), or identical by construction (levels 2 and 3 share a
+    # materiality figure). What actually matters is OVER-SUBSCRIPTION: a value claimed by more keys
+    # than it has occurrences, where at least one key is riding on another's quotation.
+    #
+    # That is not theoretical. xp_filter_material_dft_median was 485 and was satisfied only by the
+    # digits of thr_alpha_A's 0.485; the paper had never quoted it, and the gap surfaced only when
+    # the value moved to 473. Four more keys were found the same way on 2026-10-18 and waived.
+    shared, over, deficit = over_subscribed(keys, waived, body)
+    print(f"  {deficit} key match(es) rest on an occurrence another key also claims, over "
+          f"{len(over)} value(s) of {len(shared)} checkable")
+    for v, names in sorted(over.items(), key=lambda kv: -len(kv[1]))[:8]:
+        print(f"     {v!r}: {body.count(v)} occurrence(s) for {len(names)} keys "
+              f"({', '.join(sorted(names))})")
 
     if missing:
         print("\nFAIL: a generated figure is absent from the manuscript. Either the manuscript is")
