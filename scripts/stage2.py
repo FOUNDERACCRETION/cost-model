@@ -11,6 +11,7 @@ import collections
 import csv
 import json
 import math
+import random
 import re
 import statistics
 import sys
@@ -38,7 +39,10 @@ COMPUTE_SHARE = 0.10
 SPREAD = 1.10
 MATERIAL = 0.10
 OVERLAP_REPS = 60
-THRESHOLD_DRAWS = 1500  # draws behind the threshold distribution in Section 5.5  # resampling replicates behind the overlap reference range in Section 5.7
+# Bootstrap resamples behind the Monte Carlo precision figures reported in A.5. 600 is enough for
+# a half-width quoted to one decimal place and costs a couple of seconds on the draws in hand.
+BOOTSTRAP_REPS = 600
+THRESHOLD_DRAWS = 1500  # draws behind the threshold distribution in Section 5.5
 ORDER_SURVIVES = 0.95
 MATERIAL_MAJORITY = 0.50
 TOP_SHARE = 0.80
@@ -1417,12 +1421,13 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["thr_printed_coeff_shift_10"] = f"{abs(tc['roots_from_printed_coefficients'][0.10] - r10['closed_form']):.2f}"
     # Monte Carlo and readings
     lvl = "experimentally_validated"
-    med = {}
+    med, _reading_draws = {}, {}
     for name in WORLDVIEW:
         xs = {x: [d["costs"][lvl][x] for d in mc["draws"] if d["worldview"] == name] for x in P}
         med[name] = {x: an.percentile(xs[x], 50) for x in P}
         k[f"reading_{name}_B"] = money(med[name]["B"])
         k[f"reading_{name}_B_interval"] = f"{money(an.percentile(xs['B'], 5))}–{money(an.percentile(xs['B'], 95))}"
+        _reading_draws[name] = xs["B"]
     # Max over min across readings, NOT pessimistic/optimistic: the readings are named for how
     # optimistic their success reading is, and since the middle reading reports one recipe per
     # target it is now the cheapest, so "optimistic" is no longer the lower bound on cost.
@@ -1437,6 +1442,41 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     _reading_hi = max(med[w]["B"] for w in WORLDVIEW)
     k["reading_span_B_2sf"] = f"{money2sf(_reading_lo)} to {money2sf(_reading_hi)}"
     k["reading_lo_B_2sf"], k["reading_hi_B_2sf"] = money2sf(_reading_lo), money2sf(_reading_hi)
+    #
+    # HOW PRECISE THESE MEDIANS ACTUALLY ARE. The paper printed them to four and five significant
+    # figures ($3,005, $34,286, $14,807-$100,835) with nothing stated about their Monte Carlo
+    # error, and the rounding policy in A.5 asks for two significant figures on dollar figures per
+    # validated material. Six reseeded runs showed three significant figures are never stable, and
+    # that the middle reading's median straddles the $1,100/$1,200 rounding boundary -- so a 1%
+    # move in the draw produced a 9% move in the printed figure.
+    #
+    # Bootstrapped from the draws already in hand rather than by reseeding, which would cost
+    # another five model runs per figure. Seeded off the Monte Carlo seed so the build stays
+    # reproducible.
+    _bs = random.Random(MC_SEED + 1)
+    _boot = {}
+    for name, xs_B in _reading_draws.items():
+        _n = len(xs_B)
+        # kept in draw order, NOT sorted: the factor below pairs the readings replicate by
+        # replicate, and sorting each reading first would pair the i-th smallest with the i-th
+        # smallest, correlating them and narrowing the factor's interval for no reason
+        _meds = [statistics.median(_bs.choices(xs_B, k=_n)) for _ in range(BOOTSTRAP_REPS)]
+        _boot[name] = _meds
+        _s = sorted(_meds)
+        _lo, _hi = _s[int(0.025 * BOOTSTRAP_REPS)], _s[int(0.975 * BOOTSTRAP_REPS)]
+        _half = (_hi - _lo) / 2 / statistics.median(_s)
+        k[f"reading_{name}_B_mc_halfwidth"] = f"{_half:.1%}"
+        # endpoints too: A.5 quotes the middle reading's upper bound to show that the figure sits
+        # on a two-significant-figure rounding boundary, and that is not a number to hand-type
+        k[f"reading_{name}_B_mc_lo"], k[f"reading_{name}_B_mc_hi"] = money(_lo), money(_hi)
+    _facs = sorted(max(_boot[n_][i] for n_ in _boot) / min(_boot[n_][i] for n_ in _boot)
+                   for i in range(BOOTSTRAP_REPS))
+    k["reading_factor_mc_interval"] = (f"{_facs[int(0.025 * BOOTSTRAP_REPS)]:.1f}"
+                                       f"–{_facs[int(0.975 * BOOTSTRAP_REPS)]:.1f}")
+    k["reading_mc_worst_halfwidth"] = max(
+        (k[f"reading_{n_}_B_mc_halfwidth"] for n_ in _reading_draws),
+        key=lambda s: float(s.rstrip("%")))
+    k["bootstrap_reps"] = f"{BOOTSTRAP_REPS:,}"
     k["reading_factor_median"] = f"{statistics.median(factor.values()):.0f}"
     k["within_reading_max"] = f"{max(max(m.values()) / min(m.values()) for m in med.values()):.2f}"
     # Per-reading pipeline spread. These are reported individually because they are not alike: the

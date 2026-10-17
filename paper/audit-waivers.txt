@@ -122,3 +122,8 @@ kill_l2_material_BA_directional: the superseded directional convention; quoted i
 kill_l3_material_BA_directional: as above, identical to the level-2 value by construction.
 overlap_l1_ref_median: S2 quotes the reference RANGE (96.1%-97.9%) and the measured coefficient, not the median. Its 97% was matching other 97% figures.
 overlap_l2_ref_median: as above for level 2; its 98% was matching kill_l1_material_BA's 98% in the 5.6 table.
+reading_middle_prein_B_mc_lo: A.5 quotes only the upper endpoint, which is the one that crosses the rounding boundary; the half-width is reported for all three readings.
+reading_optimistic_alab_B_mc_lo: as above -- the half-width is what A.5 reports for this reading, not its endpoints.
+reading_optimistic_alab_B_mc_hi: as above.
+reading_pessimistic_leeman_B_mc_lo: as above.
+reading_pessimistic_leeman_B_mc_hi: as above.

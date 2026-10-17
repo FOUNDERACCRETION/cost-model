@@ -167,3 +167,37 @@ worldview display — an optimist reads the zero as consistent with up to 15.6% 
 construction, and a referee may read it as manufacturing an optimistic correlation out of a
 confidence level. It affects only level-3 pipeline ratios, since the paper reports no level-3 cost
 level at all. **Decide whether to keep the per-reading bounds or give every reading the same one.**
+
+---
+
+## 8. Decided, not fixed, 18 October 2026: Monte Carlo precision in §5.7
+
+§5.7 printed its scenario medians to four and five significant figures
+(\$3,005, \$34,286, intervals \$14,807–\$100,835) with nothing said about their sampling error,
+while A.5's own policy asks for two significant figures on dollar figures per validated material.
+Measured it two ways — six reseeded runs, then a 600-resample bootstrap of the pinned run, which
+agree — and the medians carry ±0.6%, ±0.9% and ±1.6%, the percentiles up to ±3.8%, and the factor
+between the extremes is 29.3–30.4. **Three significant figures are not supported anywhere in that
+table.**
+
+**What I did:** generated the half-widths and the factor interval, stated them in §5.7 and in full
+in A.5, and left the table printing what the generator produces. Rounding the table would make the
+pinned-seed run look irreproducible when it is not, so the policy now distinguishes the digits a
+replicator should reproduce exactly from the digits the method supports as claims.
+
+**What I did not do, and why:** raise `monte_carlo.n_draws` from 20,000. It would not fix the one
+figure where this bites. The middle reading's median is \$1,147, whose two-significant-figure value
+is \$1,100, but the interval reaches \$1,157, whose two-significant-figure value is \$1,200 — the
+figure sits on a rounding boundary, so a 1% sampling move becomes a 9% move in what the abstract
+says. Narrowing the interval does not move the median off the boundary: at 100,000 draws the
+interval still straddles \$1,150, and only around 400,000 would it clear. Raising the draw count
+also slows every test that runs the simulation, for a gain that is cosmetic rather than
+substantive.
+
+**Your call.** The abstract now says "roughly \$1,100 to \$34,000, a factor of 30", and both halves
+of that are defensible with the hedge. If you would rather the lower bound not sit on a boundary at
+all, the options are to quote the span to one significant figure (\$1,000 to \$30,000, which loses
+the factor), to quote the deterministic point estimates instead of the medians, or to raise the
+draws to 400,000 and accept a slower build. I would leave it as it stands and let A.5 carry the
+precision, but it is a presentation choice and you should make it knowingly, because a referee who
+reseeds the run will see \$1,100 become \$1,200.

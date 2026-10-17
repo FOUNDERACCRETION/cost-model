@@ -425,7 +425,7 @@ The figures below are Monte Carlo medians within each reading, with every other 
 | Middle (Prein) | 29.2% | 1, reported | \$1,147 | \$650--\$2,379 |
 | Pessimistic (Leeman) | 5.2% | 6.12, reported | \$34,213 | \$15,275--\$101,952 |
 
-Across the three readings that is a factor of 30 for pipeline B --- across all three, not between the extremes of the success rate, for the reason the next paragraph but one gives.
+Across the three readings that is a factor of 30 for pipeline B --- across all three, not between the extremes of the success rate, for the reason the next paragraph but one gives. These are Monte Carlo medians and carry sampling error: bootstrapping the draws puts the factor at 29.3--30.4 and the medians within \pm 0.6%, \pm 0.9% and \pm 1.6%, so the figures above are good to two significant figures and the last two digits of each are noise. Appendix A.5 states the precision in full and why more draws would not improve the one figure that sits on a rounding boundary.
 
 **Each reading carries the recipe count its own campaign published**, and the first and third read the same campaign, so they share its experiment count: @leeman2024 re-count the outcomes of the 2023 article's 355 experiments across 58 targets, 6.12 per target, while the corrected article's 353 across 57 gives 6.19, the two differing only because the correction removed one target and two experiments. A derived count has no place in either: the budget model of Section 3.5 exists for a reading that supplies a success rate without an experiment count, and applying it to a campaign that published its own would here have invented 2.95 extra attempts per target and raised the pessimistic figure by 48% at base parameters.
 
