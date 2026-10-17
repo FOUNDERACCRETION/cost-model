@@ -42,6 +42,8 @@ OVERLAP_REPS = 60
 # Bootstrap resamples behind the Monte Carlo precision figures reported in A.5. 600 is enough for
 # a half-width quoted to one decimal place and costs a couple of seconds on the draws in hand.
 BOOTSTRAP_REPS = 600
+# Draws behind the median attempt cost quoted in 5.7. The funnel is not evaluated, so these are cheap.
+ATTEMPT_MEDIAN_DRAWS = 8000
 THRESHOLD_DRAWS = 1500  # draws behind the threshold distribution in Section 5.5
 ORDER_SURVIVES = 0.95
 MATERIAL_MAJORITY = 0.50
@@ -1441,6 +1443,34 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     _reading_lo = min(med[w]["B"] for w in WORLDVIEW)
     _reading_hi = max(med[w]["B"] for w in WORLDVIEW)
     k["reading_span_B_2sf"] = f"{money2sf(_reading_lo)} to {money2sf(_reading_hi)}"
+    # 5.1 and 5.7 both describe the middle reading and differ by this much, which 5.7 explained in
+    # kind but never sized. 17% is large enough for a reader to suspect an inconsistency rather
+    # than a property of medians, so it is generated and quoted. Most of it is the attempt cost:
+    # several of its inputs are triangular with the base at the MODE and a long right tail, so
+    # their medians sit above base (other consumables 1.8x, furnace hourly 1.5x), which lifts the
+    # median attempt cost to about $299 against the base $271. The rest is that the median of a
+    # ratio is not the ratio of the medians.
+    _det_l2_B = s1["l2"][1]["usd_per"]
+    k["reading_middle_vs_deterministic"] = f"{med['middle_prein']['B'] / _det_l2_B:.2f}"
+    k["reading_middle_vs_deterministic_pct"] = f"{med['middle_prein']['B'] / _det_l2_B - 1:.0%}"
+    # The attempt cost's own median, and the two input medians that move it most. Sampled directly
+    # rather than read off the Monte Carlo, which does not retain per-draw attempt costs; the
+    # funnel is not evaluated, so this is a couple of seconds.
+    from src.sampling import sampler as _sampler
+    _arng, _adraw, _atts = random.Random(MC_SEED), _sampler(doc), []
+    _ins = collections.defaultdict(list)
+    while len(_atts) < ATTEMPT_MEDIAN_DRAWS:
+        _q, _ = _adraw(_arng)
+        if _q is None:
+            continue
+        _atts.append(synthesis_cost_per_attempt(_q)["usd"])
+        for _nm in ("other_consumables_per_attempt", "furnace_hourly"):
+            _ins[_nm].append(_q[_nm])
+    # printed like the base attempt cost ($271), not at two significant figures: $300 would
+    # collide with the top of the abstract's $190-to-$300 range, which is a different quantity
+    k["attempt_mc_median"] = f"${statistics.median(_atts):,.0f}"
+    for _nm, _vs in _ins.items():
+        k[f"inputmed_{_nm}"] = f"{statistics.median(_vs) / p[_nm]:.1f}"
     k["reading_lo_B_2sf"], k["reading_hi_B_2sf"] = money2sf(_reading_lo), money2sf(_reading_hi)
     #
     # HOW PRECISE THESE MEDIANS ACTUALLY ARE. The paper printed them to four and five significant
