@@ -616,7 +616,7 @@ parameters:
     unit: core-h per candidate (one DFT stability check)
     role: primary
     source_url: data/dft_benchmark/timings.csv
-    source_note: "A span, not a point. Low: our first-hand estimate at the base size (18 atoms), from the dft.scf_* and dft.ionic_steps records below (QE 6.7, PBE, GBRV ultrasoft, 4 ranks on an ARM64 laptop; 3.77 at 20 atoms). High: Materials Project, 1-5 calculations per material at ~200 CPU-h each (https://www.nersc.gov/assets/Uploads/NERSCuserday-jain.pdf). Base: geometric midpoint sqrt(low x high), a convention; the span covers more than two orders of magnitude, so stage 2 should sample it log-uniformly. Both provenance points are kept as the cross-check records dft.mp_2012_* below."
+    source_note: "A span, not a point. Low: our first-hand estimate at the base size (18 atoms), from the dft.scf_* and dft.ionic_steps records below (QE 6.7, PBE, GBRV ultrasoft, 4 ranks on an ARM64 laptop; the fit gives 3.59 at 20 atoms, where the raw measured median is 3.77 -- CHANGED 2026-10-18, this note quoted the measured 3.77 as though it were the fitted value). High: Materials Project, 1-5 calculations per material at ~200 CPU-h each (https://www.nersc.gov/assets/Uploads/NERSCuserday-jain.pdf). Base: geometric midpoint sqrt(low x high), a convention; the span covers more than two orders of magnitude, so stage 2 should sample it log-uniformly. Both provenance points are kept as the cross-check records dft.mp_2012_* below."
     evidence_grade: derived
 
   - name: dft.mp_2012_per_calculation
@@ -1093,8 +1093,8 @@ correlations:
   - name: success_vs_novelty_worldview
     parameters: [synth.success_unconditional, novelty.science_frac, dft.wrong_verdict_frac]
     sign: positive
-    reason: "Success and novelty come from the same contested re-analyses of the same experiments. A-Lab's 70% success and its novelty claim are one reading; Leeman et al.'s 5% success and zero new materials are another. Low success with high novelty mixes incompatible readings. The wrong-verdict share belongs to the same reading: A-Lab attributes only 3 of 57 failures to computation, while Leeman finds most targets are known disordered phases, i.e. the prediction was wrong."
-    stage2_handling: "Do not sample independently. Report the named scenarios below next to the Monte Carlo; within the Monte Carlo, condition novelty and w on a drawn scenario."
+    reason: "Success and novelty come from the same contested re-analyses of the same experiments. A-Lab's 63.2% success on the corrected count and its platform-novelty claim are one reading; Leeman et al.'s 5% success and zero new materials are another. Low success with high novelty mixes incompatible readings. The wrong-verdict share belongs to the same reading: A-Lab attributes only 3 of 57 failures to computation, while Leeman finds most targets are known disordered phases, i.e. the prediction was wrong."
+    stage2_handling: "Do not sample independently. Report the named scenarios below next to the Monte Carlo; within the Monte Carlo, draw success and w from the drawn reading. Novelty CANNOT be conditioned on the reading: only one novelty count exists (0 of 36) and every reading inherits it, so the drawn novelty carries no reading signal. CHANGED 2026-10-18: the optimistic reading used to draw novelty from 9 of 36, an invalid subtraction of overlapping categories, which manufactured a success-novelty correlation. The deterministic scenarios still assign a different Wilson bound per reading, which is a choice of confidence level rather than a difference in evidence -- see paper/NOT-FIXED.md."
 
   - name: price_basis
     parameters: [price.cpu.on_demand, price.cpu.spot, price.gpu_a100.on_demand, price.gpu_a100.spot]
@@ -1260,7 +1260,15 @@ monte_carlo:
                                                         # left to the budget-model fallback: the fallback is calibrated on
                                                         # this very pair, so it agrees here by construction, and relying on
                                                         # that agreement would hide the fallback if the calibration moved.
-          novelty: {type: beta_counts, k: 9, n: 36}
+          # CHANGED 2026-10-18: was k=9, n=36, Leeman's '9 of 36 not attributed to known
+          # phases'. That count was obtained by subtracting OVERLAPPING error categories
+          # (18 + 8 + 24 + 3 = 53 attributions across 36 compounds), so it is not a count of
+          # anything. novelty.science_frac was corrected on 2026-10-11 and this draw was not,
+          # leaving the Monte Carlo drawing a mean novelty of 25.7% for this reading while the
+          # deterministic path used a Wilson bound on zero, and Section 5.6 told readers every
+          # nonzero value we use is a bound on a zero count. There is one published novelty
+          # count for this campaign and it is zero, so all three readings now inherit it.
+          novelty: {type: beta_counts, k: 0, n: 36}
           wrong_verdict: {type: uniform, low: 0.132, high: 0.16}
         middle_prein:
           source: "Prein et al., arXiv 2511.01790 (2025)"
@@ -1282,7 +1290,7 @@ monte_carlo:
                                                         # belongs to the optimistic reading. Mixing them splices versions.
           novelty: {type: beta_counts, k: 0, n: 36}
           wrong_verdict: {type: beta_counts, k: 57, n: 166}
-      notes: "A-Lab's novelty uses Leeman's 9 of 36 not attributed to known phases (A-Lab's correction makes no new-to-science claim). Prein reports no novelty figure and inherits the only count, 0 of 36. Wrong-verdict share: GNoME's 13.2-16% flip range (no counts) for A-Lab and Prein; An et al.'s 57 of 166 flips for Leeman."
+      notes: "Novelty: all three readings inherit the only published count, 0 of 36. A-Lab's correction makes no new-to-science claim, Prein reports no novelty figure, and Leeman state that none were new. Until 2026-10-18 this reading drew from Leeman's '9 of 36 not attributed to known phases', which is a subtraction of overlapping categories rather than a count. Wrong-verdict share: GNoME's 13.2-16% flip range (no counts) for A-Lab and Prein; An et al.'s 57 of 166 flips for Leeman."
     recipes:
       reason: "Recipes per target fall as per-target success rises (correlation recipes_vs_success)."
       method: "recipes = p / q with q = 1 - (1 - p)^(1 / B), p = unconditional success, B = synth.recipe_budget. Reproduces A-Lab's 6.19 at p = 36/57. CHANGED 2026-10-11: p was (1 - wrong verdict share) x success, which both double-charged computational failure and contradicted this note's own calibration point."

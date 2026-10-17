@@ -1167,6 +1167,22 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
                    / p["pool_filter_purity"] / (1 - p["dft_wrong_verdict_frac"]))
     k["mlip_usd_per_robust_B"] = f"${_l1_B - _dft_only_B:.4f}"
     k["mlip_share_of_B_l1"] = f"{(_l1_B - _dft_only_B) / _l1_B:.2%}"
+    # That pair is everything upstream of DFT: generating the pool AND relaxing it. Section 5.2
+    # called it "the relaxations themselves", which charges generation to relaxation -- the same
+    # misattribution that produced the retracted "about three cents", in the very sentence written
+    # to correct it. Generation is the larger half ($0.0010 against $0.0009 per robust
+    # prediction), so the relaxation-only figures are generated here and the section quotes those.
+    _fB = funnel(p)["pipelines"]["B"]
+    _stage_usd = {_s["stage"]: _s["usd"] for _s in _fB["stages"]}
+    _robust_B = _fB["outputs"]["dft_confirmed_stable"]["count"]
+    _relax_B = _stage_usd["MLIP relax + classify"] / _robust_B
+    _gen_B = _stage_usd["generate"] / _robust_B
+    k["mlip_relax_usd_per_robust_B"] = f"${_relax_B:.4f}"
+    k["mlip_relax_share_of_B_l1"] = f"{_relax_B / _l1_B:.3%}"
+    k["mlip_gen_usd_per_robust_B"] = f"${_gen_B:.4f}"
+    # the two halves must account for the bundle the section used to quote whole
+    assert abs((_relax_B + _gen_B) - (_l1_B - _dft_only_B)) < 1e-9, (
+        "generation + relaxation does not reconstruct the pre-DFT compute per robust prediction")
     # Upstream compute per candidate reaching synthesis, which 5.4 quotes for pipeline A when it
     # walks the level-2 equation by hand.
     for x, v in upstream_per_target(p).items():

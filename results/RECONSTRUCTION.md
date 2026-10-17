@@ -40,8 +40,8 @@ $$C \;=\; \frac{c_0 + r\,a}{S}$$
 | Symbol | Meaning | Value | Where it comes from |
 |:--|:--|--:|:--|
 | $a$ | cost per attempt | $270.64 | section 1 above |
-| $r$ | recipes per target | 1 | `synth.recipes_per_target`: 353 experiments / 57 targets in the reference campaign |
-| $S$ | unconditional synthesis success | 0.291667 | `synth.success_unconditional`: 36 of 57 targets, campaign-observed, NOT conditioned on a correct stability label |
+| $r$ | recipes per target | 1 | `synth.recipes_per_target`: 1 per target as reported by Prein et al. |
+| $S$ | unconditional synthesis success | 0.291667 | `synth.success_unconditional`: 7 of 24 targets in Prein et al., campaign-observed, NOT conditioned on a correct stability label |
 | $c_0$ (A) | upstream compute per candidate reaching synthesis | $26.44 | affine in DFT cost; section 3 below |
 
 At base: (26.44 + 1 x 270.64) / 0.291667 = (26.44 + 270.64) / 0.291667 = **$1,018.55** for pipeline A.
@@ -67,7 +67,7 @@ $$c_{0i}(d) \;=\; \alpha_i d + \beta_i$$
 | B | 0.2934210526 | 0.0015626629 |
 | C | 1.1736842105 | 0.3381360265 |
 
-$\alpha$ carries the compute price (`compute.price_per_core_hour` = $0.04/core-h) and the number of candidates verified per
+$\alpha$ carries the compute price (`price.cpu.on_demand` = \$0.0446/core-h) and the number of candidates verified per
 candidate reaching synthesis, which is where pool prevalence and filter purity enter.
 $\alpha_C/\alpha_B$ = 4.000000, exactly the purity ratio 0.152/0.038.
 

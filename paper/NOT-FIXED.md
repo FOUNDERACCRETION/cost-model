@@ -73,9 +73,14 @@ claim of three was simply out of date. And by the paper's own taxonomy the tuiti
 related but not identical quantity", and the NRSA cap is a training-grant allowance standing in for
 a charge on a research project. The number is published; the *use* is a proxy.
 
-**Did instead:** §4.1 and Limitation 9 now give the real census (46 published, 14 first-hand, 13
+**Did instead:** §4.1 and Limitation 9 now give the real census (46 published, 15 first-hand, 13
 derived, 8 proxy, 5 assumption, 1 figure-read, 1 missing), and the census is generated so the next
 drift fails the build rather than sitting unnoticed.
+
+*Corrected 2026-10-18:* this paragraph said 14 first-hand, summing to 88, while the generated census
+says 15 and 89. The claim that drift "fails the build" was true of the manuscript and false of this
+file, because `audit_numbers.py` was only ever pointed at the two paper files. It is now run over
+this one too.
 
 ---
 
@@ -140,3 +145,25 @@ science.org was unreachable, and that source contains an internal inconsistency 
 caption giving 37.7% where the main text gives 43.0% for one subgroup. **Re-check both figures
 against the publisher version before submission.** `paper/VERIFICATION.md` records this and the
 other claims that could not be closed.
+
+---
+
+## 7. Open question raised 18 October 2026: novelty bounds assigned per reading
+
+Found while fixing a live defect. The Monte Carlo was drawing the optimistic reading's novelty from
+`beta_counts(9, 36)` — Leeman's "9 of 36 not attributed to known phases". That 9 comes from
+subtracting overlapping error categories (18 + 8 + 24 + 3 = 53 attributions across 36 compounds), so
+it counts nothing; `novelty.science_frac` was corrected away from it on 11 October and the Monte
+Carlo was not. The simulation was therefore drawing a mean novelty of 25.7% for that reading while
+§5.6 told readers every nonzero novelty value in the paper is a statistical bound on a zero count.
+Fixed: all three readings now inherit the one published count, 0 of 36.
+
+**What is not settled, and is yours to defend.** The deterministic scenarios still assign a
+different bound to each reading — the Wilson 99% bound (15.6%) to the optimistic, the 95% bound
+(9.6%) to the middle, the published 0 to the pessimistic. That is a choice of confidence level, not
+a difference in evidence: the zero count is the same count under every reading, and nothing in the
+sources ties a generous novelty bound to a generous success count. The pairing is defensible as a
+worldview display — an optimist reads the zero as consistent with up to 15.6% — but it is a
+construction, and a referee may read it as manufacturing an optimistic correlation out of a
+confidence level. It affects only level-3 pipeline ratios, since the paper reports no level-3 cost
+level at all. **Decide whether to keep the per-reading bounds or give every reading the same one.**

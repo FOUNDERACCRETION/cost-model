@@ -554,6 +554,66 @@ def test_fee_schedule_lists_every_input_to_the_attempt_cost():
         f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
 
 
+def test_no_document_quotes_a_retired_value_as_current():
+    """Supporting documents were checked by nothing, and one of them was a whole superseded run.
+
+    README.md carried level 2 at $3,653 / $3,625 / $3,756 against the current $1,019 / $983 /
+    $1,149, a 1.04x pipeline spread against 1.17x, a synthesis share of 95-99% against 81-94%, the
+    pre-correction success rates 38/54 and 7/16, and a novelty value of 25%. All of it had been
+    right before 2026-10-11. audit_numbers.py never looked at the file, so the errors sat beside
+    generated tables that contradicted them.
+
+    This guards the documents the numeric audit does not cover, against the specific values the
+    model has stopped producing. It is narrower than the audit -- a curated list, not a complete
+    check -- so paper/retired-values.txt has to be extended whenever a quoted figure is superseded.
+    """
+    import pathlib as _p, re
+    root = _p.Path(__file__).resolve().parents[1]
+
+    # Current-state documents: these describe the model as it now stands.
+    current = [root / "README.md", root / "results" / "RECONSTRUCTION.md",
+               root / "paper" / "p1-final.md", root / "paper" / "p1-appendices.md"]
+    # Historical by design: a dated snapshot and two records of what was changed and why. Recording
+    # a superseded value is their purpose, so they are not scanned.
+    #   paper/OVERNIGHT_CHANGES.md, paper/NOT-FIXED.md, paper/VERIFICATION.md, paper/DIAGNOSTICS.md
+
+    retired = {}
+    for line in (root / "paper" / "retired-values.txt").read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        value, _, why = line.partition(":")
+        retired[value.strip()] = why.strip()
+    assert len(retired) > 20, "retired-values.txt did not parse, so this check would pass vacuously"
+
+    # A line that says a figure CHANGED is allowed to name the old figure.
+    historical = re.compile(r"CHANGED|previously|used to|was\s|formerly|corrected|retired|superseded"
+                            r"|rejected variant", re.I)
+
+    offenders = []
+    for doc in current:
+        if not doc.exists():
+            continue
+        for i, line in enumerate(doc.read_text().splitlines(), 1):
+            if historical.search(line):
+                continue
+            norm = line.replace("×", "x").replace("–", "-").replace("—", "-")
+            for value, why in retired.items():
+                # Boundary-aware: a bare substring match fires on "$19.06" for the retired 9.06 and
+                # on "57/166" for the retired 7/16, so a retired value must not be flanked by a
+                # digit or a decimal point.
+                for m in re.finditer(re.escape(value), norm):
+                    before = norm[m.start() - 1] if m.start() else " "
+                    after = norm[m.end()] if m.end() < len(norm) else " "
+                    if before.isdigit() or before == "." or after.isdigit() or after == ".":
+                        continue
+                    offenders.append((doc.name, i, value, why))
+                    break
+    assert not offenders, (
+        "a document quotes a value the model no longer produces:\n"
+        + "\n".join(f"  {d}:{i}  {v!r} -- {w}" for d, i, v, w in offenders))
+
+
 def test_parameter_notes_do_not_claim_absolute_nonexistence():
     """The paper's negative claims are all scoped to what we searched; the parameter file's were
     not, and the parameter file ships.

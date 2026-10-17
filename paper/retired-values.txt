@@ -1,0 +1,66 @@
+# Values this model used to produce and no longer does.
+#
+# Why this file exists: on 2026-10-18 a whole paragraph of README.md was found to be one
+# superseded run, retyped -- level 2 at $3,653 / $3,625 / $3,756 against the current
+# $1,019 / $983 / $1,149, a 1.04x spread against 1.17x, and a synthesis share of 95-99% against
+# 81-94%. Every one of those figures had been correct before the 2026-10-11 change of
+# indirect_base to total_direct and the same-day corrections to synth.success_unconditional and
+# synth.recipes_per_target. None of it was caught, because audit_numbers.py was only ever pointed
+# at the two manuscript files and the supporting documents were checked by nothing at all.
+#
+# A superseded value is worse than a wrong one. It is internally consistent, it was right once, and
+# it sits beside a generated table that contradicts it, so a reader cannot tell which to believe.
+#
+# Format: one string per line, then a colon and what it was. A listed string must not appear in any
+# of the CURRENT-STATE documents (the list is in tests/test_structure.py). Dated changelogs and
+# before/after records are exempt by design, as are lines marked CHANGED / was / previously /
+# corrected, since recording what a figure used to be is the point of those.
+#
+# Add to this file whenever a figure the documents quote is superseded.
+
+# --- level 2, before indirect_base moved to total_direct (2026-10-11) ---
+$3,653: pipeline A level 2; now $1,019
+$3,625: pipeline B level 2; now $983
+$3,756: pipeline C level 2; now $1,149
+$3,794: pipeline A level 2, one run earlier still
+$3,765: pipeline B level 2, one run earlier still
+$3,897: pipeline C level 2, one run earlier still
+$3,581: synthesis term per validated material; now $928
+$3,722: synthesis term per validated material, one run earlier still
+$4,487: pipeline A level 2 with fees inside the base; the switch is now inert
+$4,946: pipeline A level 2 with fees inside the base, earlier still
+$3,284: pipeline A level 2 on a direct-cost-only basis; now $744
+
+# --- level-2 spreads on that same superseded run ---
+1.04x: level-2 spread at base DFT cost; now 1.17x
+1.03x: level-2 spread at base DFT cost, earlier still
+1.55x: level-2 spread at the top of the DFT span; now 2.56x
+1.53x: level-2 spread at the top of the DFT span, earlier still
+
+# --- synthesis share of level 2 ---
+95-99%: synthesis share of level 2 at base; now 81%-94%
+96-99%: synthesis share of level 2 at base, earlier still
+
+# --- synthesis success, before the conditional/unconditional correction (2026-10-11) ---
+7/16: conditioned on a characterisable product; the base is now 7/24 unconditional
+0.4375: the same conditioned rate as a decimal
+43.8%: the same conditioned rate as a percentage
+38/54: excluded the three computational failures; the optimistic reading is now 36/57
+70.4%: the same conditional optimistic rate
+# 66.7% (36/54) is deliberately NOT listed: appendix A.4 prints it as a variant it rejects, with
+# the reason, which is a legitimate use of a superseded figure.
+
+# --- novelty, before the invalid subtraction was removed (2026-10-11 and 2026-10-18) ---
+9/36: Leeman's categories subtracted while overlapping; not a count of anything
+9 of 36: the same subtraction written out
+
+# --- parameter census ---
+14 first-hand: the census moved to 15 first-hand of 89
+88 parameters: the census moved to 89
+
+# --- fee schedules ---
+eleven US: there are three university facilities, not eleven
+compute.price_per_core_hour: not a parameter name; the record is price.cpu.on_demand
+
+# --- truncations corrected earlier ---
+9.06: a truncation of 9.0667

@@ -116,3 +116,5 @@ synthesis_share_base: the same quantity as span_base_share, quoted once
 # --- Pre-upload pass, 18 October 2026 --------------------------------------------------------
 c0_B: 5.4 walks the level-2 equation for pipeline A only; B's and C's upstream terms are in the package
 c0_C: as above
+xp_filter_material_dft_median: the paper does not make this claim, like its sibling xp_gen_material_dft_median. NOTE: it was never really satisfied -- its old value 485 matched only the digits of thr_alpha_A's 0.485, so the audit's own collision limitation was standing in for a quotation. Discovered 2026-10-18 when the value moved to 473 and the match vanished.
+mlip_usd_per_robust_B: generation AND relaxation together. 5.2 now quotes the two halves separately (mlip_relax_usd_per_robust_B, mlip_gen_usd_per_robust_B) because calling the pair "the relaxations" charged generation to relaxation; the combined key is kept as the cross-check that the halves reconstruct it.

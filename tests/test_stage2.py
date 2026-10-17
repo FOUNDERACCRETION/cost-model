@@ -158,11 +158,35 @@ def test_pool_draw_centres(doc):
     assert all(d["all_db"] <= d["novel_mp"] for d in ds)
 
 
-def test_success_and_novelty_drawn_together(draws):
-    """Within the mixture, high-success draws come with high novelty (both from the same reading)."""
+def test_worldview_draws_are_tied_by_reading_but_novelty_carries_no_reading_signal(draws):
+    """Each draw takes success and the wrong-verdict share from one reading; novelty cannot.
+
+    This test used to assert corr(success, novelty) > 0.3, and it passed -- because the optimistic
+    reading drew novelty from beta_counts(9, 36), Leeman's "9 of 36 not attributed to known
+    phases". That 9 is a subtraction of overlapping error categories (18 + 8 + 24 + 3 = 53
+    attributions over 36 compounds), so it counts nothing, and novelty.science_frac was corrected
+    away from it on 2026-10-11. The Monte Carlo was not, so the test went on certifying a
+    correlation that the invalid count had manufactured: a mean novelty of 25.7% for the optimistic
+    reading against 1.4% for the other two, while the manuscript told readers every nonzero novelty
+    value it uses is a bound on a zero count.
+
+    There is one published novelty count for this campaign and it is zero, so every reading now
+    inherits it and novelty carries no reading signal at all. What the worldview tie genuinely
+    binds is the wrong-verdict share, which IS reading-dependent -- GNoME's 13.2-16% flip range for
+    A-Lab and Prein against An et al.'s 57 of 166 for Leeman -- so low success comes with a high
+    wrong-verdict share, strongly and for a reason in the sources.
+    """
     success = [p["synth_success_unconditional"] for p, _ in draws]
     novelty = [p["novelty_science_frac"] for p, _ in draws]
-    assert corr(success, novelty) > 0.3
+    wrong = [p["dft_wrong_verdict_frac"] for p, _ in draws]
+
+    assert abs(corr(success, novelty)) < 0.1, (
+        "novelty is correlated with success, so some reading is drawing it from a count of its own. "
+        "Only one novelty count exists (0 of 36) and all three readings must inherit it")
+    assert corr(success, wrong) < -0.5, (
+        "the wrong-verdict share should fall as success rises: it is drawn from the same reading")
+
+    # and the readings stay cleanly separated in the quantity they actually disagree about
     leeman = [p for p, info in draws if info["worldview"] == "pessimistic_leeman"]
     alab = [p for p, info in draws if info["worldview"] == "optimistic_alab"]
     assert max(p["synth_success_unconditional"] for p in leeman) < min(p["synth_success_unconditional"] for p in alab)

@@ -105,6 +105,29 @@ def fee_manifest(doc, out: Path) -> int:
     return len(rows)
 
 
+def _base_reading(doc: dict, S: float, r: float) -> dict:
+    """Which published reading the deterministic base case is following.
+
+    The worksheet has to name the campaign behind S and r, and hard-coding it went stale the day
+    the base case changed reading. This finds the reading whose success count and reported recipe
+    multiplicity both match the base values, and raises if none does -- a base case that matches no
+    reading would itself be the finding.
+    """
+    readings = doc["monte_carlo"]["joint"]["worldview"]["readings"]
+    for name, rd in readings.items():
+        spec = rd.get("success") or {}
+        if spec.get("type") != "beta_counts":
+            continue
+        k, n = float(spec["k"]), float(spec["n"])
+        if abs(k / n - S) < 5e-6 and abs(float(rd["recipes"]) - r) < 5e-4:
+            label = rd.get("source", name).split(",")[0].strip()
+            return {"k": k, "n": n, "recipes": float(rd["recipes"]), "label": label, "name": name}
+    raise ValueError(
+        f"the base case (S = {S:.6g}, r = {r:g}) matches no reading in monte_carlo.joint.worldview, "
+        f"so the worksheet cannot say where those values come from"
+    )
+
+
 def money(x: float) -> str:
     return f"${x:,.2f}"
 
@@ -179,10 +202,18 @@ def worksheet(doc, p, out: Path) -> None:
     A("| Symbol | Meaning | Value | Where it comes from |")
     A("|:--|:--|--:|:--|")
     A(f"| $a$ | cost per attempt | {money(att['usd'])} | section 1 above |")
-    A(f"| $r$ | recipes per target | {r:g} | `synth.recipes_per_target`: 353 experiments / 57 "
-      f"targets in the reference campaign |")
-    A(f"| $S$ | unconditional synthesis success | {S:g} | `synth.success_unconditional`: 36 of 57 "
-      f"targets, campaign-observed, NOT conditioned on a correct stability label |")
+    # The provenance of r and S used to be the hard-coded strings "353 experiments / 57 targets"
+    # and "36 of 57 targets" -- A-Lab's campaign. But the base case moved to the middle reading on
+    # 2026-10-11, so the worksheet was printing r = 1 and S = 0.2917, which are Prein's, labelled
+    # with A-Lab's counts. 353/57 = 6.19 and 36/57 = 0.63, so the stated provenance contradicted
+    # the value beside it, which is exactly the rate/count mismatch Section 5.7 warns against.
+    # Derived from the reading whose success and recipe count the base case actually follows.
+    _reading = _base_reading(doc, S, r)
+    A(f"| $r$ | recipes per target | {r:g} | `synth.recipes_per_target`: {_reading['recipes']:g} "
+      f"per target as reported by {_reading['label']} |")
+    A(f"| $S$ | unconditional synthesis success | {S:g} | `synth.success_unconditional`: "
+      f"{_reading['k']:g} of {_reading['n']:g} targets in {_reading['label']}, campaign-observed, "
+      f"NOT conditioned on a correct stability label |")
     A(f"| $c_0$ (A) | upstream compute per candidate reaching synthesis | {money(c0['A'])} | "
       f"affine in DFT cost; section 3 below |")
     A("")
@@ -211,8 +242,13 @@ def worksheet(doc, p, out: Path) -> None:
     for k in ("A", "B", "C"):
         A(f"| {k} | {tc['alpha_usd_per_core_h'][k]:.10f} | {tc['beta_usd'][k]:.10f} |")
     A("")
-    A(f"$\\alpha$ carries the compute price (`compute.price_per_core_hour` = "
-      f"{money(p['price_per_core_hour'])}/core-h) and the number of candidates verified per")
+    # Was `compute.price_per_core_hour`, which is not a parameter name -- the record is
+    # price.cpu.on_demand -- printed through money(), which rounds 0.0446 to $0.04. A reader
+    # reproducing alpha_B from the printed price got 0.04/0.152 = 0.2632 against the 0.2934 printed
+    # two lines up. This document exists to be reproduced by hand, so the price is given to the
+    # digits the coefficient consumes.
+    A(f"$\\alpha$ carries the compute price (`price.cpu.on_demand` = "
+      f"\\${p['price_per_core_hour']:.4f}/core-h) and the number of candidates verified per")
     A("candidate reaching synthesis, which is where pool prevalence and filter purity enter.")
     A(f"$\\alpha_C/\\alpha_B$ = {tc['alpha_ratio_C_over_B']:.6f}, exactly the purity ratio "
       f"{p['pool_filter_purity']:.3f}/{p['gen_filter_purity']:.3f}.")
