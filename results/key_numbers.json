@@ -218,6 +218,7 @@
  "basis_extreme_pct_C": "43%",
  "basis_direct_to_default_pct_C": "31%",
  "basis_narrowed_below_default_pct_C": "17%",
+ "basis_extreme_range": "43% to 54%",
  "xacct_direct_attempt": "$191",
  "xacct_direct_gen10": "22",
  "xacct_direct_filter10": "118",

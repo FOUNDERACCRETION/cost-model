@@ -1220,6 +1220,10 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
         k[f"basis_direct_to_default_pct_{_nm}"] = f"{_default / _direct_only - 1:.0%}"
         # stated as "below the default", so the default is the denominator here by construction
         k[f"basis_narrowed_below_default_pct_{_nm}"] = f"{1 - _narrowed / _default:.0%}"
+    # Limitation 4 quoted A's spread with no pipeline named, so the range is generated for it: a
+    # limitation should state the whole spread rather than one pipeline's corner of it.
+    _ext = [float(k[f"basis_extreme_pct_{_n}"].rstrip("%")) for _n in "ABC"]
+    k["basis_extreme_range"] = f"{min(_ext):.0f}% to {max(_ext):.0f}%"
 
     sw = dft_threshold_sweep(p)
     # The crossings depend on synthesis expenditure per target, not on DFT cost alone, so we
