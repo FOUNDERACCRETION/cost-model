@@ -148,3 +148,34 @@ It checks that each source says what the paper says it says. It does not check t
 arithmetic is right (the test suite does that), that the parameter values are the right ones to
 use, or that the conclusions follow. And it is a check by the same parties who wrote the paper.
 Independent reproduction remains outstanding.
+
+---
+
+## Part 3 — second pass, 18 October 2026 (pre-upload)
+
+### Closed first-hand this pass
+
+**`nih2026stipends` — verified at the notice itself.** NOT-OD-26-044, "Ruth L. Kirschstein National
+Research Service Award (NRSA) Stipends, Tuition/Fees and Other Budgetary Levels Effective for Fiscal
+Year 2026". Two parameter values depend on it and both check out: the FY2026 predoctoral stipend is
+**\$29,364 per year**, which is `synth.labour_annual_salary`; and tuition support is "equal to 60% of
+the actual tuition level at the applicant institution, up to \$16,000 per year", which is the base of
+`synth.labour_tuition_remission`. The notice also prints a \$21,000 cap for formally combined
+dual-degree programmes, which we do not use and which a reader should not confuse with the \$16,000.
+This entry was previously listed as unverified and as the sole source for the labour term; it is now
+read at source.
+
+**The DFT protocol is now in the paper.** Section 4.2 previously reported hardware and rank counts but
+no cutoffs, k-mesh, smearing, spin treatment or convergence thresholds, so the 2.98 core-hour anchor
+could not be assessed. The protocol was recorded in the benchmark package throughout and is now stated
+in the manuscript, including the forced substitution of GBRV for the planned SSSP library after the
+Materials Cloud file server returned HTTP 503.
+
+### Still open at upload
+
+- **The Kusumegi figures (23.7%, 89.3%).** Read from a third-party-hosted PDF because science.org was
+  unreachable, and that text contains an internal inconsistency: a supplementary caption gives 37.7%
+  where the main text gives 43.0% for one subgroup. Re-check against the publisher version.
+- **The target-level crosswalk** for A-Lab's 36 of 57, which would confirm the four inconclusive
+  targets are not subtracted twice. Needs the annotated supplement.
+- **Independent reproduction.** Has not happened. The repository is not public and no DOI is minted.

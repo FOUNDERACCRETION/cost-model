@@ -2,7 +2,7 @@
 title: "What Does It Cost to Validate a Predicted Inorganic Material?"
 subtitle: "A transparent end-to-end pipeline model, and what its inputs cannot yet support"
 author: "Karthikeya"
-date: "Working paper --- 11 October 2026"
+date: "Working paper --- 18 October 2026"
 abstract: |
   Machine learning has sharply reduced the cost of parts of the computational materials pipeline, and the field widely asserts that synthesis is now the bottleneck. We did not find that claim priced in dollars. We build a transparent end-to-end model from candidate generation through machine-learned screening and density functional theory verification to laboratory synthesis, reporting cost per robust stable prediction and per experimentally validated target. A third level, per material new to science, we define but cannot price: the only published novelty count for our reference campaign is zero. The attempt cost, \$190 to \$300 depending on the overhead convention, is assembled from eleven US fee schedules with assumed throughput and allocation rules --- a construction, not a cost observed in any laboratory.
 
@@ -33,6 +33,8 @@ header-includes:
   - \usepackage{microtype}
   - \renewcommand{\arraystretch}{1.15}
 ---
+
+Accretion Labs, Hyderabad, India. Contact: founder@accretionlabs.net. The author is an independent researcher and the founder of Accretion Labs; he holds no university appointment. This is a working paper and has not been peer reviewed.
 
 **Keywords:** materials discovery, machine-learned interatomic potentials, cost model, autonomous laboratories, research productivity. **JEL:** O31, O32.
 
@@ -206,6 +208,8 @@ We benchmarked three MLIPs [@deng2023chgnet; @chen2022m3gnet; @batatia2022mace; 
 Two findings bear on the model. Single-threaded execution is cost-minimising: core-hours are allocated cores times wall time, and twelve threads cost 32 to 90 times the core-hours of one here. And the quantity the model needs --- single-threaded CPU core-seconds per ionic step per atom, with cold-start convergence rates --- is not published per model; throughput and inference figures are published instead.
 
 Our hardware is unusual, an ARM64 laptop under virtualisation, and DFT timings carry a platform artefact: twelve ranks cost 2.6 to 7.3 times the core-hours of four, so all DFT figures use four ranks, with twelve-rank values retained as documented upper bounds. A 28-atom cell against its own 56-atom supercell, identical in chemistry and pseudopotentials, gives 0.480 against 3.842 core-hours --- a factor of 8.0, an exponent of 3.0.
+
+**The DFT protocol, because a core-hour figure cannot be assessed without it.** Quantum ESPRESSO 6.7MaX, PBE, GBRV ultrasoft pseudopotentials at their design cutoffs of 40 Ry for the wavefunction and 200 Ry for the charge density, identical for every element and structure. A Γ-centred Monkhorst--Pack mesh with $n_i = \max(1, \lceil |b_i| / 0.3\,\text{Å}^{-1} \rceil)$ on the starting cell. Marzari--Vanderbilt cold smearing at 0.01 Ry. Collinear spin polarisation with a ferromagnetic start for the manganese-containing structures and none for the rest; no Hubbard $U$. Self-consistency to $10^{-8}$ Ry with mixing 0.4. Cell relaxations use BFGS on ions and cell with a force threshold of 0.050 eV/Å, chosen to equal the MLIP force threshold so that ionic step counts are comparable between the two. Each figure is the median of three repeats at four MPI ranks. One deviation is worth stating: the plan was SSSP 1.3.0 PBE efficiency, and the Materials Cloud file server returned HTTP 503 throughout the logged attempts, so GBRV was substituted --- also ultrasoft and also built for high-throughput work, but the cutoffs are GBRV's uniform pair rather than SSSP's per-element values, and the cost would differ somewhat under SSSP. The full protocol, every input and output file, and the run log are in the replication package.
 
 ## 4.3 DFT cost: a span, not a point
 
@@ -552,9 +556,11 @@ Until such data exist, statements about what AI-driven materials discovery costs
 
 # Disclosures
 
-**AI assistance.** I used Claude (Anthropic) to assist with drafting, literature search, and methodological review. I defined the research question and scope, selected the modelling framework and assumptions, conducted and debugged the computational work, verified the sources and numerical results, and revised the final manuscript. No parameter value originates from the language model: every value traces to a published source, a first-hand measurement, or an explicitly labelled assumption recorded in the parameter manifest. Every reported figure is generated from the parameter file, and I take responsibility for all methods, interpretations, and claims in this paper.
+**Declaration of generative AI use.** During the preparation of this work I used Claude (Anthropic) to draft and revise text from my outlines and instructions, to write and debug the cost-model code and its test suite, to search for and summarise related literature, and to critique drafts adversarially. The research question, the scope, the choice of modelling framework, the parameter values and the conclusions are my own, and I revised the drafted text into my own words. No parameter value originates from the language model: every value traces to a published source, a first-hand measurement, or an explicitly labelled assumption recorded in the parameter manifest. Every reported figure in this paper is regenerated from that manifest by the released code, and a build step fails if a printed figure drifts from it. All AI-assisted output was reviewed, edited and verified by me, and I take full responsibility for every method, interpretation and claim here.
 
-**Conflict of interest.** The author is the founder of a company working in AI-driven materials science. The computational pipeline used for the first-hand benchmarks in Section 4.2 derives from that company's codebase, though the released replication package depends on no proprietary code.
+The bibliography and the substantive claims attached to each source were checked against publisher records and source texts in an AI-assisted pass, recorded in full in the replication package together with the claims it could not close. I have reviewed that record and I am responsible for it.
 
-**Data and code availability.** [Repository URL and archived DOI to be inserted on release.]
+**Conflict of interest.** The author is the founder of Accretion Labs, a company working in AI-driven materials science, and that affiliation appears on the title page. The computational pipeline used for the first-hand benchmarks in Section 4.2 derives from that company's codebase, though the released replication package depends on no proprietary code.
+
+**Data and code availability.** The replication package --- model, parameter file with every source and evidence grade, first-hand benchmark data, analysis code, test suite and verification record --- is not yet public at the time of writing. The repository URL and an archived DOI will be inserted here on release, and no claim in this paper should be read as independently reproduced until they are.
 
