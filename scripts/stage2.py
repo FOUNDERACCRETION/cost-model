@@ -1428,6 +1428,15 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     # target it is now the cheapest, so "optimistic" is no longer the lower bound on cost.
     factor = {x: max(med[w][x] for w in WORLDVIEW) / min(med[w][x] for w in WORLDVIEW) for x in P}
     k["reading_factor_B"] = f"{factor['B']:.0f}"
+    # The abstract and the contributions list quote the span of these medians at two significant
+    # figures, per the rounding policy. They were hand-rounded, so when the median moved from
+    # $1,159 to $1,147 the paper went on saying "roughly $1,200 to $34,000" when 2sf of 1,147 is
+    # $1,100 -- a 9% error in a headline figure, produced by a rounding boundary rather than by
+    # anything in the model. Generated here so the rounding cannot drift from the value it rounds.
+    _reading_lo = min(med[w]["B"] for w in WORLDVIEW)
+    _reading_hi = max(med[w]["B"] for w in WORLDVIEW)
+    k["reading_span_B_2sf"] = f"{money2sf(_reading_lo)} to {money2sf(_reading_hi)}"
+    k["reading_lo_B_2sf"], k["reading_hi_B_2sf"] = money2sf(_reading_lo), money2sf(_reading_hi)
     k["reading_factor_median"] = f"{statistics.median(factor.values()):.0f}"
     k["within_reading_max"] = f"{max(max(m.values()) / min(m.values()) for m in med.values()):.2f}"
     # Per-reading pipeline spread. These are reported individually because they are not alike: the
