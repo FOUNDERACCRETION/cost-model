@@ -78,6 +78,25 @@ def test_worldview_counts_match_records(doc):
     assert r["pessimistic_leeman"]["success"]["k"] / r["pessimistic_leeman"]["success"]["n"] == pytest.approx(3 / 58)
     w = recs["dft.wrong_verdict_frac"]
     assert r["pessimistic_leeman"]["wrong_verdict"]["k"] / r["pessimistic_leeman"]["wrong_verdict"]["n"] == pytest.approx(w["high"], rel=1e-3)
+    # The optimistic and middle readings draw the wrong-verdict share uniformly over the record's
+    # published endpoints rather than from counts, since GNoME reports rates without counts.
+    for name in ("optimistic_alab", "middle_prein"):
+        spec = r[name]["wrong_verdict"]
+        assert spec["type"] == "uniform", f"{name} should draw w uniformly over the published range"
+        assert spec["low"] == pytest.approx(w["low"]) and spec["high"] == pytest.approx(w["base"])
+
+    # NOVELTY. This test existed to tie the worldview block to the parameter records and had no
+    # novelty assertion at all, which is how the optimistic reading went on drawing
+    # beta_counts(9, 36) for a week after novelty.science_frac was corrected away from that
+    # subtraction. Only one novelty count is published for this campaign and it is zero, so every
+    # reading must inherit the same one -- a reading with a count of its own means someone has
+    # found a second novelty measurement, which would be a change to the paper, not to a draw.
+    nov = recs["novelty.science_frac"]
+    assert nov["low"] == pytest.approx(0.0), (
+        "the published novelty verdict is zero; the record's low endpoint should say so")
+    counts = {name: (rd["novelty"]["k"], rd["novelty"]["n"]) for name, rd in r.items()}
+    assert set(counts.values()) == {(0, 36)}, (
+        f"every reading must draw novelty from the one published count, 0 of 36; got {counts}")
     assert sum(doc["monte_carlo"]["joint"]["worldview"]["weights"].values()) == pytest.approx(1.0)
 
 
@@ -657,9 +676,15 @@ def test_mlip_relaxation_cost_is_negligible_against_dft(doc):
     The section argues that the level-1 cost ratio between two pipelines approaches their purity
     ratio *because* DFT dominates the compute term. That inference is only valid while the non-DFT
     compute is negligible, so the claim and the number need to move together. It previously said
-    "about three cents"; the relaxations are $0.0019 per robust prediction, and no denominator in
-    the model -- per candidate screened, per DFT-stable hit, per robust prediction, per validated
-    material, or per candidate at the worst twelve-thread penalty -- produces three cents.
+    "about three cents"; no denominator in the model -- per candidate screened, per DFT-stable hit,
+    per robust prediction, per validated material, or per candidate at the worst twelve-thread
+    penalty -- produces three cents.
+
+    The replacement figure was wrong too, more subtly. $0.0019 per robust prediction is everything
+    upstream of DFT: GENERATING the pool and relaxing it. Generation is the larger half, so the
+    sentence written to correct a misattribution of generation cost was still charging generation to
+    the relaxations. The relaxations alone are $0.0009, and the two halves are asserted separately
+    below so the section cannot quote the bundle as either one of them again.
     """
     p = resolve(doc)
     l1_b = funnel(p)["pipelines"]["B"]["outputs"]["dft_confirmed_stable"]["usd_per"]
@@ -671,3 +696,15 @@ def test_mlip_relaxation_cost_is_negligible_against_dft(doc):
     # approximation in 5.2 stops being safe and the section needs rewriting, not just renumbering.
     assert non_dft / l1_b < 0.01, f"non-DFT compute is {non_dft / l1_b:.2%} of B's level 1"
     assert non_dft < 0.01, f"${non_dft:.4f} is no longer a fraction of a cent"
+
+    # and the bundle splits into generation plus relaxation, with generation the larger part
+    B = funnel(p)["pipelines"]["B"]
+    stage_usd = {s["stage"]: s["usd"] for s in B["stages"]}
+    robust = B["outputs"]["dft_confirmed_stable"]["count"]
+    relax, gen = stage_usd["MLIP relax + classify"] / robust, stage_usd["generate"] / robust
+    assert relax + gen == pytest.approx(non_dft), (
+        "generation + relaxation must reconstruct the pre-DFT compute per robust prediction; if it "
+        "does not, a stage has been added and 5.2's two figures no longer account for the bundle")
+    assert gen > relax, (
+        "generation has been the larger half; if that reverses, 5.2's wording needs checking, since "
+        "its history is a misattribution between exactly these two terms")

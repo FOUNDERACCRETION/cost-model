@@ -188,7 +188,7 @@ and `data/mlip_benchmark/timings.csv`. All eight hold exactly.
 | Claim | Checked against the data |
 |:--|:-----------|
 | Seven structures, 10 to 56 atoms | 7 distinct sizes: 10, 14, 16, 20, 28, 32, 56 |
-| Twelve ranks cost 2.6 to 7.3 times four | Per-size medians give 2.63 to 7.30 |
+| Twelve ranks cost 2.6 to 7.3 times four | Per-size medians of the **SCF** runs give 2.63 to 7.30 (2.6272 to 7.3032). Basis matters and is easy to get wrong: including the four `vc-relax` rows gives 2.82 to 27.69, and the same-session interleaved pairs alone give 3.85 and 7.32, which is the pair `data/dft_benchmark/PROTOCOL.md` quotes. A review pass on 2026-10-18 flagged 7.30 as a typo for the protocol's 7.32; it is not. The two are different statistics over the same data and both are correct. |
 | 0.480 against 3.842 core-hours, factor 8.0, exponent 3.0 | Medians are 0.480 and 3.842; factor 8.00; log2 = 3.00 |
 | Step count 18 to 81 | 68 converged CHGNet and MACE relaxations span exactly 18 to 81. M3GNet is correctly excluded: all its converged runs report 191 steps, set by the cap rather than by convergence |
 | One of three potentials failed on six of seven structures | M3GNet converged on 1 of 7 in `primary_1thread`. The MLIP protocol's "5 of 6" excludes the non-native supercell; both figures are right for their populations |
