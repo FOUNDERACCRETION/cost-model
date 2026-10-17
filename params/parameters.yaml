@@ -817,6 +817,26 @@ parameters:
     citations: [strom2020]
     source_note: "Base: UT Austin internal service, 80 USD/sample. High: UT Austin external, 150. Low: Oregon State self-use, 5 USD per 30-min slot (https://xrd.science.oregonstate.edu/fees). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
     evidence_grade: published
+    # Section 3.5 says the parameter file lists each facility whose published recharge schedule
+    # prices an instrument-time line item. It did not: the claim described a table that had never
+    # existed, and the paper reported eleven facilities where there are three. The table is here
+    # now, one entry per facility, so the count in the paper is derived from evidence rather than
+    # asserted. Dedupe by `facility` to count: Cornell prices two records.
+    fee_facilities:
+      - facility: "UT Austin, Department of Chemistry X-ray Diffraction Laboratory"
+        url: https://sites.utexas.edu/chem-x-ray/xrd-pricing/
+        internal_rate: 80
+        external_rate: 150
+        unit: USD per sample
+        charged: one sample per attempt (base and high endpoints)
+        schedule_date: the page carries no effective date
+      - facility: "Oregon State University, X-ray Diffraction Facility"
+        url: https://xrd.science.oregonstate.edu/fees
+        internal_rate: 5
+        external_rate: null
+        unit: USD per 30-minute self-use slot
+        charged: low endpoint only; self-use rather than a per-sample service
+        schedule_date: the page carries no effective date
 
   - name: synth.furnace_fixed_fee
     low: 6
@@ -827,6 +847,14 @@ parameters:
     citations: [strom2020]
     source_note: "Cornell CCMR internal 6 USD; industry 13 USD (FY26 Industry sheet). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
     evidence_grade: published
+    fee_facilities:
+      - facility: "Cornell Center for Materials Research (CCMR) shared facilities"
+        url: https://www.ccmr.cornell.edu/sites/default/files/2025-07/FY26%20Cornell.pdf
+        internal_rate: 6
+        external_rate: 13
+        unit: USD per furnace booking
+        charged: one firing per attempt
+        schedule_date: fiscal year 2026 (internal sheet; industry rates on the companion sheet)
 
   - name: synth.furnace_hourly
     low: 3.15
@@ -837,6 +865,14 @@ parameters:
     citations: [strom2020]
     source_note: "Cornell internal 3.15-3.75 (base = midpoint, derived); high = industry upper 9.45. LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
     evidence_grade: published
+    fee_facilities:
+      - facility: "Cornell Center for Materials Research (CCMR) shared facilities"
+        url: https://www.ccmr.cornell.edu/sites/default/files/2025-07/FY26%20Cornell.pdf
+        internal_rate: 3.15-3.75
+        external_rate: 9.45
+        unit: USD per furnace-hour
+        charged: furnace_hours_per_attempt hours per firing
+        schedule_date: fiscal year 2026 (internal sheet; industry rates on the companion sheet)
 
   - name: synth.furnace_hours_per_attempt
     low: 9.246

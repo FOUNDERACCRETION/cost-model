@@ -554,6 +554,56 @@ def test_fee_schedule_lists_every_input_to_the_attempt_cost():
         f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
 
 
+def test_instrument_fee_facility_count_matches_the_parameter_file():
+    """The paper reported eleven US university fee schedules behind the attempt cost. There are
+    three.
+
+    The claim entered at revision 6 and survived to revision 15 in the abstract, the contributions
+    list and Section 3.5, which also said the parameter file lists each facility "with its facility,
+    date, URL, internal and external rate, unit and the quantity we charge" -- a table that did not
+    exist. Nothing could catch it: the numeric audit matches only percentages and dollar amounts, so
+    a count written as a word was unguarded, and no artifact held the facilities to compare against.
+    An inflated evidence base in an abstract is worse than a wrong figure in a table, because it is
+    the part a reader uses to decide how much the headline number is worth.
+
+    The table now exists, as `fee_facilities` on the instrument-time records, and this pins the
+    paper's count to it.
+    """
+    import pathlib as _p, yaml, collections, re
+    root = _p.Path(__file__).resolve().parents[1]
+    doc = yaml.safe_load((root / "params" / "parameters.yaml").read_text())
+
+    facilities = collections.OrderedDict()
+    for rec in doc["parameters"]:
+        for f in rec.get("fee_facilities") or []:
+            for field in ("facility", "url", "internal_rate", "unit", "charged", "schedule_date"):
+                assert field in f, f"{rec['name']} fee_facilities entry lacks {field!r}"
+            facilities.setdefault(f["facility"], []).append(rec["name"])
+    assert facilities, "no fee_facilities entries found, so this check would pass vacuously"
+
+    words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
+             8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve"}
+    n = len(facilities)
+    paper = (root / "paper" / "p1-final.md").read_text()
+    assert f"fee schedules of {words[n]} US university facilities" in paper, (
+        f"the parameter file carries {n} distinct instrument-fee facilities; Section 3.5 does not "
+        f"say {words[n]}")
+    assert f"{words[n]} US university recharge schedules" in paper, (
+        f"the abstract and contributions list do not say {words[n]} university recharge schedules")
+    # and the old inflated count must be gone from the manuscript entirely
+    assert not re.search(r"\beleven\b", paper), "the discredited 'eleven' count is back in the paper"
+
+    # each facility's host must actually appear in the record that cites it, so the table cannot
+    # drift away from the provenance it claims to summarise
+    for rec in doc["parameters"]:
+        for f in rec.get("fee_facilities") or []:
+            host = f["url"].split("/")[2]
+            blob = f"{rec.get('source_url', '')} {rec.get('source_note', '')}"
+            assert host in blob, (
+                f"{rec['name']} lists facility at {host} but neither its source_url nor its "
+                f"source_note mentions that host")
+
+
 def test_parity_and_materiality_boundaries_are_distinct_and_both_correct():
     """Revision 13 reported only parity boundaries and described them as the point where the
     pipelines become unequal. Parity is where they cost the SAME; a materiality boundary is where
