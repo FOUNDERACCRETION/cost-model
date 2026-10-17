@@ -81,7 +81,7 @@ l3_C: no level-3 dollar figure appears in the paper (Limitation 5)
 bound_mat_lo_dir: a direction word, rendered in 5.5 as "6.2% above"
 bound_mat_hi_dir: a direction word, rendered in 5.5 as "28.5% above"
 bound_mat_band_contains_equal_success: a yes/no flag, stated in 5.5 in words
-basis_extreme_pct: quoted in 4.5 as the 51% between the extreme variants
+basis_extreme_pct_A: quoted in 4.5 as the 51% between the extreme variants
 thr_intercept_share_10: quoted in 5.4 as the 1.3% the intercepts contribute
 el_ratio_A: quoted in 5.8 as "10 times for A"
 el_ratio_B: quoted in 5.8 as "17 times for B"

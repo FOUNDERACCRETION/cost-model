@@ -1206,9 +1206,20 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["idtier_level_down_pct"] = f"{idt['level_move_down']:.0%}"
     # Extreme-to-extreme across every overhead variant the paper tabulates: direct-only is the
     # cheapest and the negotiated rate the dearest, so the span is the full range of the 4.5 table.
-    _all_l2_A = [s1["bases"][0]["l2"][0], _l2(mtdc)[0]["usd_per"], s1["bases"][2]["l2"][0],
-                 _l2(hi)[0]["usd_per"], _l2(neg)[0]["usd_per"]]
-    k["basis_extreme_pct"] = f"{max(_all_l2_A) / min(_all_l2_A) - 1:.0%}"
+    #
+    # Per pipeline, not just A. Section 4.5 used to quote pipeline A's 51% and then hand-type "53%
+    # and 43% for B and C"; B is 53.51%, which rounds to 54, so the hand-typed figure was a
+    # truncation. The same sentence's "37% move" and the following "20% below the default" were
+    # also A's, unattributed, in a passage that names all three pipelines. All nine are generated
+    # here so none of them can be typed.
+    for _i, _nm in enumerate("ABC"):
+        _variants = [s1["bases"][0]["l2"][_i], _l2(mtdc)[_i]["usd_per"], s1["bases"][2]["l2"][_i],
+                     _l2(hi)[_i]["usd_per"], _l2(neg)[_i]["usd_per"]]
+        _direct_only, _narrowed, _default = _variants[0], _variants[1], _variants[2]
+        k[f"basis_extreme_pct_{_nm}"] = f"{max(_variants) / min(_variants) - 1:.0%}"
+        k[f"basis_direct_to_default_pct_{_nm}"] = f"{_default / _direct_only - 1:.0%}"
+        # stated as "below the default", so the default is the denominator here by construction
+        k[f"basis_narrowed_below_default_pct_{_nm}"] = f"{1 - _narrowed / _default:.0%}"
 
     sw = dft_threshold_sweep(p)
     # The crossings depend on synthesis expenditure per target, not on DFT cost alone, so we
