@@ -708,3 +708,32 @@ def test_mlip_relaxation_cost_is_negligible_against_dft(doc):
     assert gen > relax, (
         "generation has been the larger half; if that reverses, 5.2's wording needs checking, since "
         "its history is a misattribution between exactly these two terms")
+
+
+def test_percentile_returns_infinity_not_nan_in_an_infinite_tail():
+    """Every reported median and interval flows through an.percentile, and it returned nan where
+    the answer is inf.
+
+    When both bracketing values are infinite the interpolation computes inf - inf, which is nan,
+    and nan survives the multiply. The right answer is inf: a quantile sitting in a distribution's
+    infinite tail is infinite, not undefined. nan is worse than wrong here because it compares
+    false against every threshold, so a materiality or ordering test downstream counts the draw as
+    immaterial instead of skipping it -- a silent bias toward "no difference".
+
+    Reachable rather than hypothetical: level 3 is unbounded wherever the novelty share is zero,
+    which is precisely what the pessimistic reading asserts, and _ratio_gap in the same module is
+    written to expect non-finite costs. It is not live at the current parameters -- the Jeffreys
+    posterior never draws exactly zero -- so fixing it moved no figure, checked by regenerating and
+    comparing checksums.
+    """
+    inf = math.inf
+    assert an.percentile([1.0, 2.0, 3.0, 4.0, 5.0], 50) == 3.0
+    assert an.percentile([1.0, 2.0, 3.0, 4.0, 5.0], 5) == pytest.approx(1.2)
+    # a quantile landing inside the infinite tail
+    assert an.percentile([1.0, 2.0, 3.0, inf, inf], 95) == inf
+    assert an.percentile([1.0, 2.0, inf, inf, inf], 50) == inf
+    assert an.percentile([inf] * 5, 50) == inf
+    # and the finite side of the same list is unaffected
+    assert an.percentile([1.0, 2.0, 3.0, inf, inf], 50) == 3.0
+    assert an.percentile([1.0, 2.0, inf, inf, inf], 5) == pytest.approx(1.2)
+    assert math.isnan(an.percentile([], 50)), "an empty sample has no percentile"

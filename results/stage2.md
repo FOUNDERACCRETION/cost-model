@@ -87,7 +87,7 @@ Return = % fall in cost per validated material per 1% PROPORTIONAL improvement i
 | tied, synthesis | cost per synthesis attempt | 0.911 | 0.944 | 0.808 | 0.975 (0.605–0.999) | 0.985 (0.714–0.999) | 0.944 (0.396–0.997) |
 | compute | compute price | 0.089 | 0.056 | 0.192 | 0.025 (0.001–0.395) | 0.015 (0.001–0.286) | 0.056 (0.003–0.604) |
 | compute | DFT cost per candidate | 0.089 | 0.056 | 0.191 | 0.025 (0.001–0.395) | 0.015 (0.001–0.286) | 0.055 (0.003–0.604) |
-| compute | MLIP precision (filter purity) | 0.000 | 0.056 | 0.191 | 0.000 (0.000–0.000) | 0.015 (0.001–0.286) | 0.055 (0.003–0.604) |
+| compute | MLIP precision (filter purity) | 0.000 | 0.056 | 0.191 | -0.000 (-0.000–-0.000) | 0.015 (0.001–0.286) | 0.055 (0.003–0.604) |
 
 **The synthesis levers are tied at unit elasticity; they are not ranked.** Level-2 synthesis cost is recipes × cost per attempt / success, so each of the three has elasticity one by construction. Success is exactly 1 because it also divides the compute term. Recipes and cost per attempt equal the synthesis share of level-2 cost (0.911 for A, 0.944 for B, 0.808 for C). The gap between them is the compute share, not a difference in leverage. `tests/test_stage2.py` asserts this structure.
 

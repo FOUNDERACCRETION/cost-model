@@ -65,12 +65,24 @@ def costs(p: dict) -> dict:
 
 
 def percentile(values: list[float], q: float) -> float:
-    """Linear-interpolation percentile, q in [0, 100]."""
+    """Linear-interpolation percentile, q in [0, 100].
+
+    The two bracketing values are compared before interpolating, because when both are infinite the
+    arithmetic gives nan: inf - inf is nan, and nan times anything stays nan. The right answer there
+    is inf -- a quantile sitting in a distribution's infinite tail is infinite, not undefined -- and
+    nan would be worse than wrong. It compares false against every threshold, so a materiality or
+    ordering test downstream would silently count the draw as immaterial rather than skipping it.
+
+    Reachable: level 3 is unbounded wherever the novelty share is zero, which is exactly what the
+    pessimistic reading asserts, and the module elsewhere expects non-finite costs (see _ratio_gap).
+    """
     xs = sorted(values)
     if not xs:
         return math.nan
     pos = (len(xs) - 1) * q / 100
     lo, hi = math.floor(pos), math.ceil(pos)
+    if xs[lo] == xs[hi]:
+        return xs[lo]
     return xs[lo] + (xs[hi] - xs[lo]) * (pos - lo)
 
 
