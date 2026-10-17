@@ -64,3 +64,10 @@ compute.price_per_core_hour: not a parameter name; the record is price.cpu.on_de
 
 # --- truncations corrected earlier ---
 9.06: a truncation of 9.0667
+
+# --- DIAGNOSTICS.md threshold block, computed from a synthesis bill 6.2x too large (found 2026-10-18) ---
+$1,676.05: the synthesis bill before the base case took the middle reading's single recipe; now $270.64
+196.5733: the tau=0.10 crossing on that bill; now 31.4097
+96.4264: the tau=0.05 crossing on that bill; now 15.2442
+407.5972: the tau=0.20 crossing on that bill; now 65.4726
+7.6 x 10: the worst relative residual's leading digits; now 6.3e-16

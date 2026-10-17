@@ -572,10 +572,16 @@ def test_no_document_quotes_a_retired_value_as_current():
 
     # Current-state documents: these describe the model as it now stands.
     current = [root / "README.md", root / "results" / "RECONSTRUCTION.md",
-               root / "paper" / "p1-final.md", root / "paper" / "p1-appendices.md"]
+               root / "paper" / "p1-final.md", root / "paper" / "p1-appendices.md",
+               # DIAGNOSTICS.md describes the model as it stands, despite holding historical
+               # material: 27 of its figures had gone stale by 2026-10-18, including a block of
+               # threshold roots computed from a synthesis bill 6.2x too large. Its genuinely
+               # historical tables name their old values on lines that say so, which the
+               # `historical` pattern below exempts.
+               root / "paper" / "DIAGNOSTICS.md"]
     # Historical by design: a dated snapshot and two records of what was changed and why. Recording
     # a superseded value is their purpose, so they are not scanned.
-    #   paper/OVERNIGHT_CHANGES.md, paper/NOT-FIXED.md, paper/VERIFICATION.md, paper/DIAGNOSTICS.md
+    #   paper/OVERNIGHT_CHANGES.md, paper/NOT-FIXED.md, paper/VERIFICATION.md
 
     retired = {}
     for line in (root / "paper" / "retired-values.txt").read_text().splitlines():

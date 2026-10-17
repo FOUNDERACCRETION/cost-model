@@ -3,7 +3,18 @@
 Material that belongs to the model's provenance rather than to its results. An external reviewer
 of revision 11 asked for the paper to be compressed, noting that the main results carried
 "lengthy revision-history and numerical-check explanations". Those are recorded here instead of
-being deleted, and each regenerates from the repository.
+being deleted.
+
+**On 18 October 2026 this file said each of these regenerates from the repository. That was not
+true of the file itself.** `scripts/audit_numbers.py` is pointed at the manuscript and its
+appendices only, so nothing checked this document, and 27 of its roughly 45 generated figures had
+gone stale --- a whole section of threshold roots computed from a synthesis bill 6.2 times too
+large, two overlap tables off by up to 1.6 percentage points, and one conclusion that the stale
+figures had inverted. They are corrected below, each marked. The figures here are copied from the
+generated artefacts by hand and are therefore exactly as reliable as the last person to copy them;
+`results/key_numbers.json` and `results/threshold_coefficients.json` are the sources, and this file
+is now covered by the retired-value guard in `tests/test_structure.py` so that a figure the model
+has stopped producing cannot sit here unnoticed again.
 
 ## The superseded materiality convention
 
@@ -17,12 +28,16 @@ Effect on the one figure that moved:
 
 | Level, pair | Superseded (directional) | Current (symmetric) |
 |:--|--:|--:|
-| Level 1, B–A | 97.7% | 97.9% |
-| Level 2, B–A | 0.5% | 0.9% |
-| Level 3, B–A | 0.5% | 0.9% |
+| Level 1, B–A | 97.9% | 98.1% |
+| Level 2, B–A | 8.9% | 10.0% |
+| Level 3, B–A | 8.9% | 10.0% |
 
-Both level-2 values display as 1% at the paper's precision, so the published table did not
-change, but the number a reader reproduces did. The directional statistic is still computed and
+The two level-2 values do **not** display the same at the paper's precision --- 9% against the 10%
+the paper prints --- so the published table changed as well as the number a reader reproduces.
+*Corrected 2026-10-18: this table was stale by a whole run and the column was shifted, with level
+1's directional value sitting in the current column; the previous text concluded from the stale
+figures that "both level-2 values display as 1%, so the published table did not change", which was
+the opposite of the truth.* The directional statistic is still computed and
 exported as `p_material_directional` (keys `kill_l*_material_BA_directional`) so the size of the
 correction stays inspectable.
 
@@ -39,27 +54,37 @@ Unrounded coefficients of `c₀ᵢ(d) = αᵢd + βᵢ`, archived in `results/th
 | B | 0.2934210526 | 0.0015626629 |
 | C | 1.1736842105 | 0.3381360265 |
 
-- Worst relative residual **7.6 × 10⁻¹⁶**, across six verification costs up to 2,000 core-hours —
+- Worst relative residual **6.3 × 10⁻¹⁶**, across six verification costs up to 2,000 core-hours —
   twice the top of the swept range, so the fit is tested outside the interval it was fitted on
   (the coefficients are recovered from two probe points, which makes agreement at those two
   points trivial).
 - `α_C/α_B` = 4.000000, exactly the purity ratio of §5.3.
-- At τ = 0.10 the closed form returns **196.5733** and the model's bisected root returns
-  **196.5733** — relative agreement 2 × 10⁻¹⁵, i.e. the same number. Revision 10's text said the
+- At τ = 0.10 the closed form returns **31.4097** and the model's bisected root returns
+  **31.4097** — relative agreement 3 × 10⁻¹⁶, i.e. the same number. Revision 10's text said the
   closed form "returns 196.6 against the 197 the model solves numerically", implying a mismatch
-  that does not exist; 197 was only the rounded display.
-- Substituting the **printed** (rounded) coefficients gives 196.39, a shift of 0.18 core-hours.
+  that does not exist; 197 was only the rounded display, and both of those figures belong to the
+  superseded synthesis bill below.
+- Substituting the **printed** (rounded) coefficients gives 31.3812, a shift of 0.029 core-hours.
   This is the only source of disagreement between the paper's figures and a reader's
   recomputation from them.
-- Synthesis bill at base, `b = ra` = \$1,676.05.
+- Synthesis bill at base, `b = ra` = \$270.64.
+
+*Corrected 2026-10-18.* Every figure in this section that depends on the synthesis bill was stale
+by one run. The bill was \$1,676.05 before the base case moved to the middle reading's single
+recipe per target on 11 October; it is \$270.64 now, and `d* = [(1+τ)β_B − β_C + τb] /
+[α_C − (1+τ)α_B]` carries that change straight into every root. Substituting the old bill
+reproduces the superseded 96.4264 / 196.5733 / 407.5972 exactly, which is how the figures were
+confirmed to be one propagated value rather than seven separate errors. The coefficients themselves, the
+denominators and the residual check never depended on the bill, which is why they survived — and
+is why the block read as though it were current.
 
 Roots and denominators at the three reported thresholds:
 
 | τ | closed form | numerical root | denominator | usable |
 |--:|--:|--:|--:|:--|
-| 0.05 | 96.4264 | 96.4264 | 0.865592 | yes |
-| 0.10 | 196.5733 | 196.5733 | 0.850921 | yes |
-| 0.20 | 407.5972 | 407.5972 | 0.821579 | yes |
+| 0.05 | 15.2442 | 15.2442 | 0.865592 | yes |
+| 0.10 | 31.4097 | 31.4097 | 0.850921 | yes |
+| 0.20 | 65.4726 | 65.4726 | 0.821579 | yes |
 
 A positive denominator is necessary but not sufficient: the root must also be nonnegative to lie
 in the domain `d ≥ 0`. The boundary is at `b = (β_C − (1+τ)β_B)/τ`; below it the formula returns a
@@ -73,10 +98,10 @@ Full sweep in `results/overlap_bin_sensitivity.csv`. A–B overlap:
 
 | bins | 20 | 40 | 60 | 120 | 240 |
 |:--|--:|--:|--:|--:|--:|
-| Level 1 | 90.6% | 89.9% | 89.4% | 88.8% | 87.8% |
-| Level 2 | 98.5% | 98.5% | 98.6% | 97.7% | 97.1% |
+| Level 1 | 90.8% | 90.4% | 89.6% | 88.9% | 87.7% |
+| Level 2 | 97.4% | 97.3% | 97.1% | 96.6% | 95.5% |
 
-Beyond the reported range, level-1 A–B overlap falls to 80.2% at 2,000 bins and 53.4% at 20,000
+Beyond the reported range, level-1 A–B overlap falls to 79.2% at 2,000 bins and 52.6% at 20,000
 bins against 20,000 draws.
 
 **Two generalisations revision 11 asserted and revision 12 does not**, both corrected by the
@@ -84,7 +109,7 @@ reviewer:
 
 1. *Weakly decreasing in bin count.* True only for **nested** refinements, where each coarse bin
    divides exactly into fine ones. 20 → 60 → 240 is nested (×3 then ×4); 40 → 60 is not (×1.5),
-   and its direction is not guaranteed. On these draws it happens to decrease (89.93% → 89.43%),
+   and its direction is not guaranteed. On these draws it happens to decrease (90.36% → 89.61%),
    so the monotonicity across the sweep is an observation, not a theorem.
 2. *Falls towards zero as bins approach the sample size.* Not a property of the statistic. Two
    samples with identical values have identical histograms at any bin count and retain overlap
@@ -138,13 +163,13 @@ materials discovery. Each regenerates from the repository.
 
 ## Threshold fit
 
-- Worst relative residual of `c0i(d) = αi·d + βi` against the model: **7.6 × 10⁻¹⁶**, evaluated at
+- Worst relative residual of `c0i(d) = αi·d + βi` against the model: **6.3 × 10⁻¹⁶**, evaluated at
   six verification costs up to 2,000 core-hours — twice the top of the swept range, so affinity is
   checked outside the interval the two-point recovery was fitted on.
 - Unrounded coefficients, residual table and root comparison: `results/threshold_coefficients.json`.
-- Closed form against the model's bisected root at τ = 0.10: **196.5733 vs 196.5733**, relative
+- Closed form against the model's bisected root at τ = 0.10: **31.4097 vs 31.4097**, relative
   agreement 2 × 10⁻¹⁵. They are the same number, as they must be if the relation is affine.
-- Substituting the *rounded* printed coefficients instead gives **196.39** — a shift of 0.18
+- Substituting the *rounded* printed coefficients instead gives **31.3812** — a shift of 0.029
   core-hours. This is the only source of disagreement between the paper's printed figures and a
   reader's recomputation from them.
 - `α_C/α_B = 4.000000`, exactly the purity ratio of §5.3, asserted to 1e-9 by
@@ -162,8 +187,15 @@ positive range of all three pipelines at that level.
 
 | | Measured | Reference range | Position |
 |:--|--:|:--|:--|
-| Level 1 | 89% | 96.5%–97.8% | below |
-| Level 2 | 99% | 96.9%–98.0% | above |
+| Level 1 | 90% | 96.1%–97.9% | below |
+| Level 2 | 97% | 97.0%–98.3% | inside |
+
+*Corrected 2026-10-18.* Both rows were stale and the level-2 row was wrong in kind, not only in
+value: its measured 99% is level 3's figure, and the "above" verdict was false. Level 2's measured
+overlap of 97.05% sits **inside** the reference band, 0.06 percentage points above its floor of
+96.99%. The file asserted that the level-2 marginals are more alike than independent resampling
+would make them; they are statistically indistinguishable from it. That is a weaker claim than the
+one the file made, and the right one.
 
 The replicates are independent pairs; the measured A and B samples are dependent, sharing parameter
 draws. That dependence is not reproduced, is not modelled, and its direction is not asserted. The
@@ -174,24 +206,24 @@ Bin-count sweep, A–B overlap:
 
 | bins | 20 | 40 | 60 | 120 | 240 |
 |:--|--:|--:|--:|--:|--:|
-| Level 1 | 90.6% | 89.9% | 89.4% | 88.8% | 87.8% |
-| Level 2 | 98.5% | 98.5% | 98.6% | 97.7% | 97.1% |
+| Level 1 | 90.8% | 90.4% | 89.6% | 88.9% | 87.7% |
+| Level 2 | 97.4% | 97.3% | 97.1% | 96.6% | 95.5% |
 
 Beyond the reported range the level-1 figure falls to 80.2% at 2,000 bins and 53.4% at 20,000 bins
 against 20,000 draws. Those values are reported here and not in the paper, because at that
 resolution the coefficient is dominated by sample sparsity: two independent samples from an
-identical distribution score 0.61 at 20,000 bins.
+identical distribution score 0.60 at 20,000 bins.
 
 ## Test suite
 
-754 tests. The ones that guard against specific past failures:
+756 tests. The ones that guard against specific past failures:
 
 | Test | Guards |
 |:--|:--|
 | `test_level2_is_independent_of_w` | `w` cancels from level 2, at interior values, and is still live at level 1 |
 | `test_the_crossing_does_not_depend_on_synthesis_success` | `S` cancels from `d*`, swept over the full range of the three readings |
 | `test_materiality_is_symmetric_and_matches_the_sweep_convention` | one denominator convention across sweep and simulation |
-| `test_parity_and_materiality_boundaries_are_distinct_and_both_correct` | each boundary delivers the gap it claims; materiality is >10× parity at base |
+| `test_parity_and_materiality_boundaries_are_distinct_and_both_correct` | each boundary delivers the gap it claims; materiality is >3× parity at base |
 | `test_success_ratio_boundaries_are_checked_against_the_probability_ceiling` | a ratio is attainable only while the implied rate stays ≤ 1 |
 | `test_feasibility_ceiling_moves_with_the_reading` | the ceiling is 1/S_base and depends on which reading sets it |
 | `test_matching_purity_does_not_quite_equalise_the_pipelines` | residual equals the β gap over Q_B, not over the bill |
