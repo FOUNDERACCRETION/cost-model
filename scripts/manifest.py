@@ -51,8 +51,8 @@ FEE_ALLOCATION = {
     "synth.weeks_per_year": "throughput denominator (allocation input)",
     "synth.crucible_cost": "/ attempts_per_crucible",
     "synth.attempts_per_crucible": "crucible reuse (allocation input)",
-    "synth.precursor_mass_g": "x precursor_usd_per_g",
-    "synth.precursor_usd_per_g": "x precursor_mass_g",
+    "synth.precursor_mass_g_per_attempt": "x precursor_usd_per_g",
+    "synth.precursor_usd_per_g": "x precursor_mass_g_per_attempt",
     "synth.other_consumables_per_attempt": "charged once per attempt",
     "synth.indirect_rate": "x F&A base (total direct costs including fees and tuition)",
 }
@@ -81,7 +81,16 @@ def fee_manifest(doc, out: Path) -> int:
     for name, alloc in FEE_ALLOCATION.items():
         r = recs.get(name)
         if r is None:
-            continue
+            # This used to `continue`. A key misspelled against the parameter file then vanished
+            # from the manifest without a word: `synth.precursor_mass_g` (the record is
+            # `synth.precursor_mass_g_per_attempt`) was dropped for several revisions, so a file
+            # headed "every input to the $271 attempt estimate" omitted the precursor mass that is
+            # half of its own precursors line, and the paper quoted the resulting short count.
+            raise KeyError(
+                f"FEE_ALLOCATION names {name!r}, which is not a parameter record. The fee "
+                f"schedule must list every input to the attempt cost, so a name that resolves "
+                f"to nothing is an error rather than a row to skip."
+            )
         note = (r.get("source_note", "") or "").replace("\n", " ")
         rows.append([name, r.get("base", ""), r.get("unit", ""), alloc,
                      r.get("evidence_grade", ""), r.get("source_url", ""), note])

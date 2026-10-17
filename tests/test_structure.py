@@ -494,6 +494,66 @@ def test_reconstruction_worksheet_reproduces_the_attempt_cost():
         f"worksheet components {comps[:7]} do not sum to its printed subtotal {printed_direct}")
 
 
+def test_fee_schedule_lists_every_input_to_the_attempt_cost():
+    """The fee schedule is headed "every input to the $271 attempt estimate", and that claim has to
+    hold three ways.
+
+    It failed all three for several revisions. FEE_ALLOCATION named `synth.precursor_mass_g` while
+    the record is `synth.precursor_mass_g_per_attempt`; the writer skipped names it could not
+    resolve, so the row disappeared silently; and the paper then quoted the short count, claiming
+    fourteen inputs. A file promising completeness omitted the precursor mass that is half of its
+    own precursors line.
+    """
+    import sys, pathlib as _p, csv, importlib.util, inspect, re, subprocess
+    root = _p.Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root))
+    from src.params import load, records
+    from src import funnel
+
+    spec = importlib.util.spec_from_file_location("_manifest", root / "scripts" / "manifest.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    recs = records(load())
+
+    # 1. every allocation key is a real parameter record
+    unresolved = [k for k in mod.FEE_ALLOCATION if k not in recs]
+    assert not unresolved, f"FEE_ALLOCATION names records that do not exist: {unresolved}"
+
+    # 2. every record the attempt cost reads is in the allocation table. The function takes the
+    # resolved namespace, whose names are stripped of their section prefix and sometimes renamed
+    # (`synth.indirect_rate` arrives as `synth_indirect_rate`), so the mapping is read out of
+    # resolve() rather than guessed from the spelling.
+    from src import params as _params
+    resolve_map = dict(re.findall(r'"([a-z_0-9]+)":\s*v\("([a-z_0-9.]+)"\)',
+                                  inspect.getsource(_params.resolve_with_sources)))
+    assert resolve_map.get("precursor_mass_g") == "synth.precursor_mass_g_per_attempt", (
+        "the resolve mapping could not be read, so this check would pass vacuously")
+    src = inspect.getsource(funnel.synthesis_cost_per_attempt)
+    consumed = set(re.findall(r'p\[\"([a-z_]+)\"\]', src))
+    # accounting switches select which basis is reported; they are not priced inputs
+    consumed -= {"indirect_base", "fa_on_service_fees", "synth_cost_basis"}
+    for short in sorted(consumed):
+        record = resolve_map.get(short)
+        assert record, f"{short!r} is read by the attempt cost but is not resolved from a record"
+        assert record in mod.FEE_ALLOCATION, (
+            f"synthesis_cost_per_attempt reads {short!r} (record {record!r}) but no "
+            f"FEE_ALLOCATION entry covers it, so the fee schedule is incomplete")
+
+    # 3. the written file has one row per entry, and the paper states that count
+    subprocess.run([sys.executable, str(root / "scripts" / "manifest.py")], cwd=root, check=True,
+                   capture_output=True)
+    # read through csv, not by splitting lines: a source_passage field can carry a newline inside
+    # its quotes, so physical lines outnumber records
+    with open(root / "results" / "fee_schedule_manifest.csv", newline="") as fh:
+        records_read = [r for r in csv.reader(fh) if r and not r[0].startswith("#")]
+    rows = records_read[1:]                     # drop the header row
+    assert len(rows) == len(mod.FEE_ALLOCATION), (
+        f"{len(rows)} rows written for {len(mod.FEE_ALLOCATION)} allocation entries")
+    words = {14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen"}
+    assert f"{words[len(rows)]} attempt-cost inputs" in (root / "paper" / "p1-final.md").read_text(), (
+        f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
+
+
 def test_parity_and_materiality_boundaries_are_distinct_and_both_correct():
     """Revision 13 reported only parity boundaries and described them as the point where the
     pipelines become unequal. Parity is where they cost the SAME; a materiality boundary is where

@@ -527,7 +527,7 @@ The model, parameters, first-hand benchmark data, analysis code and test suite a
 
 The model is a pure function from parameters to results, so a reader who disagrees can substitute and rerun --- the overhead treatment, the weighting of the three readings, the DFT cost span, the choice of optimistic success count --- and each takes one edit.
 
-Alongside the code the package carries the manifest of all 89 parameters with ranges, units, evidence grades and sources; the fourteen attempt-cost inputs, each with the usage allocation that converts a published rate into dollars per attempt; the unrounded threshold coefficients with their residuals; the seeded sampler; a worksheet walking the attempt cost, the level-2 equation, the threshold crossings and the decision boundaries of Section 5.5 from inputs to results; and a verification record of the bibliography and claim checks, with what could not be closed listed as open. None of this substitutes for independent reproduction, which has not happened.
+Alongside the code the package carries the manifest of all 89 parameters with ranges, units, evidence grades and sources; the fifteen attempt-cost inputs, each with the usage allocation that converts a published rate into dollars per attempt; the unrounded threshold coefficients with their residuals; the seeded sampler; a worksheet walking the attempt cost, the level-2 equation, the threshold crossings and the decision boundaries of Section 5.5 from inputs to results; and a verification record of the bibliography and claim checks, with what could not be closed listed as open. None of this substitutes for independent reproduction, which has not happened.
 
 # 9. Conclusion
 
