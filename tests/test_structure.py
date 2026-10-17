@@ -554,6 +554,44 @@ def test_fee_schedule_lists_every_input_to_the_attempt_cost():
         f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
 
 
+def test_every_path_the_readme_names_exists():
+    """The README is the replication package's front door, and it pointed at three dead files.
+
+    It told a reader to run `scripts/fill_draft.py`, which does not exist: it was deleted on
+    2026-10-11 in a commit about recipe counts, with no mention in the message. The layout table
+    also listed `tests/test_draft.py`, deleted in the same commit, and `paper/p1-full-draft.md`,
+    which the manuscript split replaced months earlier -- while omitting audit_numbers.py,
+    manifest.py and test_stage2.py, which do exist and are central.
+
+    The deleted test file is worth a note. It held `test_no_stale_overhead_figures` -- "values from
+    before the effective-rate fix must not survive untagged" -- which is the same guard rebuilt
+    today as test_no_document_quotes_a_retired_value_as_current. In between, README.md,
+    DIAGNOSTICS.md and NOT-FIXED.md all went stale in exactly the way it existed to prevent. Its
+    mechanism was stronger than today's, too: the draft carried `<!--k:name-->` tags binding each
+    printed figure to one key, so a figure could not be satisfied by another key's value. That is
+    the collision problem audit_numbers.py now has to report around.
+    """
+    import pathlib as _p, re
+    root = _p.Path(__file__).resolve().parents[1]
+    named = set(re.findall(r"`([A-Za-z0-9_./-]+\.(?:py|md|yaml|json|bib|csv|txt))`",
+                           (root / "README.md").read_text()))
+    assert len(named) > 15, "README paths did not parse, so this check would pass vacuously"
+
+    missing = []
+    for name in sorted(named):
+        if (root / name).exists():
+            continue
+        # a bare filename is allowed when it is listed inside a directory's own row, so resolve it
+        # against the directories the README documents before calling it absent
+        if any((root / d / name).exists() for d in ("scripts", "src", "tests", "results", "paper",
+                                                    "params", "data", "sources")):
+            continue
+        missing.append(name)
+    assert not missing, (
+        "the README names files that do not exist, so a reader following it hits a dead end: "
+        + ", ".join(missing))
+
+
 def test_no_new_key_rides_on_another_keys_quotation():
     """A key the paper never quotes can pass the audit by sharing a value with one it does.
 
