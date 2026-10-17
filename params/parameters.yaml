@@ -393,7 +393,7 @@ parameters:
     high: 0.009057
     unit: core-s per ionic step per atom
     source_url: data/mlip_benchmark/timings.csv
-    source_note: Config primary_1thread, 6 native structures. Base = pooled sum(core-s per step) / sum(atoms); range = per-structure min/max. Per-step cost grows ~linearly with size (log-log slope 1.05, PROTOCOL.md section 7).
+    source_note: Config primary_1thread, 6 native structures. Base = pooled sum(core-s per step) / sum(atoms); range = per-structure min/max. Per-step cost grows ~linearly with size across ALL SEVEN sizes (log-log slope 1.05, PROTOCOL.md section 7); on the 6 native structures this base value is pooled over, the slope is 0.83, i.e. sub-linear. CHANGED 2026-10-18 -- the note quoted the all-7 slope in the same sentence as '6 native structures', which made a sub-linear subset read as linear.
     evidence_grade: first_hand
 
   - name: mlip.mace-mp-0.step_cost_per_atom
@@ -402,7 +402,7 @@ parameters:
     high: 0.04325
     unit: core-s per ionic step per atom
     source_url: data/mlip_benchmark/timings.csv
-    source_note: As for CHGNet. Log-log slope 0.99.
+    source_note: As for CHGNet. Log-log slope 0.99 over all seven sizes, 0.95 over the 6 native structures the base value pools.
     evidence_grade: first_hand
 
   - name: mlip.m3gnet.step_cost_per_atom
@@ -411,7 +411,7 @@ parameters:
     high: 0.003920
     unit: core-s per ionic step per atom
     source_url: data/mlip_benchmark/timings.csv
-    source_note: As for CHGNet. Log-log slope 0.89. Five of six of these runs hit the step cap; the per-step cost is still valid.
+    source_note: As for CHGNet. Log-log slope 0.89 over all seven sizes, 0.83 over the 6 native structures the base value pools. Five of six of these runs hit the step cap; the per-step cost is still valid.
     evidence_grade: first_hand
 
   - name: mlip.steps_per_relaxation
@@ -980,7 +980,7 @@ parameters:
     high: 9.388
     unit: USD per g of stoichiometric precursor mix
     source_url: data/precursors/fisher_prices_2026-10-10.csv
-    source_note: "Derived by src/derive.py from Fisher Scientific US list prices fetched 2026-10-10 (catalogue numbers and URLs in the CSV; USD, visible without login; contract prices may be lower) and the routes in data/precursors/routes.csv for our six compositions. Per target, precursors are mixed in stoichiometric mass. Low: cheapest target (Li2MnSiO4) at the largest pack. Base: median target at the smallest pack of >= 100 g. High: dearest target (BaTiS3) at the smallest pack. Rare and transition-metal precursors dominate: In2O3 5.92-10.95 $/g, BaS 10.70-12.80, MnF2 2.96-5.11, against ZnO 0.06-0.33 and Li2CO3 0.37-0.82. The TiSiN2 and BaTiS3 routes are cost proxies (no TiN or TiS2 price). Sigma-Aldrich (A-Lab's supplier) blocked fetching. Not modelled: buying a whole pack for a few grams, which raises cost per attempt for small campaigns."
+    source_note: "Derived by src/derive.py from Fisher Scientific US list prices fetched 2026-10-10 (catalogue numbers and URLs in the CSV; USD, visible without login; contract prices may be lower) and the routes in data/precursors/routes.csv for our six compositions. Per target, precursors are mixed in stoichiometric mass. Low: cheapest target (Li2MnSiO4) at the largest pack. Base: the MEDIAN OVER the six targets' blended prices at the smallest pack of >= 100 g, which for an even count is the mean of the two middle blends (TiSiN2 1.3503 and NaMnF3 2.1703, giving 1.7603) -- so no single target has this value. CHANGED 2026-10-18 -- this said 'median target', which reads as one target's blend. High: dearest target (BaTiS3) at the smallest pack. Rare and transition-metal precursors dominate: In2O3 5.92-10.95 $/g, BaS 10.70-12.80, MnF2 2.96-5.11, against ZnO 0.06-0.33 and Li2CO3 0.37-0.82. The TiSiN2 and BaTiS3 routes are cost proxies (no TiN or TiS2 price). Sigma-Aldrich (A-Lab's supplier) blocked fetching. Not modelled: buying a whole pack for a few grams, which raises cost per attempt for small campaigns."
     evidence_grade: derived
 
   - name: synth.other_consumables_per_attempt

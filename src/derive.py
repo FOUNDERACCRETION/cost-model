@@ -67,7 +67,19 @@ def mlip_step_cost_per_atom(rows: list[dict], model: str) -> dict:
 
 
 def mlip_steps_distribution(rows: list[dict], models=("chgnet", "mace-mp-0")) -> dict:
-    """Ionic steps per converged relaxation, pooled over the given models (all 7 structures)."""
+    """Ionic steps per converged relaxation, pooled over the given models (all 7 structures).
+
+    M3GNet is excluded by that default, and the reason belongs here rather than in the caller's
+    head: it converged on only 1 of its 7 structures, and that single relaxation took 191 steps
+    against the 18-to-81 range of the other two models. One outlier from a model that mostly fails
+    to converge is not a step count, and pooling it would widen the distribution on the strength of
+    a single run while saying nothing about size dependence.
+
+    It is NOT excluded for hitting the step cap. The cap is 500 -- every non-converged row reports
+    exactly 500, which is how mlip_step_cap derives it -- and the 191-step rows are flagged
+    converged. paper/VERIFICATION.md asserted the cap explanation until 2026-10-18; its
+    non-convergence is already carried by mlip.m3gnet.nonconv_frac, 6 of 7.
+    """
     values = sorted(
         int(r["n_ionic_steps"])
         for m in models

@@ -201,3 +201,56 @@ the factor), to quote the deterministic point estimates instead of the medians, 
 draws to 400,000 and accept a slower build. I would leave it as it stands and let A.5 carry the
 precision, but it is a presentation choice and you should make it knowingly, because a referee who
 reseeds the run will see \$1,100 become \$1,200.
+
+---
+
+## 9. Three findings in the derivation layer, verified and left for you — 18 October 2026
+
+An independent audit recomputed every parameter graded `derived` or `first_hand` from the raw CSVs
+without importing `src/derive.py`. **Every one reproduces exactly, base and both endpoints.** No
+numerical error anywhere in the derivation layer. What it did find is three things about the
+*structure* of that layer, each verified here before being written down.
+
+**(a) `dft.scf_size_exponent`'s high endpoint is degenerate, so size sensitivity is one-sided.**
+`dft_scf_fit` sets `b_low = min(b, b_native)` and `b_high = max(b, b_native)`. The all-7 fit is
+1.788 and the native-6 fit is 1.390, so high collapses onto base and the record reads
+1.39 / 1.788 / 1.788. The exponent enters as `(n_atoms / ref)**b`, so for cells larger than the
+20-atom reference the model can only ever make DFT *cheaper* than base as cells grow, never
+steeper. A defensible high exists and the data supports it: the protocol's controlled 28→56 pair —
+same chemistry, same pseudopotentials, the cleanest measurement in the set — gives **2.61 per SCF
+iteration**, 46% above base.
+
+Why this is contained rather than urgent: on the default `dft_cost_basis: span` the DFT cost is read
+straight from `dft.cost_per_candidate`, so all four `scf_*` records are off the cost path and show a
+swing of exactly 0.0 in `results/tornado.csv`. The degeneracy only bites on the `first_hand` basis.
+**Decide whether to set the high endpoint from the controlled pair.** It would widen the DFT span's
+low end and change the `first_hand` figures; it would not touch any figure the paper prints at the
+default basis.
+
+**(b) §4.2's "exponent of 3.0" and the model's 1.788 are different quantities with nothing
+reconciling them.** Both are right. The 3.0 is the controlled 28→56 pair in *total* core-hours
+(0.4801 against 3.8417, ratio 8.0022, log₂ = 3.0004), which absorbs the SCF-iteration count rising
+13→17 and the irreducible k-points 18→22. The 1.788 is the 7-point fit *per SCF iteration*.
+`data/dft_benchmark/PROTOCOL.md` states the distinction and says the figure "is not a fitted law and
+should not be extrapolated"; the paper drops the qualifier, so the two numbers sit in one document
+with no indication they measure different things. **Worth one clause in §4.2.**
+
+**(c) The step cost and the step count are measured on different structure sets, and multiplied.**
+`mlip_step_cost_per_atom` excludes the 56-atom supercell (6 native structures);
+`mlip_steps_distribution` includes it (all 7). `funnel.py` multiplies them, so a per-atom cost
+measured on 10-to-32-atom cells is multiplied by a step count whose maximum, 81, comes from a cell
+the cost model never evaluated. Native-only converged steps are [18,18,20,22,25,28,32,35,39,43,44,46]:
+mean 30.83 against 36.71, max 46 against 81. Each function documents its own subset; nothing flags
+that they disagree. **Judgement call: defensible if step count really is size-independent, which is
+what §4.2 claims, but then the exclusion from the cost fit needs the same justification.**
+
+Also corrected outright this pass, as plain documentation errors rather than judgements:
+`paper/VERIFICATION.md` claimed "68 converged CHGNet and MACE relaxations" where there are 14 (68 is
+every chgnet and mace row with `converged = True` across all six configs, repeats and sweeps
+included) and said M3GNet's 191 steps were "set by the cap" when the cap is 500 and those rows are
+flagged converged — M3GNet is excluded because it converged on 1 of 7 structures and that one run
+took 191 steps; the three `step_cost_per_atom` notes quoted the all-7 log-log slope in the same
+sentence as "6 native structures", which for CHGNet turned a sub-linear 0.83 into "~linearly, slope
+1.05"; and `synth.precursor_usd_per_g`'s note said "median target" where the code takes the median
+*over* six targets, which for an even count is the mean of the two middle blends, so no target has
+that value.
