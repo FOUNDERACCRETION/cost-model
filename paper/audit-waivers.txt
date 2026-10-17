@@ -18,7 +18,7 @@ l3_B: no level-3 dollar figure appears in the paper (Limitation 5)
 l3_C: no level-3 dollar figure appears in the paper (Limitation 5)
 kill_l1_material_BA_directional: superseded convention, kept for inspection in DIAGNOSTICS.md
 xp_gen_immaterial_dft_max: cut from 5.7 when the section was compressed; in the repository
-xp_gen_material_dft_median: cut from 5.7 when the section was compressed; in the repository
+xp_gen_material_dft_median: the paper does not make this claim (cut when 5.7 was compressed). NOTE: 336 now also appears as the DFT span ratio, an unrelated quantity, so this key would pass the check coincidentally even without the waiver
 overlap_bin_counts: the bin counts are given as a range in prose, not as a list
 
 # --- Archive-only: unrounded values, deliberately not printed in the paper ------------------
@@ -32,7 +32,7 @@ thr_beta_C_full: unrounded coefficient, archived in results/threshold_coefficien
 # --- Revision 14: absolute recipe counts; the table reports shares of the 6.193 baseline -----
 
 # --- Final draft: software-validation figures moved to paper/DIAGNOSTICS.md ------------------
-thr_printed_coeff_root_10: the paper does not make this claim; the rounded-coefficient root and its 0.18 core-hour shift are recorded in paper/DIAGNOSTICS.md
+thr_printed_coeff_root_10: the paper quotes the true root, 31.4, and the rounded-coefficient root now equals it to one decimal; A.1 reports the shift between them instead, so this key is not quoted in its own right
 
 # --- Deep review: the paper rounds to two significant figures, which is what the inputs support -
 bound_mat5_lo: 5.6 reports the 10% band numerically and the 5% and 20% bands in rounded prose

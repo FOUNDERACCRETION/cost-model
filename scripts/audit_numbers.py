@@ -25,6 +25,7 @@ Run: python scripts/audit_numbers.py paper/p1-revision13.md
 """
 from __future__ import annotations
 
+import collections
 import json
 import re
 import sys
@@ -138,6 +139,21 @@ def audit(papers: list[Path], keys_path: Path) -> int:
     print(f"  {len(orphans)} hand-written figures matching no key")
     if orphans:
         print("     " + ", ".join(orphans[:40]) + (" ..." if len(orphans) > 40 else ""))
+
+    # The check's own limitation, printed so nobody over-trusts it. A key is satisfied by its value
+    # appearing ANYWHERE in the document, so two keys that happen to share a value can stand in for
+    # each other: the DFT span ratio of 336 and the median verification cost of material generative
+    # draws, also 336, are unrelated quantities that the string match cannot tell apart. This counts
+    # how much of the check is exposed to that. It is not a failure condition -- a collision means
+    # the check is weaker for those keys, not that a figure is wrong.
+    shared = collections.Counter()
+    for name in keys:
+        v = normalise(str(keys[name]))
+        if len(v) >= 3 and v not in ("yes", "no"):
+            shared[v] += 1
+    ambiguous = sum(n for n in shared.values() if n > 1)
+    print(f"  {ambiguous} of {sum(shared.values())} checkable keys share a value with another key, "
+          f"so their match is not uniquely attributable")
 
     if missing:
         print("\nFAIL: a generated figure is absent from the manuscript. Either the manuscript is")
