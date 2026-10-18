@@ -1,5 +1,25 @@
 # Overnight changes, 2026-10-10
 
+> **This is a dated snapshot of one night's work, not a description of the current state.** Its "is
+> now" statements were true on 2026-10-10 and several are not true any more. Read it as history.
+> What has changed since, as of 2026-10-18:
+>
+> - **The indirect-cost range.** This file says "the range is now 0.25 / 0.42 / 0.58". The high
+>   became **0.45** on 2026-10-11: 0.58 is the average *negotiated* rate, a different quantity from
+>   the effective rate the record measures, and it lies outside the 25–45% effective range the same
+>   source gives. 58% is retained only as a labelled illustration.
+> - **The number tagging described at the end of this file no longer exists.** `tests/test_draft.py`
+>   and `scripts/fill_draft.py` were both deleted on 2026-10-11, and the manuscript carries no
+>   `<!--k:…-->` tags. `scripts/audit_numbers.py` replaced them by matching figures as strings
+>   against the whole document, which is weaker: a figure can be satisfied by a different key that
+>   happens to share its value. See `paper/NOT-FIXED.md` and the retired-value guard in
+>   `tests/test_structure.py`.
+> - **The base case moved** to the middle reading's own campaign on 2026-10-11 (Prein's 7 of 24 and
+>   one recipe per target), which changed every level-2 figure in this file. Level 2 for pipeline B
+>   is **\$983**, not the figures tabulated below.
+>
+> Superseded figures are listed with their replacements in `paper/retired-values.txt`.
+
 ## Summary
 
 **Headline before and after the indirect-cost fix.** The overhead rate (`synth.indirect_rate`) went from 0.58 to 0.42.
