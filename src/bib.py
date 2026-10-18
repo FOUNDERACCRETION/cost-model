@@ -40,11 +40,22 @@ def parameter_citations(doc: dict) -> dict[str, list[str]]:
 
 
 DRAFT_CITE = re.compile(r"\[@([^\]]+)\]")
+# Author-in-text citations, "@leeman2024 re-analyse the campaign", which pandoc resolves exactly as
+# it resolves the bracketed form. Until 2026-10-18 only the bracketed form was extracted, so
+# draft_citations saw 37 of the 43 keys the manuscript cites and test_draft_citations_resolve was
+# validating a minority of its own target. A broken key of this form renders as a bare marker in
+# the PDF rather than failing anything. The negative lookbehind keeps bracketed keys from matching
+# twice; the trailing strip drops sentence punctuation, which is not part of a key.
+INTEXT_CITE = re.compile(r"(?<![\[\w@])@([A-Za-z][A-Za-z0-9_:.#$%&+?<>~/-]*)")
 
 
 def draft_citations(text: str) -> list[str]:
-    """Keys cited in pandoc form, [@key] or [@key1; @key2], in a Markdown draft."""
+    """Keys cited in a Markdown draft, in either pandoc form.
+
+    Bracketed: [@key] or [@key1; @key2]. Author-in-text: @key.
+    """
     found = []
     for group in DRAFT_CITE.findall(text):
         found += [k.strip().lstrip("@").split(",")[0].strip() for k in group.split(";")]
+    found += [k.rstrip(".,;:!?)") for k in INTEXT_CITE.findall(text)]
     return found

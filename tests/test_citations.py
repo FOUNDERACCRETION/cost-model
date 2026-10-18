@@ -1,5 +1,6 @@
 """Parameters and the paper draft cite only keys that exist in paper/references.bib, and nothing withdrawn."""
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -49,6 +50,32 @@ def test_draft_citations_resolve():
         if bad:
             missing[draft.name] = bad
     assert not missing, f"a document cites keys absent from {BIB.name}: {missing}"
+
+
+def test_citation_extraction_sees_both_pandoc_forms():
+    """The guard above is only as wide as the extractor, and the extractor was half-blind.
+
+    draft_citations matched only the bracketed form, [@key], so it saw 37 of the 43 keys the
+    manuscript cites and test_draft_citations_resolve was validating a minority of its own target.
+    Author-in-text citations -- "@leeman2024 re-analyse the campaign" -- were invisible, and a
+    broken key of that form renders as a bare marker in the PDF rather than failing anything.
+
+    This pins both forms, and pins that the manuscript really does use both, so the check cannot go
+    quiet by the extractor narrowing OR by the paper's citation style drifting.
+    """
+    found = draft_citations("Bracketed [@alpha] and grouped [@beta; @gamma], then @delta in text.")
+    assert set(found) == {"alpha", "beta", "gamma", "delta"}, found
+    # trailing sentence punctuation is not part of a key
+    assert draft_citations("as @epsilon. And @zeta, also @eta;") == ["epsilon", "zeta", "eta"]
+    # a bracketed key must not be counted twice by the in-text pattern
+    assert draft_citations("[@theta]").count("theta") == 1
+
+    main = set(draft_citations((ROOT / "paper" / "p1-final.md").read_text()))
+    assert len(main) > 30, f"only {len(main)} keys extracted from the manuscript"
+    bracket_only = set(re.findall(r"\[@([a-z0-9]+)\]", (ROOT / "paper" / "p1-final.md").read_text()))
+    assert main - bracket_only, (
+        "every citation in the manuscript is bracketed, so this test would pass even with the "
+        "in-text pattern removed; check the extractor still handles author-in-text citations")
 
 
 def test_bib_entries_have_titles_and_years():
