@@ -242,3 +242,32 @@ no figure; confirmed by regenerating and comparing checksums.
 **Two latent edge cases, inert at these parameters,** both reachable only through infinite costs and
 both in superseded or diagnostic quantities rather than reported ones: `a/b` with `b` infinite scores
 as material in `p_material_directional`, and `inf < inf` is False in `p_lt`.
+
+## Part 7: level 1 re-derived by hand from the raw parameter file — 18 October 2026
+
+Part 6 checks the model's formulas. This checks the model's *output*, by computing pipeline B's
+level-1 cost from the raw `base` values in `params/parameters.yaml` with no import of `src/funnel.py`,
+`src/analysis.py` or `src/params.py` — only `yaml.safe_load` and arithmetic written out longhand.
+This is the one check internal consistency cannot do: everything else in this repository compares the
+paper against the model, so a formula wrong in the same way in both places would pass.
+
+Every intermediate lands on the model's own stage figures:
+
+| Step | Hand arithmetic | Model |
+|:--|--:|--:|
+| structures generated for 500 MP-novel | 500 / 0.724 = 690.6077 | 690.60773481 |
+| flagged fraction (eq. 3, measured basis) | 0.092 × 0.7585 / 0.152 = 0.459092 | 0.459092 |
+| sent to DFT | 500 × 0.459092 = 229.5461 | 229.54605263 |
+| DFT-stable verdicts | 229.5461 × 0.152 = 34.8910 | 34.891 |
+| robust predictions (× (1 − w)) | 34.8910 × 0.84 = 29.3084 | 29.30844 |
+| generation | 690.6077 × 3.45 s / 3600 × \$0.0446 = \$0.029518 | \$0.02951773 |
+| MLIP relaxation | 500 × 0.00112131 core-h × \$0.0446 = \$0.025005 | \$0.02500514 |
+| DFT | 229.5461 × 54.54 core-h × \$0.0446 = \$558.3671 | \$558.36710029 |
+| **level 1, pipeline B** | **\$558.4216 / 29.3084 = \$19.053270** | **\$19.053270** |
+
+The paper prints \$19.05. The two halves §5.2 quotes separately also reproduce independently:
+relaxation \$0.000853 per robust prediction (printed \$0.0009) and generation \$0.001007 (printed
+\$0.0010), which confirms both that the split is real and that generation is the larger half.
+
+Together with the earlier hand derivation of level 2 for the same pipeline, which agreed to the cent
+at \$982.77, the funnel reproduces from its inputs at both levels without using any of its own code.
