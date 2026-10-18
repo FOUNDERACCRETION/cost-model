@@ -565,6 +565,31 @@ uv run python scripts/manifest.py                 # parameter and fee manifests,
 uv run python scripts/audit_numbers.py paper/p1-final.md paper/p1-appendices.md   # every printed figure vs the model
 ```
 
+### Building the PDFs
+
+Needs pandoc (3.1.3 here) and a LaTeX distribution with XeTeX. Built with `citeproc`, so the
+bibliography comes from `paper/references.bib` and no separate BibTeX run is needed:
+
+```bash
+pandoc paper/p1-final.md      -o p1-final.pdf      --pdf-engine=xelatex --citeproc --bibliography=paper/references.bib
+pandoc paper/p1-appendices.md -o p1-appendices.pdf --pdf-engine=xelatex --citeproc --bibliography=paper/references.bib
+```
+
+That gives 32 pages and 9 pages respectively. **If it fails with `File 'lmodern.sty' not found`**,
+your TeX tree is missing Latin Modern, which pandoc's default template loads. Either install it
+(`tlmgr install lmodern`, or the `lmodern` package on Debian/Ubuntu), or build with a template that
+does not load it:
+
+```bash
+pandoc -D latex | sed 's/^\\usepackage{lmodern}/%&/' > /tmp/tpl.latex
+pandoc paper/p1-final.md -o p1-final.pdf --pdf-engine=xelatex --citeproc \
+       --bibliography=paper/references.bib --template=/tmp/tpl.latex
+```
+
+The second route is what the container this was developed in required; it is a one-line change to
+pandoc's own default template, so it is not vendored here and will not drift from your pandoc
+version.
+
 ## Layout
 
 | Path | What it is |
