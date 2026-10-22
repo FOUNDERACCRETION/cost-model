@@ -9,7 +9,7 @@
 
 # --- Format variants: the paper quotes the same value, written differently -----------------
 bound_recipes_AB_top_share: the 5.6 table carries the unrounded 11.42%; prose rounds to 11%
-thr_worst_residual: quoted in 5.5 as $7.6 \times 10^{-16}$ in LaTeX rather than as 7.6e-16
+thr_worst_residual: not quoted; A.1 says the residuals are in the replication package. (A waiver here used to claim it was quoted in 5.5 as 7.6e-16, long after that sentence was cut.)
 thr_root_relgap_10: quoted in 5.5 as $2 \times 10^{-15}$ in LaTeX
 
 # --- Claims the paper does not make -------------------------------------------------------
@@ -86,9 +86,9 @@ thr_intercept_share_10: quoted in 5.4 as the 1.3% the intercepts contribute
 el_ratio_A: quoted in 5.8 as "10 times for A"
 el_ratio_B: quoted in 5.8 as "17 times for B"
 el_ratio_C: quoted in 5.8 as "4 times as much ... for pipeline C"
-within_optimistic_alab_spread: quoted in 5.7 as 1.06
-within_middle_prein_spread: quoted in 5.7 as 1.21
-within_pessimistic_leeman_spread: quoted in 5.7 as 1.07
+within_optimistic_alab_spread: quoted in 5.7 as "1.06 under the optimistic one"
+within_middle_prein_spread: quoted in 5.7 as "1.21 times under the middle reading"
+within_pessimistic_leeman_spread: quoted in 5.7 as "1.08 under the pessimistic one"
 within_reading_max: the same quantity as within_middle_prein_spread, quoted once
 reading_factor_median: 5.7 quotes the pipeline-B factor of 30; 2.3 and 6.2 round it to 30
 
@@ -125,3 +125,5 @@ reading_optimistic_alab_B_mc_lo: as above -- the half-width is what A.5 reports 
 reading_optimistic_alab_B_mc_hi: as above.
 reading_pessimistic_leeman_B_mc_lo: as above.
 reading_pessimistic_leeman_B_mc_hi: as above.
+thr_residual_check_max_core_h: not quoted; A.1 says the range over which affinity was checked is in the replication package
+wchem_l1_ratio: 3.4 quotes the same quantity as wchem_l1_spread_pct, "a spread of 39%"

@@ -1006,3 +1006,40 @@ def test_short_bare_number_keys_are_not_matched_by_section_numbers():
             bad.append((name, val))
     assert not bad, ("these keys match the manuscript only at a section number or not at all:\n"
                      + "\n".join(f"  {n} = {v}" for n, v in bad))
+
+
+def test_short_figures_are_quoted_in_the_sentence_that_owns_them():
+    """The numeric audit checks presence anywhere; for short figures that proves nothing.
+
+    On 2026-10-22, 5.4 quoted the 5% threshold distribution as "10 to 382 with a median of 78;
+    at 20%, 43 to 1,877 with a median of 328. In 14 of 1,500 draws" against generated 338, 41,
+    329 and 12; 5.6 quoted 60 and 999 against 73 and 1,000; 5.7 quoted 1.07 against 1.08 (behind
+    a waiver saying "quoted as 1.07"); 5.8 quoted 16, 37 and 61 against 17, 39 and 64. Every
+    stale figure's replacement occurred somewhere else in the manuscript, so the audit passed.
+
+    paper/audit-anchors.txt pins each such key to the phrase that quotes it. The phrase, with
+    the key's current value substituted, must occur verbatim. "--" is read as an en dash.
+    """
+    import pathlib as _p, json
+    root = _p.Path(__file__).resolve().parents[1]
+    keys = json.loads((root / "results" / "key_numbers.json").read_text())
+    body = "\n".join((root / "paper" / p).read_text() for p in ("p1-final.md", "p1-appendices.md"))
+    body = body.replace("--", "–")
+    missing, unknown = [], []
+    n = 0
+    for line in (root / "paper" / "audit-anchors.txt").read_text().splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        key, tpl = (s.strip() for s in line.split("||", 1))
+        if key not in keys:
+            unknown.append(key)
+            continue
+        n += 1
+        phrase = tpl.replace("{v}", str(keys[key]))
+        if phrase not in body:
+            missing.append((key, phrase))
+    assert not unknown, f"anchors name keys the model no longer produces: {unknown}"
+    assert n >= 30, "the anchor file has lost most of its lines"
+    assert not missing, ("a short figure is stale in its own sentence (the audit's anywhere-match "
+                         "would not have caught this):\n"
+                         + "\n".join(f"  {k}: expected {p!r}" for k, p in missing))

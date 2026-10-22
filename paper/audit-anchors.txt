@@ -1,0 +1,39 @@
+# key || phrase template. {v} is replaced by the key's current value. The phrase must occur
+# verbatim in the manuscript (both files joined). This is the check audit_numbers.py cannot
+# do for short bare numbers: "338", "41", "64" and "12" all occur somewhere in 42 pages, so
+# presence anywhere proves nothing. On 2026-10-22 nine such figures in 5.4, 5.6, 5.7 and
+# 5.8 were stale while the audit passed. Add a line whenever a short figure is quoted.
+thrdist10_median || at a median of {v} core-hours
+thrdist10_p5 || percentile range of {v} to
+thrdist10_p95 || range of 20 to {v}
+thrdist5_p5 || At 5% the distribution runs {v} to
+thrdist5_p95 || runs 10 to {v} with a median of
+thrdist5_median || with a median of {v}; at 20%
+thrdist20_p5 || at 20%, {v} to
+thrdist20_p95 || to {v} with a median of
+thrdist20_median || with a median of {v}. In
+thrdist_no_crossing_10 || In {v} of 1,500 draws
+thrdist_draws || each of {v} parameter draws
+xp_filter_prior_above_crossing || with {v} of draws above it
+xp_filter_material_share || but only {v} material
+xp_gen_prior_above_crossing || with {v} above it against
+xp_gen_material_share || against {v} material
+xp_filter_material_dft_min || material filter draws occur from {v} core-hours
+xp_filter_immaterial_dft_max || immaterial ones as high as {v}.
+within_middle_prein_spread || moves the median by {v} times under the middle reading
+within_pessimistic_leeman_spread || {v} under the pessimistic one
+within_optimistic_alab_spread || {v} under the optimistic one
+el_mc_ratio_C || the ratios are {v},
+el_mc_ratio_A || the ratios are 17, {v} and
+el_mc_ratio_B || and {v}, because the DFT-cost prior
+el_ratio_C || {v} times as much as the same improvement in compute price for pipeline C
+el_ratio_A || {v} times for A
+el_ratio_B || {v} times for B
+overlap_l1_BA_span_pp || spans of {v} and
+overlap_l2_BA_span_pp || and {v} percentage points
+overlap_l1_BA_range || stays within {v} at level 1
+overlap_l2_BA_range || and {v} at level 2
+kill_l1_overlap_BA || measured level-1 coefficient of {v}
+kill_l2_overlap_BA || measured level-2 coefficient of {v}
+cross_gen_10pct || the generative crossing is {v} core-hours
+cross_filter_10pct || The filter crossing is {v} core-hours
