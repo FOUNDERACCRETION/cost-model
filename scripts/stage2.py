@@ -1100,6 +1100,7 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["synthesis_share_base"] = k["span_base_share"]
     parts = s1["att"]["parts"]
     k["attempt"] = money(s1["att"]["usd"])
+    k["labour_fringe_pct"] = f"{p['labour_fringe_rate']:.1%}"   # 3.5 names the rate
     # Every component, not a subset: 3.5 prints the full breakdown, and the two that were missing
     # here (crucible, other consumables) were the two the audit could not check.
     for name in ("xrd", "furnace", "labour", "tuition", "precursors"):

@@ -34,8 +34,9 @@ choices:
   dft_cost_basis: span               # span (primary: 3-1,000 core-h) | first_hand (size-dependent)
   mlip_filter_basis: measured        # measured (S&B post-filter purity; CHGNet only) | matbench (recall + FPR)
   price_basis: on_demand             # on_demand | spot
-  # Whose cost: "funder" = full cost to the research funder, including institutional F&A (default; the
-  # question is the resource cost of a material, and F&A pays for real space, utilities and administration);
+  # Whose cost: "funder" = the funder's outlay, direct costs plus the indirect cost the institution
+  # recovers (default). It is not the institution's full resource cost, which paper 4.5 says no row
+  # here reaches; F&A pays for real space, utilities and administration but recovers them only in part.
   # "bench" = direct costs only, as a lab's own budget sees them. base_case.py prints both.
   cost_basis: funder                 # funder | bench
   # Put XRD and furnace recharge fees inside the F&A base? Applies only when indirect_base = mtdc.
@@ -778,7 +779,7 @@ parameters:
     role: analysis
     source_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133
     citations: [szymanski2023alab]
-    source_note: "Derived from two A-Lab figures with a budget model: each recipe succeeds with probability q, a target gets at most B recipes, so per-target success s = 1 - (1 - q)^B and expected recipes = s / q. A-Lab's s = 36/57 and 353/57 = 6.19 recipes per target give q = 0.102 and B = 9.29. Used by the Monte Carlo and scenarios to tie recipes to success (correlation recipes_vs_success); the deterministic base case keeps A-Lab's observed 6.19."
+    source_note: "Derived from two A-Lab figures with a budget model: each recipe succeeds with probability q, a target gets at most B recipes, so per-target success s = 1 - (1 - q)^B and expected recipes = s / q. A-Lab's s = 36/57 and 353/57 = 6.19 recipes per target give q = 0.102 and B = 9.28 (9.283). Used by the Monte Carlo and scenarios to tie recipes to success (correlation recipes_vs_success); the deterministic base case keeps A-Lab's observed 6.19."
     evidence_grade: derived
 
   - name: synth.recipes_per_target
@@ -812,7 +813,6 @@ parameters:
     citations: [prein2025, szymanski2023alab, szymanski2026correction, leeman2024, chen2024jacs]
     source_note: "UNCONDITIONAL rates throughout, as each campaign reports them. Base: Prein et al. 2025, 7/24 = 0.29167 unconditional (24 targets attempted; 8 fused to their crucibles and could not be characterised; 7 of the remaining 16 formed the target phase). CHANGED 2026-10-11: was 7/16 = 0.4375, which conditions on a characterisable product and so was not comparable with the other two readings, both of which count against targets attempted. High: A-Lab corrected, 36/57 = 0.6316 (https://pmc.ncbi.nlm.nih.gov/articles/PMC10700133). Low: Leeman et al. 2024, 3/58 = 0.05172 (https://par.nsf.gov/servlets/purl/10532478). Other: Prein 7/24 = 29% counting uncharacterisable; Chen et al. 2024, 1/4. CHANGED 2026-10-11: was 'given the DFT verdict is right', with high = 38/54 = 0.7037 (computational failures removed from the denominator AND the two manual-intervention successes added) and the model then dividing all three readings by (1 - w). Only the optimistic reading had been conditioned, so the middle and pessimistic branches were charged computational failure twice. All three are now unconditional and (1 - w) no longer enters the synthesis pass rate. The A-Lab target-level crosswalk is still PENDING, so 36/57 is a proposed baseline, not a settled count."
     evidence_grade: published
-    change_note: "CHANGED 2026-10-11: high was 0.58, the NEGOTIATED average. That is a different quantity from the effective rate and lies outside the 25-45% effective range the same source gives, so it is not an upper bound on an effective rate. High is now 0.45, the top of the effective range; 58% is retained as the negotiated_rate_scenario, clearly labelled."
 
   - name: synth.xrd_cost_per_sample
     low: 5
@@ -821,7 +821,7 @@ parameters:
     unit: USD per sample
     source_url: https://sites.utexas.edu/chem-x-ray/xrd-pricing/
     citations: [strom2020]
-    source_note: "Base: UT Austin internal service, 80 USD/sample. High: UT Austin external, 150. Low: Oregon State self-use, 5 USD per 30-min slot (https://xrd.science.oregonstate.edu/fees). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
+    source_note: "Base: UT Austin internal service, 80 USD/sample. High: UT Austin external, 150. Low: Oregon State self-use, 5 USD per 30-min slot (https://xrd.science.oregonstate.edu/fees). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; checked 2026-10-22 at the NSF PAR copy: 'user fee income alone is not enough to fully support most shared facilities; substantial operational cost may be supported by the home institution or, in some cases, grant funding')."
     evidence_grade: published
     # Section 3.5 says the parameter file lists each facility whose published recharge schedule
     # prices an instrument-time line item. It did not: the claim described a table that had never
@@ -851,7 +851,7 @@ parameters:
     unit: USD per furnace booking
     source_url: https://www.ccmr.cornell.edu/sites/default/files/2025-07/FY26%20Cornell.pdf
     citations: [strom2020]
-    source_note: "Cornell CCMR internal 6 USD; industry 13 USD (FY26 Industry sheet). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
+    source_note: "Cornell CCMR internal 6 USD; industry 13 USD (FY26 Industry sheet). LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; checked 2026-10-22 at the NSF PAR copy: 'user fee income alone is not enough to fully support most shared facilities; substantial operational cost may be supported by the home institution or, in some cases, grant funding')."
     evidence_grade: published
     fee_facilities:
       - facility: "Cornell Center for Materials Research (CCMR) shared facilities"
@@ -869,7 +869,7 @@ parameters:
     unit: USD per furnace-hour
     source_url: https://www.ccmr.cornell.edu/sites/default/files/2025-07/FY26%20Cornell.pdf
     citations: [strom2020]
-    source_note: "Cornell internal 3.15-3.75 (base = midpoint, derived); high = industry upper 9.45. LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; claim not yet checked against the article text)."
+    source_note: "Cornell internal 3.15-3.75 (base = midpoint, derived); high = industry upper 9.45. LOWER BOUND on resource cost: recharge fees do not fully cover shared-facility costs (Strom et al. 2020, MRS Bulletin 45(5) 331-335; checked 2026-10-22 at the NSF PAR copy: 'user fee income alone is not enough to fully support most shared facilities; substantial operational cost may be supported by the home institution or, in some cases, grant funding')."
     evidence_grade: published
     fee_facilities:
       - facility: "Cornell Center for Materials Research (CCMR) shared facilities"
@@ -924,8 +924,9 @@ parameters:
     unit: fraction of the indirect-cost base (total direct costs when indirect_base = total_direct)
     source_url: https://www.nber.org/papers/w33627
     citations: [azoulay2025icr, cfr200468]
-    source_note: "Azoulay, Gross & Sampat (2025), 'Indirect Cost Recovery in U.S. Innovation Policy', NBER WP 33627. Base: the EFFECTIVE indirect cost recovery (ICR) rate, what NIH actually pays, averages 42% (abstract; Table 1, 2024: mean 42%, median 40%, s.d. 10%, min 14%, max 81%). High: the NEGOTIATED ICR rate, the ceiling an institution may charge, averages 58% (abstract; Table 1, 2024: mean 58%, median 56%). Low: 'effective rates in practice are generally between 25% and 45%' (section 3.3, p. 17), lower end. Applying the negotiated 58% would overstate indirect cost by about a third. Population: the underlying data are NIH indirect-cost records for 354 NIH grantee institutions (69% universities, 18% independent hospitals, 13% research institutes; NIH RePORTER since 2006 and the CGAF before), not a census of US universities. The effective rate is NIH ICR paid divided by direct costs for the institution as a whole, a total-direct-cost denominator, whereas the model applies it to an MTDC-like base that excludes tuition and service fees; on a narrower base the true rate per base dollar is somewhat higher, so 42% leans low. Vocabulary: the paper's headline term is 'indirect cost recovery'; it uses 'F&A rate' only for the negotiated agreement. Used only when cost_basis = funder. Base of the charge: labour, fringe, crucibles, precursors and other consumables (MTDC includes salaries, fringe, materials, supplies and services and excludes tuition remission, 2 CFR 200.1, https://www.law.cornell.edu/cfr/text/2/200.1). XRD and furnace recharge fees are left out of the base by default: service-centre rates 'must normally consist of its direct costs and an allocable share of all indirect costs' (2 CFR 200.468(b)(2), https://www.law.cornell.edu/cfr/text/2/200.468), so indirect cost on top would double-count. Institutional practice varies; choices.fa_base_includes_service_fees reverses this. Negotiated-rate examples, not used: Caltech FY2026 on-campus 70% (https://www.fundingopportunities.caltech.edu/static/guides/FY26_Rate_Memo.pdf), Stanford 54% (FY2025-26), Michigan 56% (FY2025-29), MIT 62% (FY2026). The 2025 NIH 15% cap was vacated (First Circuit, Jan 2026) and is not used."
+    source_note: "Azoulay, Gross & Sampat (2025), 'Indirect Cost Recovery in U.S. Innovation Policy', NBER WP 33627. Base: the EFFECTIVE indirect cost recovery (ICR) rate, what NIH actually pays, averages 42% (abstract; Table 1, 2024: mean 42%, median 40%, s.d. 10%, min 14%, max 81%). High: 0.45, the top of the effective range (CHANGED 2026-10-11, see change_note). Low: 'effective rates in practice are generally between 25% and 45%' (section 3.3, p. 17), lower end. The NEGOTIATED ICR rate, the ceiling an institution may charge, averages 58% (abstract; Table 1, 2024: mean 58%, median 56%); it is a different quantity, retained as negotiated_rate_scenario, and applying it would overstate indirect cost by about a third. Population: the underlying data are NIH indirect-cost records for 354 NIH grantee institutions (69% universities, 18% independent hospitals, 13% research institutes; NIH RePORTER since 2006 and the CGAF before), not a census of US universities. The effective rate is NIH ICR paid divided by direct costs for the institution as a whole, a total-direct-cost denominator, and since 2026-10-11 the model applies it to the same base (indirect_base: total_direct, including service fees and tuition); the MTDC-like base that excludes tuition and service fees is retained as an accounting scenario, on which the matched rate per base dollar would be somewhat higher. Vocabulary: the paper's headline term is 'indirect cost recovery'; it uses 'F&A rate' only for the negotiated agreement. Used only when cost_basis = funder. Base of the charge: labour, fringe, crucibles, precursors and other consumables (MTDC includes salaries, fringe, materials, supplies and services and excludes tuition remission, 2 CFR 200.1, https://www.law.cornell.edu/cfr/text/2/200.1). Under the mtdc scenario XRD and furnace recharge fees are left out of the base (fees per choices.fa_base_includes_service_fees): service-centre rates 'must normally consist of its direct costs and an allocable share of all indirect costs' (2 CFR 200.468(b)(2), https://www.law.cornell.edu/cfr/text/2/200.468), so indirect cost on top would double-count. Institutional practice varies; choices.fa_base_includes_service_fees reverses this. Negotiated-rate examples, not used: Caltech FY2026 on-campus 70% (https://www.fundingopportunities.caltech.edu/static/guides/FY26_Rate_Memo.pdf), Stanford 54% (FY2025-26), Michigan 56% (FY2025-29), MIT 62% (FY2026). The 2025 NIH 15% cap was vacated (First Circuit, Jan 2026) and is not used."
     evidence_grade: published
+    change_note: "CHANGED 2026-10-11: high was 0.58, the NEGOTIATED average. That is a different quantity from the effective rate and lies outside the 25-45% effective range the same source gives, so it is not an upper bound on an effective rate. High is now 0.45, the top of the effective range; 58% is retained as the negotiated_rate_scenario, clearly labelled."
 
   - name: synth.labour_attempts_per_week
     low: 10
@@ -1142,7 +1143,7 @@ scenarios:
       dft.wrong_verdict_frac: 0.3434              # highest flip rate in sources; Leeman: most targets are known disordered phases
       novelty.science_frac: 0.0                   # 0 of 36 new
     note: "Novelty 0 makes level 3 unbounded (no new material at any spend). That is this worldview's result, not a numerical failure.
-      CHANGED 2026-10-11 (third change today): recipes were left to the budget-model fallback, which returned 9.06 at this
+      CHANGED 2026-10-11 (third change today): recipes were left to the budget-model fallback, which returned 9.07 at this
       success rate. That was wrong in kind, not just in value. Leeman et al. re-count the outcomes of the SAME campaign, so
       the experiment count is observed, not hypothetical: the budget model exists to tie recipes to success across worlds
       where the count is unknown, and applying it to a campaign that published its own count invents 3 extra attempts per
@@ -1203,7 +1204,7 @@ monte_carlo:
       reason: "0 (fellowship) to the NIH compensation-cap residual, mode at the NRSA tuition cap."
     synth.indirect_rate:
       type: triangular
-      reason: "NBER WP 33627: lower end of typical effective ICR rates (low), average effective rate NIH pays (mode), average negotiated rate (high)."
+      reason: "NBER WP 33627: lower end of typical effective ICR rates (low), average effective rate NIH pays (mode), top of the typical effective range (high); the negotiated average 58% is a separate scenario."
     synth.labour_attempts_per_week:
       type: triangular
       reason: "Liverpool estimate 10-20 per researcher-week, midpoint mode."

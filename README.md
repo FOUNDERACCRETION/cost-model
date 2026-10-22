@@ -531,7 +531,7 @@ All are break-even solves on the model with every other quantity held shared, no
 | `synth.furnace_fixed_fee` | triangular | 6 / 6 / 13 | Internal fee (mode) to industry fee. |
 | `synth.furnace_hourly` | triangular | 3.15 / 3.45 / 9.45 | Internal range midpoint (mode) to industry upper rate. |
 | `synth.labour_tuition_remission` | triangular | 0 / 16000 / 31914 | 0 (fellowship) to the NIH compensation-cap residual, mode at the NRSA tuition cap. |
-| `synth.indirect_rate` | triangular | 0.25 / 0.42 / 0.45 | NBER WP 33627: lower end of typical effective ICR rates (low), average effective rate NIH pays (mode), average negotiated rate (high). |
+| `synth.indirect_rate` | triangular | 0.25 / 0.42 / 0.45 | NBER WP 33627: lower end of typical effective ICR rates (low), average effective rate NIH pays (mode), top of the typical effective range (high); the negotiated average 58% is a separate scenario. |
 | `synth.labour_attempts_per_week` | triangular | 10 / 15 / 20 | Liverpool estimate 10-20 per researcher-week, midpoint mode. |
 | `synth.crucible_cost` | triangular | 37.85 / 69.75 / 156.1 | Three vendor prices for a 10 mL alumina crucible. |
 | `synth.attempts_per_crucible` | log_triangular | 10 / 20 / 100 | Assumed firing life 10-100 (mode 20); spans 10x. |
