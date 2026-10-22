@@ -1,8 +1,8 @@
 ---
 title: "Appendices and Supplements"
 subtitle: "Companion to \"What Does It Cost to Validate a Predicted Inorganic Material?\""
-author: "Karthikeya"
-date: "Working paper --- 11 October 2026"
+author: "Karthikeya Aduru"
+date: "Working paper --- 22 October 2026"
 documentclass: article
 classoption:
   - 11pt

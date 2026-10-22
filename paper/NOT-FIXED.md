@@ -254,3 +254,45 @@ sentence as "6 native structures", which for CHGNet turned a sub-linear 0.83 int
 1.05"; and `synth.precursor_usd_per_g`'s note said "median target" where the code takes the median
 *over* six targets, which for an even count is the mean of the two middle blends, so no target has
 that value.
+
+---
+
+## Resolved 22 October 2026: items 7, 8 and 9
+
+The author delegated all three. Each was decided on the merits rather than by defaulting to the
+earlier recommendation, and two of the three alternatives turned out to be worse than they looked.
+
+**Item 7, novelty bounds — kept, and stated.** "Same bound for all three readings" looked cleaner and
+is not. The pessimistic reading *is* Leeman's, and Leeman's own published verdict is that none of
+the materials were new; giving that reading a nonzero Wilson bound would contradict the source it is
+named for. So the per-reading structure has a real anchor at one end. What it lacked was an honest
+account of the other two. §5.6 now says the pessimistic reading takes the published zero, the middle
+and optimistic readings take the 95% and 99% bounds on that same count, and the pairing of the more
+generous bound with the more optimistic reading "is a choice of confidence level, not a difference in
+evidence". No figure moves.
+
+**Item 8, Monte Carlo precision — left as it stands.** The deterministic span would change the
+abstract's estimand from medians to point estimates, and §5.7's whole argument is that medians with
+every other parameter drawn are the right summary; it would also make the abstract disagree with
+§5.7's table, trading one problem for a new inconsistency. Rounding the span to one significant figure
+gives \$1,000, a 13% understatement of a \$1,147 median, and loses the factor of 30. The case for
+leaving it: anyone reproducing with the pinned seed gets exactly \$1,147 and so exactly \$1,100; only
+someone who reseeds sees \$1,200, and that person is running a different experiment that A.5 already
+sizes for them (±0.9%); and the abstract hedges the figure with "roughly". The precision is disclosed,
+the figure is reproducible, and the factor of 30 — the claim the span actually supports — is stable
+across seeds (29.3–30.4).
+
+**Item 9, the derivation layer — one disclosure, no model change.** Setting the size exponent's high
+endpoint to 2.61 from the controlled 28→56 pair would import a parameter from a single pair that
+`data/dft_benchmark/PROTOCOL.md` explicitly says "is not a fitted law and should not be
+extrapolated", for an endpoint that is inert at the default `span` basis. So 9a stays documented here
+and out of the paper. 9b is different, because §4.2 makes the claims it concerns: "log-log slope near
+one" and "18 to 81 steps" are over all seven sizes, while the per-atom cost pools six. §4.2 now says
+so, gives the native-only figures (slope 0.83 to 0.95, steps 18 to 46), says why the supercell is in
+the size test and out of the cost, and sizes the difference: \$0.00014 per robust prediction, under a
+thousandth of a percent of level-1 cost. Aligning the model instead would have moved two printed
+figures on upload day for that.
+
+A note against myself: the first draft of that §4.2 clause said the difference was "under a hundredth
+of a cent". It is 1.37 hundredths. All three figures in the clause were hand-typed, which is the habit
+behind four of the defects found on 18 October; checking them before committing caught it.
