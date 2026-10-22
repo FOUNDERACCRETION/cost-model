@@ -1372,6 +1372,11 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     k["bound_max_ratio_pessimistic"] = f"{1.0 / _recs['low']:.1f}"
     k["bound_top_mat_hi"] = f"{at_top['success_CB_mat_hi']:.3f}"
     k["bound_top_mat_hi_implied_optimistic"] = f"{_recs['high'] * at_top['success_CB_mat_hi']:.1%}"
+    # The largest implied rate in the 5.5 table at the BASE reading is the materiality column's top,
+    # not the parity column's: 5.5 used to say 74.7% (the parity row at 1,000 core-h) while the
+    # same table printed 2.817 in the materiality column, which implies 82.2%.
+    k["bound_top_mat_hi_implied_base"] = f"{S * at_top['success_CB_mat_hi']:.1%}"
+    k["mlip_step_cap"] = f"{p['mlip_step_cap']:.0f}"
     k["bound_success_parity_pp"] = f"{(S * at_base['success_CB'] - S) * 100:.2f}"
     # The 10% materiality band, which parity does not give.
     k["bound_mat_lo"] = f"{at_base['success_CB_mat_lo']:.3f}"

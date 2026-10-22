@@ -567,7 +567,7 @@ uv run python scripts/audit_numbers.py paper/p1-final.md paper/p1-appendices.md 
 
 Without `uv`: `python -m venv .venv`, activate it, `pip install pyyaml pytest`, then the same commands without the `uv run` prefix.
 
-**Reproduction record.** Developed on Linux (Python 3.13). Reproduced on 22 October 2026 on a second machine, Windows 11 with Python 3.12 (PowerShell): 766 tests pass, and regenerating `results/` from `params/parameters.yaml` and `data/` gives byte-identical `key_numbers.json` — every figure the paper prints — and every other output except one value in `monte_carlo_summary.csv`, the 5th percentile of level-1 pipeline B under the middle reading, which differs in its sixteenth significant digit (4.370194370527293 against …294, one floating-point unit; platform math library). Line endings aside, nothing else moved. The first Windows run had failed on five tests because file reads used the platform default encoding; that is fixed and guarded by a test.
+**Reproduction record.** Developed on Linux (Python 3.13). Reproduced on 22 October 2026 on a second machine, Windows 11 with Python 3.12 (PowerShell): 766 tests pass, and regenerating `results/` from `params/parameters.yaml` and `data/` gives byte-identical `key_numbers.json` — every figure the paper prints — and every other output except one value in `monte_carlo_summary.csv`, the 5th percentile of level-1 pipeline B under the middle reading, which differs in its sixteenth significant digit (4.370194370527293 against …294, one floating-point unit; platform math library). Line endings aside, nothing else moved. The same day, a fresh clone of the public repository on Linux (Python 3.13, clean virtual environment) regenerated every output byte-identical, derived parameters and manifests included. The first Windows run had failed on five tests because file reads used the platform default encoding; that is fixed and guarded by a test.
 
 ### Building the PDFs
 
@@ -575,11 +575,17 @@ Needs pandoc (3.1.3 here) and a LaTeX distribution with XeTeX. Built with `citep
 bibliography comes from `paper/references.bib` and no separate BibTeX run is needed:
 
 ```bash
-pandoc paper/p1-final.md      -o p1-final.pdf      --pdf-engine=xelatex --citeproc --bibliography=paper/references.bib
-pandoc paper/p1-appendices.md -o p1-appendices.pdf --pdf-engine=xelatex --citeproc --bibliography=paper/references.bib
+python scripts/build_pdf.py        # one 41-page PDF: paper, then appendices, one reference list -> build/
 ```
 
-That gives 32 pages and 9 pages respectively. **If it fails with `File 'lmodern.sty' not found`**,
+That is the file posted to SSRN. The two sources can also be built separately (33 and 9 pages), but
+then the page numbers restart and the bibliography is split, so the same work is cited as "2025" in
+one and "2025a" in the other:
+
+```bash
+pandoc paper/p1-final.md      -o p1-final.pdf      --pdf-engine=xelatex --citeproc --bibliography=paper/references.bib
+pandoc paper/p1-appendices.md -o p1-appendices.pdf --pdf-engine=xelatex --citeproc --bibliography=paper/references.bib
+``` **If it fails with `File 'lmodern.sty' not found`**,
 your TeX tree is missing Latin Modern, which pandoc's default template loads. Either install it
 (`tlmgr install lmodern`, or the `lmodern` package on Debian/Ubuntu), or build with a template that
 does not load it:

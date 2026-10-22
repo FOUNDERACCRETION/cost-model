@@ -334,6 +334,8 @@
  "bound_max_ratio_pessimistic": "19.3",
  "bound_top_mat_hi": "2.817",
  "bound_top_mat_hi_implied_optimistic": "177.9%",
+ "bound_top_mat_hi_implied_base": "82.2%",
+ "mlip_step_cap": "500",
  "bound_success_parity_pp": "4.92",
  "bound_mat_lo": "1.062",
  "bound_mat_hi": "1.285",
