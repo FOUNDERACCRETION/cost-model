@@ -565,6 +565,10 @@ uv run python scripts/manifest.py                 # parameter and fee manifests,
 uv run python scripts/audit_numbers.py paper/p1-final.md paper/p1-appendices.md   # every printed figure vs the model
 ```
 
+Without `uv`: `python -m venv .venv`, activate it, `pip install pyyaml pytest`, then the same commands without the `uv run` prefix.
+
+**Reproduction record.** Developed on Linux (Python 3.13). Reproduced on 22 October 2026 on a second machine, Windows 11 with Python 3.12 (PowerShell): 766 tests pass, and regenerating `results/` from `params/parameters.yaml` and `data/` gives byte-identical `key_numbers.json` — every figure the paper prints — and every other output except one value in `monte_carlo_summary.csv`, the 5th percentile of level-1 pipeline B under the middle reading, which differs in its sixteenth significant digit (4.370194370527293 against …294, one floating-point unit; platform math library). Line endings aside, nothing else moved. The first Windows run had failed on five tests because file reads used the platform default encoding; that is fixed and guarded by a test.
+
 ### Building the PDFs
 
 Needs pandoc (3.1.3 here) and a LaTeX distribution with XeTeX. Built with `citeproc`, so the
