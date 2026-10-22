@@ -196,6 +196,8 @@
  "c0_B": "$16.00",
  "c0_C": "$64.35",
  "gen_share_of_C_compute": "0.5%",
+ "novelty_mc_count": "0 of 36",
+ "novelty_mc_mean": "1.4%",
  "leeman_fallback_recipes": "9.07",
  "leeman_fallback_extra_recipes": "2.95",
  "leeman_fallback_inflation": "48%",

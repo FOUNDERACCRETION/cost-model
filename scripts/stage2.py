@@ -1198,6 +1198,15 @@ def key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor):
     _c = funnel(p)["pipelines"]["C"]["outputs"]["experimentally_validated"]
     k["gen_share_of_C_compute"] = (
         f"{_c['gpu_h_per'] * p['price_per_gpu_hour'] / _c['compute_usd_per']:.1%}")
+    # What the Monte Carlo actually draws for novelty. 5.6 used to say every nonzero novelty value
+    # is a Wilson bound; that is true of the named scenarios only. The simulation draws every
+    # reading's share from the Jeffreys posterior on the same count, which is never zero.
+    _nov = {w: r["novelty"] for w, r in doc["monte_carlo"]["joint"]["worldview"]["readings"].items()}
+    assert all(v["type"] == "beta_counts" for v in _nov.values()), _nov
+    assert len({(v["k"], v["n"]) for v in _nov.values()}) == 1, "readings draw novelty from different counts"
+    _nk, _nn = next(iter(_nov.values()))["k"], next(iter(_nov.values()))["n"]
+    k["novelty_mc_count"] = f"{_nk} of {_nn}"
+    k["novelty_mc_mean"] = f"{(_nk + 0.5) / (_nn + 1):.1%}"
     # What the budget-model fallback WOULD have charged the pessimistic reading, which 5.7 quotes
     # as the size of the error avoided. Computed, not remembered.
     _rec_pes = doc["monte_carlo"]["joint"]["worldview"]["readings"]["pessimistic_leeman"]
