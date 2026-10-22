@@ -20,7 +20,7 @@ SELECTABLE_GENERATORS = ("ion_exchange", "mattergen")
 
 
 def load(path: Path = PARAMS_YAML) -> dict:
-    with open(path) as fh:
+    with open(path, encoding="utf-8") as fh:
         doc = yaml.safe_load(fh)
     validate(doc)
     return doc

@@ -13,12 +13,12 @@ ENTRY = re.compile(r"^@(\w+)\s*\{\s*([^,\s]+)\s*,", re.M)
 
 def keys(path: Path = BIB) -> list[str]:
     """Citation keys of every entry, in file order."""
-    return [m.group(2) for m in ENTRY.finditer(Path(path).read_text())]
+    return [m.group(2) for m in ENTRY.finditer(Path(path).read_text(encoding="utf-8"))]
 
 
 def entries(path: Path = BIB) -> dict[str, dict]:
     """{key: {"type": ..., field: value}} with brace-balanced field values (enough for checks, not a full parser)."""
-    text = Path(path).read_text()
+    text = Path(path).read_text(encoding="utf-8")
     out = {}
     starts = list(ENTRY.finditer(text))
     for i, m in enumerate(starts):

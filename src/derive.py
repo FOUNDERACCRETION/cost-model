@@ -25,7 +25,7 @@ MATBENCH_FILES = {"chgnet": "chgnet-0.3.0.yml", "mace-mp-0": "mace-mp-0.yml", "m
 
 
 def read_csv(path: Path) -> list[dict]:
-    with open(path, newline="") as fh:
+    with open(path, newline="", encoding="utf-8") as fh:
         return list(csv.DictReader(fh))
 
 
@@ -172,7 +172,7 @@ def native_size_range(rows: list[dict]) -> dict:
 
 def matbench_rates(model: str) -> dict:
     """Recall (TPR), false-positive rate and prevalence on the unique-prototype WBM set."""
-    with open(MATBENCH_DIR / MATBENCH_FILES[model]) as fh:
+    with open(MATBENCH_DIR / MATBENCH_FILES[model], encoding="utf-8") as fh:
         doc = yaml.safe_load(fh)
     m = doc["metrics"]["discovery"]["unique_prototypes"]
     tp, fp, tn, fn = m["TP"], m["FP"], m["TN"], m["FN"]

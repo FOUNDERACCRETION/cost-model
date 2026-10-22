@@ -24,6 +24,9 @@ Exit status is nonzero when an unwaived key is missing, so CI fails on drift.
 Run: python scripts/audit_numbers.py paper/p1-revision13.md
 """
 from __future__ import annotations
+import sys as _sys
+if hasattr(_sys.stdout, "reconfigure"):  # a cp1252 or ASCII console must not crash a UTF-8 report
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import collections
 import json
@@ -50,7 +53,7 @@ def normalise(s: str) -> str:
 def load_waivers() -> dict:
     out = {}
     if WAIVERS.exists():
-        for line in WAIVERS.read_text().splitlines():
+        for line in WAIVERS.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
@@ -112,9 +115,9 @@ def audit(papers: list[Path], keys_path: Path) -> int:
     # check is that no generated figure is stranded, not that it sits in a particular file.
     if isinstance(papers, Path):
         papers = [papers]
-    text = "\n".join(p.read_text() for p in papers)
+    text = "\n".join(p.read_text(encoding="utf-8") for p in papers)
     paper = papers[0]
-    keys = json.loads(keys_path.read_text())
+    keys = json.loads(keys_path.read_text(encoding="utf-8"))
     waived = load_waivers()
     body = normalise(text)
 

@@ -44,7 +44,7 @@ def test_draft_citations_resolve():
     missing = {}
     for draft in DRAFTS:
         assert draft.exists(), f"{draft.name} is missing, so its citations go unchecked"
-        cited = draft_citations(draft.read_text())
+        cited = draft_citations(draft.read_text(encoding="utf-8"))
         assert cited, f"{draft.name} cites nothing, which means the parser has stopped matching"
         bad = sorted({k for k in cited if k not in bib})
         if bad:
@@ -70,9 +70,9 @@ def test_citation_extraction_sees_both_pandoc_forms():
     # a bracketed key must not be counted twice by the in-text pattern
     assert draft_citations("[@theta]").count("theta") == 1
 
-    main = set(draft_citations((ROOT / "paper" / "p1-final.md").read_text()))
+    main = set(draft_citations((ROOT / "paper" / "p1-final.md").read_text(encoding="utf-8")))
     assert len(main) > 30, f"only {len(main)} keys extracted from the manuscript"
-    bracket_only = set(re.findall(r"\[@([a-z0-9]+)\]", (ROOT / "paper" / "p1-final.md").read_text()))
+    bracket_only = set(re.findall(r"\[@([a-z0-9]+)\]", (ROOT / "paper" / "p1-final.md").read_text(encoding="utf-8")))
     assert main - bracket_only, (
         "every citation in the manuscript is bracketed, so this test would pass even with the "
         "in-text pattern removed; check the extractor still handles author-in-text citations")
@@ -107,7 +107,7 @@ def test_withdrawn_paper_cited_nowhere():
     hits = []
     for path in repo_files():
         try:
-            text = path.read_text(errors="ignore").lower()
+            text = path.read_text(encoding="utf-8", errors="ignore").lower()
         except OSError:
             continue
         # Strip comment lines first: a DO-NOT-CITE warning has to be able to name the paper

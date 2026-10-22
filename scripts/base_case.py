@@ -4,6 +4,9 @@ Run: uv run python scripts/base_case.py [--price spot] [--dft first_hand] [--fil
                                         [--generator ion_exchange]
 """
 
+import sys as _sys
+if hasattr(_sys.stdout, "reconfigure"):  # a cp1252 or ASCII console must not crash a UTF-8 report
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import argparse
 import math
 import sys

@@ -5,6 +5,9 @@ The values printed here are the ones recorded in params/parameters.yaml;
 tests/test_traceability.py checks that the two agree.
 """
 
+import sys as _sys
+if hasattr(_sys.stdout, "reconfigure"):  # a cp1252 or ASCII console must not crash a UTF-8 report
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import json
 import sys
 from pathlib import Path

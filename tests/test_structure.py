@@ -458,7 +458,7 @@ def test_the_manuscript_revision_label_matches_its_filename():
     root = _p.Path(__file__).resolve().parents[1]
     for q in root.glob("paper/p1-revision*.md"):
         n = int(re.search(r"revision(\d+)", q.name).group(1))
-        head = q.read_text()[:2000]
+        head = q.read_text(encoding="utf-8")[:2000]
         m = re.search(r'^date:.*revision (\d+)', head, re.M)
         assert m, f"{q.name} has no revision number on its title page"
         assert int(m.group(1)) == n, (
@@ -476,7 +476,7 @@ def test_reconstruction_worksheet_reproduces_the_attempt_cost():
 
     subprocess.run([sys.executable, str(root / "scripts" / "manifest.py")], cwd=root, check=True,
                    capture_output=True)
-    text = (root / "results" / "RECONSTRUCTION.md").read_text()
+    text = (root / "results" / "RECONSTRUCTION.md").read_text(encoding="utf-8")
     model = synthesis_cost_per_attempt(resolve(load()))["usd"]
 
     # the printed total must be the model's
@@ -544,13 +544,13 @@ def test_fee_schedule_lists_every_input_to_the_attempt_cost():
                    capture_output=True)
     # read through csv, not by splitting lines: a source_passage field can carry a newline inside
     # its quotes, so physical lines outnumber records
-    with open(root / "results" / "fee_schedule_manifest.csv", newline="") as fh:
+    with open(root / "results" / "fee_schedule_manifest.csv", newline="", encoding="utf-8") as fh:
         records_read = [r for r in csv.reader(fh) if r and not r[0].startswith("#")]
     rows = records_read[1:]                     # drop the header row
     assert len(rows) == len(mod.FEE_ALLOCATION), (
         f"{len(rows)} rows written for {len(mod.FEE_ALLOCATION)} allocation entries")
     words = {14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen"}
-    assert f"{words[len(rows)]} attempt-cost inputs" in (root / "paper" / "p1-final.md").read_text(), (
+    assert f"{words[len(rows)]} attempt-cost inputs" in (root / "paper" / "p1-final.md").read_text(encoding="utf-8"), (
         f"the paper does not say there are {words[len(rows)]} attempt-cost inputs")
 
 
@@ -569,7 +569,7 @@ def test_the_generator_draws_no_unseeded_randomness():
     import pathlib as _p, re
     root = _p.Path(__file__).resolve().parents[1]
     for name in ("scripts/stage2.py", "src/sampling.py", "src/analysis.py"):
-        src = (root / name).read_text()
+        src = (root / name).read_text(encoding="utf-8")
         body = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
         bare = re.findall(r"\brandom\.Random\(\s*\)", body)
         assert not bare, f"{name} constructs an unseeded Random()"
@@ -601,7 +601,7 @@ def test_every_path_the_readme_names_exists():
     import pathlib as _p, re
     root = _p.Path(__file__).resolve().parents[1]
     named = set(re.findall(r"`([A-Za-z0-9_./-]+\.(?:py|md|yaml|json|bib|csv|txt))`",
-                           (root / "README.md").read_text()))
+                           (root / "README.md").read_text(encoding="utf-8")))
     assert len(named) > 15, "README paths did not parse, so this check would pass vacuously"
 
     # Files git ignores are generated, not shipped, so a fresh clone does not have them until the
@@ -655,8 +655,8 @@ def test_no_new_key_rides_on_another_keys_quotation():
     sys.path.insert(0, str(root / "scripts"))
     from audit_numbers import over_subscribed, normalise, load_waivers
 
-    keys = json.loads((root / "results" / "key_numbers.json").read_text())
-    body = normalise("\n".join((root / "paper" / p).read_text()
+    keys = json.loads((root / "results" / "key_numbers.json").read_text(encoding="utf-8"))
+    body = normalise("\n".join((root / "paper" / p).read_text(encoding="utf-8")
                                for p in ("p1-final.md", "p1-appendices.md")))
     shared, over, deficit = over_subscribed(keys, load_waivers(), body)
     assert shared, "no checkable values found, so this check would pass vacuously"
@@ -697,7 +697,7 @@ def test_no_document_quotes_a_retired_value_as_current():
     #   paper/OVERNIGHT_CHANGES.md, paper/NOT-FIXED.md, paper/VERIFICATION.md
 
     retired = {}
-    for line in (root / "paper" / "retired-values.txt").read_text().splitlines():
+    for line in (root / "paper" / "retired-values.txt").read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
@@ -713,7 +713,7 @@ def test_no_document_quotes_a_retired_value_as_current():
     for doc in current:
         if not doc.exists():
             continue
-        for i, line in enumerate(doc.read_text().splitlines(), 1):
+        for i, line in enumerate(doc.read_text(encoding="utf-8").splitlines(), 1):
             if historical.search(line):
                 continue
             norm = line.replace("×", "x").replace("–", "-").replace("—", "-")
@@ -791,7 +791,7 @@ def test_instrument_fee_facility_count_matches_the_parameter_file():
     """
     import pathlib as _p, yaml, collections, re
     root = _p.Path(__file__).resolve().parents[1]
-    doc = yaml.safe_load((root / "params" / "parameters.yaml").read_text())
+    doc = yaml.safe_load((root / "params" / "parameters.yaml").read_text(encoding="utf-8"))
 
     facilities = collections.OrderedDict()
     for rec in doc["parameters"]:
@@ -804,7 +804,7 @@ def test_instrument_fee_facility_count_matches_the_parameter_file():
     words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
              8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve"}
     n = len(facilities)
-    paper = (root / "paper" / "p1-final.md").read_text()
+    paper = (root / "paper" / "p1-final.md").read_text(encoding="utf-8")
     assert f"fee schedules of {words[n]} US university facilities" in paper, (
         f"the parameter file carries {n} distinct instrument-fee facilities; Section 3.5 does not "
         f"say {words[n]}")
@@ -969,9 +969,9 @@ def test_waiver_notes_that_quote_the_manuscript_still_match_it():
     """
     import pathlib as _p, re
     root = _p.Path(__file__).resolve().parents[1]
-    body = "\n".join((root / "paper" / p).read_text() for p in ("p1-final.md", "p1-appendices.md"))
+    body = "\n".join((root / "paper" / p).read_text(encoding="utf-8") for p in ("p1-final.md", "p1-appendices.md"))
     gone = []
-    for line in (root / "paper" / "audit-waivers.txt").read_text().splitlines():
+    for line in (root / "paper" / "audit-waivers.txt").read_text(encoding="utf-8").splitlines():
         if line.startswith("#") or ":" not in line:
             continue
         for q in re.findall(r'"([^"]+)"', line):
@@ -991,9 +991,9 @@ def test_short_bare_number_keys_are_not_matched_by_section_numbers():
     """
     import pathlib as _p, re, json
     root = _p.Path(__file__).resolve().parents[1]
-    body = "\n".join((root / "paper" / p).read_text() for p in ("p1-final.md", "p1-appendices.md"))
-    keys = json.loads((root / "results" / "key_numbers.json").read_text())
-    waived = {l.split(":")[0].strip() for l in (root / "paper" / "audit-waivers.txt").read_text().splitlines()
+    body = "\n".join((root / "paper" / p).read_text(encoding="utf-8") for p in ("p1-final.md", "p1-appendices.md"))
+    keys = json.loads((root / "results" / "key_numbers.json").read_text(encoding="utf-8"))
+    waived = {l.split(":")[0].strip() for l in (root / "paper" / "audit-waivers.txt").read_text(encoding="utf-8").splitlines()
               if l and not l.startswith("#") and ":" in l}
     bad = []
     for name, val in keys.items():
@@ -1022,12 +1022,12 @@ def test_short_figures_are_quoted_in_the_sentence_that_owns_them():
     """
     import pathlib as _p, json
     root = _p.Path(__file__).resolve().parents[1]
-    keys = json.loads((root / "results" / "key_numbers.json").read_text())
-    body = "\n".join((root / "paper" / p).read_text() for p in ("p1-final.md", "p1-appendices.md"))
+    keys = json.loads((root / "results" / "key_numbers.json").read_text(encoding="utf-8"))
+    body = "\n".join((root / "paper" / p).read_text(encoding="utf-8") for p in ("p1-final.md", "p1-appendices.md"))
     body = body.replace("--", "–")
     missing, unknown = [], []
     n = 0
-    for line in (root / "paper" / "audit-anchors.txt").read_text().splitlines():
+    for line in (root / "paper" / "audit-anchors.txt").read_text(encoding="utf-8").splitlines():
         if not line.strip() or line.startswith("#"):
             continue
         key, tpl = (s.strip() for s in line.split("||", 1))
@@ -1043,3 +1043,34 @@ def test_short_figures_are_quoted_in_the_sentence_that_owns_them():
     assert not missing, ("a short figure is stale in its own sentence (the audit's anywhere-match "
                          "would not have caught this):\n"
                          + "\n".join(f"  {k}: expected {p!r}" for k, p in missing))
+
+
+def test_every_text_file_access_names_its_encoding():
+    """The package failed on its first Windows run, 2026-10-22, with 5 of 765 tests.
+
+    Every read went through the platform default encoding, which on Windows is cp1252, so each
+    en dash in the manuscript became three characters, '1.17x' with a multiplication sign did not
+    match, and DIAGNOSTICS.md raised UnicodeDecodeError at byte 0x81. The model was untouched; the
+    checks around it were unreadable. Every open(), read_text() and write_text() in src/, scripts/
+    and tests/ now names utf-8, and the suite is run under LC_ALL=C before a release.
+    """
+    import pathlib as _p, re
+    root = _p.Path(__file__).resolve().parents[1]
+    import ast
+    bad = []
+    for d in ("src", "scripts", "tests"):
+        for f in sorted((root / d).glob("*.py")):
+            src = f.read_text(encoding="utf-8")
+            for node in ast.walk(ast.parse(src)):
+                if not isinstance(node, ast.Call):
+                    continue
+                fn = node.func
+                name = fn.id if isinstance(fn, ast.Name) else fn.attr if isinstance(fn, ast.Attribute) else ""
+                if name not in ("open", "read_text", "write_text"):
+                    continue
+                kws = {k.arg for k in node.keywords}
+                modes = [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
+                if "encoding" in kws or any("b" in m for m in modes):
+                    continue
+                bad.append(f"{f.relative_to(root)}:{node.lineno}: {ast.get_source_segment(src, node)[:80]}")
+    assert not bad, "text file access without an explicit encoding:\n" + "\n".join(bad)

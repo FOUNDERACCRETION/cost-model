@@ -438,7 +438,7 @@ def test_purity_for_parity(doc):
 
 
 def test_readme_generated_blocks_filled():
-    text = open("README.md").read()
+    text = open("README.md", encoding="utf-8").read()
     names = re.findall(r"<!-- generated:(\w+):begin -->", text)
     assert set(names) == {"headline", "spot", "daf", "returns", "kill", "montecarlo", "tornado", "breakevens",
                           "distributions", "basecase", "costbasis", "dftspan", "attempt", "level3", "multiplier",
@@ -450,7 +450,7 @@ def test_readme_generated_blocks_filled():
 
 def test_readme_headline_numbers_match_model(doc):
     """The hand-written stage-1 findings quote the model's current base-case numbers."""
-    text = open("README.md").read()
+    text = open("README.md", encoding="utf-8").read()
     c = an.costs(resolve(doc))
 
     def money(x):
@@ -463,7 +463,7 @@ def test_readme_headline_numbers_match_model(doc):
 
 def test_readme_scoped_level2_sentence(doc):
     """The level-2 headline quotes the spread at the base and at the top of the DFT span."""
-    text = open("README.md").read()
+    text = open("README.md", encoding="utf-8").read()
     p = resolve(doc)
     hi = records(doc)["dft.cost_per_candidate"]["high"]
     for dft, label in ((p["dft_cost_per_candidate"], "base"), (hi, "high")):
@@ -479,7 +479,7 @@ def test_readings_carry_sources(doc):
 
 def test_readme_headline_is_conditional():
     """The README headline is the per-reading table, with no single unqualified point estimate."""
-    text = open("README.md").read()
+    text = open("README.md", encoding="utf-8").read()
     block = re.search(r"<!-- generated:headline:begin -->\n(.*?)<!-- generated:headline:end -->", text, re.S).group(1)
     for reading in ("optimistic (A-Lab)", "middle (Prein)", "pessimistic (Leeman)"):
         assert reading in block
@@ -489,7 +489,7 @@ def test_readme_headline_is_conditional():
 
 def test_readme_quotes_current_indirect_rate(doc):
     """Hand-written README text quotes the indirect cost recovery rate the model actually uses."""
-    text = open("README.md").read()
+    text = open("README.md", encoding="utf-8").read()
     rec = records(doc)["synth.indirect_rate"]
     assert f"{rec['base']:.0%}" in text
     assert f"The rate is {rec['base']:.0%}" in text
@@ -499,7 +499,7 @@ def test_key_numbers_match_model(doc):
     """results/key_numbers.json (the paper draft's source of model numbers) is current."""
     import json
 
-    keys = json.load(open("results/key_numbers.json"))
+    keys = json.load(open("results/key_numbers.json", encoding="utf-8"))
     c = an.costs(resolve(doc))
 
     def money(x):

@@ -21,6 +21,9 @@ the model, so none of them can drift from the figures the paper prints:
 Run: python scripts/manifest.py
 """
 from __future__ import annotations
+import sys as _sys
+if hasattr(_sys.stdout, "reconfigure"):  # a cp1252 or ASCII console must not crash a UTF-8 report
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import csv
 import json
@@ -60,7 +63,7 @@ FEE_ALLOCATION = {
 
 def parameter_manifest(doc, out: Path) -> int:
     recs = records(doc)
-    with open(out, "w", newline="") as fh:
+    with open(out, "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["name", "low", "base", "high", "unit", "evidence_grade", "distribution",
                     "source_url", "citations", "source_passage_or_derivation"])
@@ -94,7 +97,7 @@ def fee_manifest(doc, out: Path) -> int:
         note = (r.get("source_note", "") or "").replace("\n", " ")
         rows.append([name, r.get("base", ""), r.get("unit", ""), alloc,
                      r.get("evidence_grade", ""), r.get("source_url", ""), note])
-    with open(out, "w", newline="") as fh:
+    with open(out, "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["# every input to the $271 attempt estimate, with its usage allocation"])
         w.writerow(["# 'allocation input' marks a parameter that converts rates into per-attempt "
@@ -301,7 +304,7 @@ def worksheet(doc, p, out: Path) -> None:
     A("")
     A("The Monte Carlo is seeded from `monte_carlo.seed` in the parameter file, so the draw-level")
     A("outputs are reproducible byte for byte on the same Python version.")
-    out.write_text("\n".join(L) + "\n")
+    out.write_text("\n".join(L) + "\n", encoding="utf-8")
 
 
 def main() -> None:

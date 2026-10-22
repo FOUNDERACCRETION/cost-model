@@ -37,7 +37,7 @@ def test_every_record_is_used_or_a_cross_check(doc):
     for rec in doc["parameters"]:
         name = rec["name"]
         if rec.get("role") == "analysis":
-            source = "".join(open(f).read() for f in ("src/analysis.py", "src/sampling.py"))
+            source = "".join(open(f, encoding="utf-8").read() for f in ("src/analysis.py", "src/sampling.py"))
             assert name in source, f"{name} has role analysis but the analysis code never reads it"
             continue
         if rec.get("role") == "cross_check" or name.startswith(stage2):

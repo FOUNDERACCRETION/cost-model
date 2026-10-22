@@ -6,6 +6,9 @@ README.md between <!-- generated:NAME:begin --> and <!-- generated:NAME:end --> 
 those blocks comes from params/parameters.yaml and data/.
 """
 
+import sys as _sys
+if hasattr(_sys.stdout, "reconfigure"):  # a cp1252 or ASCII console must not crash a UTF-8 report
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import argparse
 import collections
 import csv
@@ -1682,23 +1685,23 @@ def main():
                        ("Tornado (summary)", "tornado")):
         report += [f"## {title}", "", sections[key], ""]
     report += ["## Tornado (full)", "", tornado_full(tor), ""]
-    (out_dir / "stage2.md").write_text("\n".join(report))
+    (out_dir / "stage2.md").write_text("\n".join(report), encoding="utf-8")
     # The reconstruction package (manifests + hand-checkable worksheet) is part of the build, so
     # it cannot fall behind the parameter file.
     import subprocess
     subprocess.run([sys.executable, str(ROOT / "scripts" / "manifest.py")],
                    cwd=ROOT, check=True, capture_output=True)
     keys = key_numbers(doc, p, s1, mc, summ, scen, kill, mc_ret, tor)
-    (out_dir / "key_numbers.json").write_text(json.dumps(keys, indent=1, ensure_ascii=False) + "\n")
+    (out_dir / "key_numbers.json").write_text(json.dumps(keys, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
     # Archives behind two claims the paper makes to limited precision: the affine threshold
     # coefficients (Section 5.5) and the bin-count dependence of the overlap coefficient (5.6).
     tc = threshold_coefficients(p)
     tc["roots"] = {str(t): v for t, v in tc["roots"].items()}
     tc["roots_from_printed_coefficients"] = {str(t): v for t, v in tc["roots_from_printed_coefficients"].items()}
-    (out_dir / "threshold_coefficients.json").write_text(json.dumps(tc, indent=1) + "\n")
+    (out_dir / "threshold_coefficients.json").write_text(json.dumps(tc, indent=1) + "\n", encoding="utf-8")
     osens = an.overlap_sensitivity(mc)
-    with open(out_dir / "overlap_bin_sensitivity.csv", "w", newline="") as fh:
+    with open(out_dir / "overlap_bin_sensitivity.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["# overlap coefficient vs bin count; bins hold normalised probabilities, not densities"])
         w.writerow(["bins", "level", "pair", "overlap"])
@@ -1707,7 +1710,7 @@ def main():
                 for pr, v in osens[n][lv].items():
                     w.writerow([n, lv, f"{pr[0]} vs {pr[1]}", f"{v:.6f}"])
 
-    with open(out_dir / "tornado.csv", "w", newline="") as fh:
+    with open(out_dir / "tornado.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["level", "pipeline", "parameter", "cost_at_low", "cost_at_high", "swing", "variance_share", "status"])
         for lvl in an.LEVELS:
@@ -1715,13 +1718,13 @@ def main():
                 for r in tor[lvl][k]:
                     w.writerow([lvl, k, r["name"], r["low_cost"], r["high_cost"], r["swing"], r["share"], r["status"]])
     # Per-draw output is large and regenerable (same seed), so it is git-ignored; the summary is committed.
-    with open(out_dir / "monte_carlo_draws.csv", "w", newline="") as fh:
+    with open(out_dir / "monte_carlo_draws.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["draw", "worldview", "dft_core_h", *(f"{SHORT[l]}_{k}" for l in an.LEVELS for k in an.PIPELINES)])
         for i, d in enumerate(mc["draws"]):
             w.writerow([i, d["worldview"], d["dft_cost"], *(d["costs"][l][k] for l in an.LEVELS for k in an.PIPELINES)])
     qs = (5, 25, 50, 75, 95)
-    with open(out_dir / "monte_carlo_summary.csv", "w", newline="") as fh:
+    with open(out_dir / "monte_carlo_summary.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["# seed", MC_SEED, "draws", len(mc["draws"]), "rejected", mc["rejected"],
                     "regenerate", "uv run python scripts/stage2.py"])
@@ -1737,10 +1740,10 @@ def main():
 
     if not args.no_readme:
         readme = ROOT / "README.md"
-        text = readme.read_text()
+        text = readme.read_text(encoding="utf-8")
         for key, body in sections.items():
             text = replace_block(text, key, body)
-        readme.write_text(text)
+        readme.write_text(text, encoding="utf-8")
 
     print("\n\n".join(f"== {k}\n{v}" for k, v in sections.items()))
 
