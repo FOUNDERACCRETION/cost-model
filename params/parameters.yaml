@@ -423,7 +423,7 @@ parameters:
       type: empirical
       values: [18, 18, 20, 22, 25, 28, 32, 35, 39, 43, 44, 46, 63, 81]
     source_url: data/mlip_benchmark/timings.csv
-    source_note: Every converged CHGNet and MACE-MP-0 relaxation in primary_1thread (7 structures x 2 models). Base = mean, because cost is linear in steps so the expected cost uses the mean. No size dependence (PROTOCOL.md section 1). Stage 2 samples from the values.
+    source_note: Every converged CHGNet and MACE-MP-0 relaxation in primary_1thread (7 structures x 2 models). Base = mean, because cost is linear in steps so the expected cost uses the mean. Steps rise with size (log-log slope 0.72 CHGNet, 0.66 MACE over 7 structures) with scatter; the pool includes the 56-atom supercell, and pooling the 6 native structures instead gives 30.83, a difference worth $0.00014 per robust prediction. Stage 2 samples from the values.
     evidence_grade: first_hand
 
   - name: mlip.step_cap

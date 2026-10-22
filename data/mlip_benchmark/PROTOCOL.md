@@ -174,8 +174,9 @@ All starting geometries are the **as-generated, unrelaxed** candidates (frame 0 
 `ml_cache/candidate_relaxation_traj/`), saved in `structures/` so the benchmark doesn't depend on the cache. All three
 models start from the identical geometry. `LiMnPO4_2x1x1` is a 2×1×1 supercell of the 28-atom
 candidate, added only to extend the size range to 56 atoms; it is **not a native candidate**
-(`native_candidate=False` in every row). It keeps the parent's symmetry, so its step count tracks the parent cell and
-mainly the per-step cost scales.
+(`native_candidate=False` in every row). It keeps the parent's symmetry; it took 81 steps (CHGNet) and 63 (MACE) against the parent's 35 and 43,
+so both the per-step cost and the step count scale. *Corrected 2026-10-22; previously claimed the step count
+tracks the parent cell.*
 
 | structure_id | formula | n_atoms | native_candidate | source candidate | supercell | space group (initial) | volume Å³ |
 |---|---|---|---|---|---|---|---|
