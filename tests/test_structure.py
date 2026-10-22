@@ -604,14 +604,29 @@ def test_every_path_the_readme_names_exists():
                            (root / "README.md").read_text()))
     assert len(named) > 15, "README paths did not parse, so this check would pass vacuously"
 
+    # Files git ignores are generated, not shipped, so a fresh clone does not have them until the
+    # pipeline runs. results/monte_carlo_draws.csv is the case: about 4 MB of per-draw output that
+    # the README itself describes as git-ignored and regenerated from the pinned seed. Requiring it
+    # made this test fail on a clean checkout until stage2.py had been run once -- which would have
+    # been the first thing a replicator saw, for a reason that has nothing to do with the paper.
+    import subprocess
+    def git_ignored(rel: str) -> bool:
+        try:
+            return subprocess.run(["git", "check-ignore", "-q", rel], cwd=root).returncode == 0
+        except OSError:          # no git on the machine; fall back to requiring the file
+            return False
+
     missing = []
     for name in sorted(named):
         if (root / name).exists():
             continue
         # a bare filename is allowed when it is listed inside a directory's own row, so resolve it
         # against the directories the README documents before calling it absent
-        if any((root / d / name).exists() for d in ("scripts", "src", "tests", "results", "paper",
-                                                    "params", "data", "sources")):
+        candidates = [name] + [f"{d}/{name}" for d in ("scripts", "src", "tests", "results", "paper",
+                                                       "params", "data", "sources")]
+        if any((root / c).exists() for c in candidates):
+            continue
+        if any(git_ignored(c) for c in candidates):
             continue
         missing.append(name)
     assert not missing, (
