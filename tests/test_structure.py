@@ -952,3 +952,57 @@ def test_feasibility_ceiling_moves_with_the_reading():
     assert rec["high"] * top["success_CB_mat_hi"] > 1.0, "optimistic reading: span-top bound infeasible"
     assert rec["low"] * top["success_CB_mat_hi"] < 1.0, "pessimistic reading: unconstrained"
     assert 1.0 / rec["high"] < 1.0 / p["synth_success_unconditional"] < 1.0 / rec["low"]
+
+
+def test_waiver_notes_that_quote_the_manuscript_still_match_it():
+    """A waiver that describes prose outlives the prose it describes.
+
+    audit-waivers.txt waived overlap_l1_BA_range as 'quoted in S2 descending, "from 90% to 87% at
+    level 1"'. The Monte Carlo draws changed on 2026-10-18 and the key became 88%-91%; the
+    manuscript kept saying 90% to 87% (and spans of 3.4 and 1.3 points against 3.1 and 1.9), and
+    the audit passed, because the waiver said the figure was quoted in another form and nothing
+    asked whether that form was still there. The two span keys passed on their own because "3.1"
+    and "1.9" occur in the paper as section numbers.
+
+    So every double-quoted phrase in a waiver line has to appear verbatim in the manuscript. A
+    phrase with an ellipsis is a paraphrase, not a quotation, and is skipped.
+    """
+    import pathlib as _p, re
+    root = _p.Path(__file__).resolve().parents[1]
+    body = "\n".join((root / "paper" / p).read_text() for p in ("p1-final.md", "p1-appendices.md"))
+    gone = []
+    for line in (root / "paper" / "audit-waivers.txt").read_text().splitlines():
+        if line.startswith("#") or ":" not in line:
+            continue
+        for q in re.findall(r'"([^"]+)"', line):
+            if "..." not in q and q not in body:
+                gone.append((line.split(":")[0], q))
+    assert not gone, ("a waiver quotes manuscript text that is no longer there -- the figure it "
+                      "waives is probably stale:\n" + "\n".join(f"  {k}: {q!r}" for k, q in gone))
+
+
+def test_short_bare_number_keys_are_not_matched_by_section_numbers():
+    """overlap_l1_BA_span_pp = 3.1 was 'present' because Section 3.1 exists.
+
+    Any key whose value is a bare one-decimal number under 10 can be matched by a section number
+    or a figure of speech. For those keys this requires at least one occurrence that is not
+    immediately preceded by a heading marker, 'Section', 'Supplement', 'Appendix' or 'A.' and not
+    part of a longer number.
+    """
+    import pathlib as _p, re, json
+    root = _p.Path(__file__).resolve().parents[1]
+    body = "\n".join((root / "paper" / p).read_text() for p in ("p1-final.md", "p1-appendices.md"))
+    keys = json.loads((root / "results" / "key_numbers.json").read_text())
+    waived = {l.split(":")[0].strip() for l in (root / "paper" / "audit-waivers.txt").read_text().splitlines()
+              if l and not l.startswith("#") and ":" in l}
+    bad = []
+    for name, val in keys.items():
+        if name in waived or not re.fullmatch(r"\d\.\d", str(val)):
+            continue
+        real = [m for m in re.finditer(rf"(?<![\d.])({re.escape(str(val))})(?![\d])", body)
+                if not re.search(r"(^|\n)#+\s*$|(Section|Supplement|Appendix|S|A\.|§)\s*$",
+                                 body[max(0, m.start() - 12):m.start()])]
+        if not real:
+            bad.append((name, val))
+    assert not bad, ("these keys match the manuscript only at a section number or not at all:\n"
+                     + "\n".join(f"  {n} = {v}" for n, v in bad))

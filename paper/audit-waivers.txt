@@ -104,9 +104,7 @@ bdrow_1000_recipes: as above
 bound_recipes_AB: 5.5 gives the share, 3.85% of the baseline count
 cross_filter_20pct: 5.4 prints the two-significant-figure 410
 kill_l1_material_BA_1dp: the 5.6 table carries the 0-dp 98%
-mc_l2_B_p95_thousands: Limitation 10 quotes the exact $64,269 instead of the rounded form
-overlap_l1_BA_range: quoted in S2 descending, "from 90% to 87% at level 1"
-overlap_l2_BA_range: quoted in S2 descending, "from 97% to 96% at level 2"
+mc_l2_B_p95_thousands: Limitation 10 quotes the exact mc_l2_B_p95 instead of the rounded form
 span_base_share: quoted in the 5.4 span table as "81--94%" (percent sign placed once)
 span_base_share_lo: component of span_base_share, quoted as part of that range
 span_high_share: quoted in the 5.4 span table as "19--48%"
@@ -117,7 +115,7 @@ synthesis_share_base: the same quantity as span_base_share, quoted once
 c0_B: 5.4 walks the level-2 equation for pipeline A only; B's and C's upstream terms are in the package
 c0_C: as above
 xp_filter_material_dft_median: the paper does not make this claim, like its sibling xp_gen_material_dft_median. NOTE: it was never really satisfied -- its old value 485 matched only the digits of thr_alpha_A's 0.485, so the audit's own collision limitation was standing in for a quotation. Discovered 2026-10-18 when the value moved to 473 and the match vanished.
-mlip_usd_per_robust_B: generation AND relaxation together. 5.2 now quotes the two halves separately (mlip_relax_usd_per_robust_B, mlip_gen_usd_per_robust_B) because calling the pair "the relaxations" charged generation to relaxation; the combined key is kept as the cross-check that the halves reconstruct it.
+mlip_usd_per_robust_B: generation AND relaxation together. 5.2 now quotes the two halves separately (mlip_relax_usd_per_robust_B, mlip_gen_usd_per_robust_B) because calling the pair the relaxations charged generation to relaxation; the combined key is kept as the cross-check that the halves reconstruct it.
 kill_l2_material_BA_directional: the superseded directional convention; quoted in paper/DIAGNOSTICS.md, not the paper. Its 8.9% was matching only compute_share_A's unrelated 8.9% in 5.5.
 kill_l3_material_BA_directional: as above, identical to the level-2 value by construction.
 overlap_l1_ref_median: S2 quotes the reference RANGE (96.1%-97.9%) and the measured coefficient, not the median. Its 97% was matching other 97% figures.
