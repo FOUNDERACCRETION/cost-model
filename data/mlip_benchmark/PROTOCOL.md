@@ -30,8 +30,10 @@ converged on every structure in both matrix configs.
 
 **Two factors, not one.** Every row also carries `core_seconds_per_ionic_step` (= threads_actual × wall_clock_s /
 n_ionic_steps). Per-step cost grows roughly linearly with N (§7, log-log slope of time per step 0.89–1.05
-across the three models), while the number of ionic steps (18–81 for the CHGNet/MACE matrix runs) varies
-with structure independently of size. A cost model
+across the three models), while the number of ionic steps (18–81 for the CHGNet/MACE matrix runs) rises
+with size less steeply (log-log slope 0.72 CHGNet, 0.66 MACE, the gap between the core_hours and time_per_step
+slopes in §7) and with scatter by structure. *Corrected 2026-10-22: this line previously said steps vary
+"independently of size", which the §7 table contradicts.* A cost model
 should therefore use cost per relaxation = (core-seconds per step at N) × (steps), with the two factors taken separately.
 
 **Parallel throughput is not a parameter of this study.** Concurrent workers on this platform hit a WSL2/Hyper-V

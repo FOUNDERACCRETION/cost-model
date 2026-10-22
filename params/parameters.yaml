@@ -1177,7 +1177,7 @@ monte_carlo:
     mlip.steps_per_relaxation:
       type: bootstrap_mean
       values: [18, 18, 20, 22, 25, 28, 32, 35, 39, 43, 44, 46, 63, 81]
-      reason: "Every converged CHGNet and MACE relaxation (first-hand); no size dependence."
+      reason: "Every converged CHGNet and MACE relaxation (first-hand); steps rise with size (slope ~0.7) with scatter, so sampled as a pool rather than modelled."
     mlip.chgnet.nonconv_frac:
       type: beta_counts
       k: 0

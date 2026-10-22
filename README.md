@@ -523,7 +523,7 @@ All are break-even solves on the model with every other quantity held shared, no
 |---|---|---|---|
 | `batch.n_atoms` | empirical | 6 values, 10–32 | A candidate is one of the native benchmark sizes; only MLIP cost depends on it. |
 | `mlip.chgnet.step_cost_per_atom` | bootstrap_mean | 6 values, 0.003209–0.009057 | Per-structure core-s per step per atom, primary_1thread, 6 native structures (first-hand). |
-| `mlip.steps_per_relaxation` | bootstrap_mean | 14 values, 18–81 | Every converged CHGNet and MACE relaxation (first-hand); no size dependence. |
+| `mlip.steps_per_relaxation` | bootstrap_mean | 14 values, 18–81 | Every converged CHGNet and MACE relaxation (first-hand); steps rise with size (slope ~0.7) with scatter, so sampled as a pool rather than modelled. |
 | `mlip.chgnet.nonconv_frac` | beta_counts | 0 of 7 | 0 of 7 benchmark relaxations hit the cap. |
 | `mlip.chgnet.recall` | triangular | 0.4 / 0.7585 / 0.95 | Matbench value as mode; 0.40-0.95 are plausibility bounds, not a measured interval. |
 | `dft.cost_per_candidate` | log_uniform | 2.975 to 1000 | Spans 3-1,000 core-h (two and a half orders of magnitude) between our measurement and MP 2012; no defensible mode. |
